@@ -1,0 +1,83 @@
+# GSAP ScrollTrigger - Input Contract
+
+request:
+  type: object
+  required:
+    - motion_plan
+  properties:
+    motion_plan:
+      type: object
+      properties:
+        narrative:
+          type: array
+          items:
+            type: object
+            properties:
+              act:
+                type: string
+              scroll_range:
+                type: string
+              elements:
+                type: array
+                items:
+                  type: string
+        constraints:
+          type: array
+          items:
+            type: string
+    
+    dom_structure:
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              selector:
+                type: string
+              children:
+                type: array
+                items:
+                  type: string
+    
+    integration_target:
+      type: string
+      enum: [nextjs, react, vanilla]
+      default: nextjs
+    
+    lenis_integrated:
+      type: boolean
+      default: true
+
+# Exemplo
+example:
+  motion_plan:
+    narrative:
+      - act: introducao
+        scroll_range: "0-0.3"
+        elements: [hero_title, hero_subtitle]
+      - act: revelacao
+        scroll_range: "0.3-0.7"
+        elements: [product_grid, feature_cards]
+      - act: climax
+        scroll_range: "0.7-1.0"
+        elements: [cta, social_proof]
+    constraints:
+      - "performance_budget: 16ms p95"
+      - "a11y_target: AA"
+      - "motion_policy: full + reduced"
+  
+  dom_structure:
+    sections:
+      - name: hero
+        selector: .hero
+        children: [.hero_title, .hero_subtitle]
+      - name: products
+        selector: .products
+        children: [.product_card]
+  
+  integration_target: nextjs
+  lenis_integrated: true
