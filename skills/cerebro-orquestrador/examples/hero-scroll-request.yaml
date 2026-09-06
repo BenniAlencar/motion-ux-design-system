@@ -1,0 +1,61 @@
+# Exemplo: Hero Scroll Request
+
+user_request: "Quero um hero com scroll que revela produtos"
+
+context:
+  project_name: "Minha Landing"
+  brand_name: "Minha Marca"
+  industry: tech
+  tone: minimalist
+
+constraints:
+  performance_budget_ms: 16
+  a11y_target: AA
+  motion_policy: full
+  locales: [pt-BR]
+  max_bundle_kb: 250
+
+assets_provided:
+  logo: false
+  copy: true
+  images: []
+  fonts: []
+  models_3d: []
+
+---
+
+# Expected Output (Cerebro)
+
+intent_type: hero_scroll
+surface: hero
+
+selected_skills:
+  - gsap-scrolltrigger (primary)
+  - lenis (primary)
+  - accessibility-a11y (required)
+  - performance-budget (required)
+  - asset-gate (required)
+  - quality-gate (required)
+
+narrative:
+  - act: introducao
+    scroll_range: "0-0.3"
+    elements: [hero_title, hero_subtitle]
+  - act: revelacao
+    scroll_range: "0.3-0.7"
+    elements: [product_grid, feature_cards]
+  - act: climax
+    scroll_range: "0.7-1.0"
+    elements: [cta, social_proof]
+
+asset_gate_report:
+  asset_state: asset_pending
+  delivery_state: prototype
+  blocking_assets:
+    - type: logo
+      status: missing
+    - type: images
+      status: missing
+      count: 3
+
+next_action: "Aguardar logo e imagens para final delivery"
