@@ -41,6 +41,43 @@ skills:
   curtains:
     status: proposed
     sources: []
+  copy-landing-hero:
+    status: proposed
+    sources:
+      - path: agentes-training/CODIGOS_x5f_SECRETOS_x5f_DOMINAM_x5f_TUDO_x5f_V11.txt
+        role: primary
+      - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+        role: primary
+      - path: agentes-training/SHOPIFY_x5f_EDITIONS_x5f_WINTER26_x5f_ULTRA_x5f_200_x5f_PADROES_x5f_LIMPO.txt
+        role: product-context
+  copy-product-descriptions:
+    status: proposed
+    sources:
+      - path: agentes-training/SHOPIFY_x5f_EDITIONS_x5f_WINTER26_x5f_ULTRA_x5f_200_x5f_PADROES_x5f_LIMPO.txt
+        role: primary
+      - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+        role: primary
+  copy-email-sequence:
+    status: proposed
+    sources:
+      - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+        role: primary
+      - path: agentes-training/CODIGOS_x5f_SECRETOS_x5f_DOMINAM_x5f_TUDO_x5f_V11.txt
+        role: primary
+  copy-social-hooks:
+    status: proposed
+    sources:
+      - path: agentes-training/CODIGOS_x5f_SECRETOS_x5f_DOMINAM_x5f_TUDO_x5f_V11.txt
+        role: primary
+      - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+        role: primary
+  copy-cta-library:
+    status: proposed
+    sources:
+      - path: agentes-training/CODIGOS_x5f_SECRETOS_x5f_DOMINAM_x5f_TUDO_x5f_V11.txt
+        role: primary
+      - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+        role: primary
   flip:
     status: proposed
     sources:
@@ -159,6 +196,27 @@ skills:
         role: primary
       - path: agentes-training/SPLINE_x5f_RUNTIME_x5f_VIEWER_x5f_ENGENHARIA_x5f_TOTAL.txt
         role: engineering
+  storytelling-brand-narrative:
+    status: proposed
+    sources:
+      - path: agentes-training/BENNI_x5f_MASTER_x5f_OS_x5f_V10_x5f_ULTRA_x5f_200_x5f_PADROES.txt
+        role: primary
+      - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+        role: primary
+  storytelling-product-story:
+    status: proposed
+    sources:
+      - path: agentes-training/SHOPIFY_x5f_EDITIONS_x5f_WINTER26_x5f_ULTRA_x5f_200_x5f_PADROES_x5f_LIMPO.txt
+        role: primary
+      - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+        role: primary
+  storytelling-founder-pitch:
+    status: proposed
+    sources:
+      - path: agentes-training/CODIGOS_x5f_SECRETOS_x5f_DOMINAM_x5f_TUDO_x5f_V11.txt
+        role: primary
+      - path: agentes-training/BENNI_x5f_MASTER_x5f_OS_x5f_V10_x5f_ULTRA_x5f_200_x5f_PADROES.txt
+        role: primary
   swup:
     status: proposed
     sources:
@@ -180,6 +238,36 @@ skills:
         role: primary
       - path: agentes-training/TONEJS_x5f_ENGENHARIA_x5f_TOTAL.txt
         role: engineering
+  offer-architecture:
+    status: proposed
+    sources:
+      - path: agentes-training/CODIGOS_x5f_SECRETOS_x5f_DOMINAM_x5f_TUDO_x5f_V11.txt
+        role: primary
+      - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+        role: primary
+      - path: agentes-training/SHOPIFY_x5f_EDITIONS_x5f_WINTER26_x5f_ULTRA_x5f_200_x5f_PADROES_x5f_LIMPO.txt
+        role: product-context
+  offer-pricing-psychology:
+    status: proposed
+    sources:
+      - path: agentes-training/SHOPIFY_x5f_EDITIONS_x5f_WINTER26_x5f_ULTRA_x5f_200_x5f_PADROES_x5f_LIMPO.txt
+        role: primary
+      - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+        role: primary
+  offer-bonus-stack:
+    status: proposed
+    sources:
+      - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+        role: primary
+      - path: agentes-training/CODIGOS_x5f_SECRETOS_x5f_DOMINAM_x5f_TUDO_x5f_V11.txt
+        role: primary
+  offer-guarantee-risk-reversal:
+    status: proposed
+    sources:
+      - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+        role: primary
+      - path: agentes-training/SHOPIFY_x5f_EDITIONS_x5f_WINTER26_x5f_ULTRA_x5f_200_x5f_PADROES_x5f_LIMPO.txt
+        role: product-context
   webgpu-gpgpu:
     status: proposed
     sources:
