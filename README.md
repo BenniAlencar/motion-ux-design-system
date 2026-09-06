@@ -11,32 +11,76 @@ Cada skill e um **enxame declarativo de agentes** com:
 - Patterns e templates
 - Evals e acceptance criteria
 
-## Skills
+## Skills (26 total)
 
 ### Core
 | Skill | Descricao |
 |-------|----------|
 | cerebro-orquestrador | Roteador e classificador de intencao |
 
-### Bibliotecas
+### GSAP Ecosystem
 | Skill | Descricao |
 |-------|----------|
-| gsap-scrolltrigger | GSAP + ScrollTrigger + Observer + Flip |
-| lenis | Lenis smooth scroll + integracao GSAP |
-| r3f-threejs-drei | Three.js + R3F + Drei + Shaders |
-| spline-runtime | Spline 3D + Runtime Viewer |
-| rive | Rive animations + state machines |
-| lottiefiles | Lottie JSON + bodymovin |
-| webgpu-gpgpu | WebGPU + GPGPU + compute shaders |
+| gsap-scrolltrigger | GSAP Core + ScrollTrigger |
+| scrollsmoother | GSAP ScrollSmoother |
+| observer | GSAP Observer (hover, press, enter, leave) |
+| flip | GSAP Flip (layout transitions) |
+
+### Scroll
+| Skill | Descricao |
+|-------|----------|
+| lenis | Lenis smooth scroll |
+| locomotive-scroll | Locomotive Scroll |
+
+### Animation
+| Skill | Descricao |
+|-------|----------|
+| motion-framer | Framer Motion (React) |
+| animejs | Anime.js (CSS, SVG, JS) |
+| theatrejs | Theatre.js (timelines visuais) |
+
+### 3D / WebGL
+| Skill | Descricao |
+|-------|----------|
+| r3f-threejs-drei | Three.js + R3F + Drei |
+| spline-runtime | Spline 3D + Runtime |
+| webgpu-gpgpu | WebGPU + GPGPU |
 | lygia | Lygia shader library |
+| webgpu-wgsl-tsl | WebGPU + WGSL + TSL |
+| pixi | Pixi.js (2D WebGL) |
+| ogl | OGL (WebGL leve) |
+| curtains | Curtains.js (WebGL + DOM) |
+
+### Page Transitions
+| Skill | Descricao |
+|-------|----------|
+| barba | Barba.js (page transitions) |
+| swup | Swup (modern page transitions) |
+
+### Animation Formats
+| Skill | Descricao |
+|-------|----------|
+| rive | Rive (state machines) |
+| lottiefiles | Lottie / dotLottie |
+
+### Physics / Generative
+| Skill | Descricao |
+|-------|----------|
+| rapier | Rapier physics (3D) |
+| p5js | p5.js (generative art) |
+
+### Audio
+| Skill | Descricao |
+|-------|----------|
+| tonejs | Tone.js (audio interativo) |
 
 ### Qualidade
 | Skill | Descricao |
 |-------|----------|
-| accessibility-a11y | WCAG, keyboard, focus, screen reader |
-| performance-budget | Frame budget, memory, draw calls, bundle |
-| asset-gate | Asset intake, manifest, provenance, rights |
-| quality-gate | QA, acceptance, evidence, rollback, snapshot |
+| accessibility-a11y | WCAG, keyboard, focus, a11y |
+| performance-budget | Frame budget, memory, bundle |
+| asset-gate | Asset intake, manifest, rights |
+| quality-gate | QA, acceptance, evidence, rollback |
 
 ## Uso em IDEs
 
@@ -49,7 +93,8 @@ Cada skill e um **enxame declarativo de agentes** com:
 ## Estrutura de uma Skill
 
 ```
-skills/<skill>/\n├── SKILL.md           # Manifesto e instrucoes
+skills/<skill>/
+├── SKILL.md           # Manifesto e instrucoes
 ├── AGENTS.md          # Enxame de agentes
 ├── WORKFLOW.md        # Fluxo obrigatorio
 ├── INPUT_CONTRACT.yaml
@@ -63,7 +108,7 @@ skills/<skill>/\n├── SKILL.md           # Manifesto e instrucoes
 
 ## Status
 
-v1.0.0 - Skills dedicadas Motion/UX para design de sites e UI
+v1.0.0 - 26 skills dedicadas Motion/UX para design de sites e UI
 
 ## Repositorio
 
