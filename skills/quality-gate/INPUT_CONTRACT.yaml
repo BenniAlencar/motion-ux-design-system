@@ -1,0 +1,110 @@
+# Quality Gate - Input Contract
+
+request:
+  type: object
+  required:
+    - execution_results
+  properties:
+    execution_results:
+      type: object
+      description: "Resultados de todas as skills executadas"
+      properties:
+        gsap-scrolltrigger:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [completed, failed, skipped]
+            outputs:
+              type: array
+              items:
+                type: string
+        
+        lenis:
+          type: object
+          properties:
+            status:
+              type: string
+            outputs:
+              type: array
+              items:
+                type: string
+        
+        accessibility-a11y:
+          type: object
+          properties:
+            status:
+              type: string
+            outputs:
+              type: array
+              items:
+                type: string
+            a11y_report:
+              type: object
+        
+        performance-budget:
+          type: object
+          properties:
+            status:
+              type: string
+            outputs:
+              type: array
+              items:
+                type: string
+            performance_report:
+              type: object
+    
+    asset_state:
+      type: string
+      enum: [provided, pending, placeholder_only]
+    
+    project_context:
+      type: object
+      properties:
+        project_name:
+          type: string
+        delivery_deadline:
+          type: string
+          format: date-time
+        stakeholder_email:
+          type: string
+
+# Exemplo
+example:
+  execution_results:
+    gsap-scrolltrigger:
+      status: completed
+      outputs:
+        - motion_plan.yaml
+        - implementation.tsx
+        - reduced_motion.css
+    
+    lenis:
+      status: completed
+      outputs:
+        - lenis_integration.ts
+    
+    accessibility-a11y:
+      status: completed
+      outputs:
+        - a11y_report.yaml
+      a11y_report:
+        contrast: pass_with_warnings
+        keyboard: pass
+        focus_visible: pass
+    
+    performance-budget:
+      status: completed
+      outputs:
+        - performance_report.yaml
+      performance_report:
+        lighthouse_score: 87
+        frame_time_p95_ms: 14
+        bundle_js_kb: 142
+  
+  asset_state: pending
+  
+  project_context:
+    project_name: "Minha Landing"
+    delivery_deadline: "2026-09-15T00:00:00Z"
+    stakeholder_email: "cliente@empresa.com"
