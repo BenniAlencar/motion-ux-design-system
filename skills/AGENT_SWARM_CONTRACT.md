@@ -62,6 +62,16 @@ Skills visuais podem adicionar agentes especializados, por exemplo:
 - `audio`;
 - `asset-pipeline`.
 
+Skills de **copy, storytelling e oferta** devem adicionar:
+
+- `voice-tone`;
+- `hook-opening`;
+- `narrative-arc`;
+- `offer-architecture`;
+- `cta-design`;
+- `objection-handling`;
+- `proof-evidence`.
+
 ## Proveniencia
 
 Cada skill deve declarar fontes em `TRAINING_SOURCES.yaml`:
@@ -111,3 +121,24 @@ Todo enxame visual deve declarar:
 - todos os arquivos estruturais existirem;
 - nenhuma fonte ter sido substituida por resumo inventado;
 - relatorio de cobertura ser gerado.
+
+## Copy, Storytelling e Oferta
+
+Para skills de escrita, o enxame deve garantir:
+
+- **Clareza**: mensagem compreensivel em 5 segundos.
+- **Especificidade**: claims com dados, exemplos ou provas.
+- **Relevancia**: alinhada ao contexto, publico e canal.
+- **Credibilidade**: sem exageros, com fontes ou evidencias quando aplicavel.
+- **Conversao**: CTA claro, acao unica, friccao reduzida.
+- **Consistencia**: voz e tom alinhados a marca e ao momento.
+- **Acessibilidade**: linguagem simples, estrutura escaneavel, contraste semantico.
+
+O enxame de copy nunca deve:
+
+- inventar dados, resultados ou depoimentos;
+- prometer o que o produto nao entrega;
+- usar gatilhos manipulative sem transparencia;
+- ignorar o contexto de uso (anuncio, landing, email, social, pitch).
+
+Todo output de copy deve ser tratato como **hipotese** ate ser testado em contexto real.
