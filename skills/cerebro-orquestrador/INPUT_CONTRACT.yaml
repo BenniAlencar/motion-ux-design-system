@@ -7,55 +7,108 @@ request:
   properties:
     user_request:
       type: string
-      description: Pedido em linguagem natural
+      description: "Pedido em linguagem natural. Ex: 'Quero um hero com scroll que revela produtos'"
+      examples:
+        - "Quero um hero com scroll que revela produtos"
+        - "Preciso de uma landing page para meu SaaS"
+        - "Hero 3D com particulas que seguem o mouse"
+        - "Microinteracoes para botoes e cards"
+    
     context:
       type: object
       properties:
         project_name:
           type: string
+          description: "Nome do projeto"
         brand_name:
           type: string
+          description: "Nome da marca"
         industry:
           type: string
+          description: "Industria/segmento"
+          enum: [tech, fashion, food, finance, health, education, entertainment, other]
         reference_urls:
           type: array
           items:
             type: string
+            format: uri
+          description: "URLs de referencia (Awwwards, sites, etc)"
+        target_audience:
+          type: string
+          description: "Publico alvo"
+        tone:
+          type: string
+          description: "Tom da comunicacao"
+          enum: [minimalist, bold, playful, serious, luxury, friendly]
+    
     constraints:
       type: object
       properties:
         performance_budget_ms:
           type: number
           default: 16
+          description: "Frame budget em ms (16ms = 60fps)"
         a11y_target:
           type: string
           enum: [A, AA, AAA]
           default: AA
+          description: "Nivel WCAG alvo"
         motion_policy:
           type: string
           enum: [full, reduced, static]
           default: full
+          description: "Politica de motion (full = todas animacoes, reduced = respeita prefers-reduced-motion, static = sem animacoes)"
         locales:
           type: array
           items:
             type: string
           default: [pt-BR]
+          description: "Locales suportados"
+        max_bundle_kb:
+          type: number
+          default: 250
+          description: "Maximo bundle size em kB"
+    
     assets_provided:
       type: object
       properties:
         logo:
           type: boolean
+          description: "Logo disponivel?"
         copy:
           type: boolean
+          description: "Copy/textos disponiveis?"
         images:
           type: array
           items:
             type: string
+          description: "URLs ou paths de imagens"
         fonts:
           type: array
           items:
             type: string
+          description: "Fontes disponiveis (nomes ou URLs)"
         models_3d:
           type: array
           items:
             type: string
+          description: "Modelos 3D disponiveis (GLB, Spline, etc)"
+        videos:
+          type: array
+          items:
+            type: string
+          description: "Videos disponiveis"
+        animations:
+          type: array
+          items:
+            type: string
+          description: "Animacoes disponiveis (Rive, Lottie)"
+
+# Validacoes
+validations:
+  - rule: "user_request nao pode ser vazio"
+    error: "Pedido do usuario e obrigatorio"
+  - rule: "performance_budget_ms >= 8"
+    error: "Frame budget minimo e 8ms (120fps)"
+  - rule: "max_bundle_kb <= 500"
+    error: "Bundle maximo e 500kB"
