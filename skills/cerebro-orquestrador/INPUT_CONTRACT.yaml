@@ -1,0 +1,61 @@
+# Cerebro - Input Contract
+
+request:
+  type: object
+  required:
+    - user_request
+  properties:
+    user_request:
+      type: string
+      description: Pedido em linguagem natural
+    context:
+      type: object
+      properties:
+        project_name:
+          type: string
+        brand_name:
+          type: string
+        industry:
+          type: string
+        reference_urls:
+          type: array
+          items:
+            type: string
+    constraints:
+      type: object
+      properties:
+        performance_budget_ms:
+          type: number
+          default: 16
+        a11y_target:
+          type: string
+          enum: [A, AA, AAA]
+          default: AA
+        motion_policy:
+          type: string
+          enum: [full, reduced, static]
+          default: full
+        locales:
+          type: array
+          items:
+            type: string
+          default: [pt-BR]
+    assets_provided:
+      type: object
+      properties:
+        logo:
+          type: boolean
+        copy:
+          type: boolean
+        images:
+          type: array
+          items:
+            type: string
+        fonts:
+          type: array
+          items:
+            type: string
+        models_3d:
+          type: array
+          items:
+            type: string
