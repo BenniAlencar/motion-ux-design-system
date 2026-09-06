@@ -1,0 +1,46 @@
+# WebGPU GPGPU - Input Contract
+
+request:
+  type: object
+  required:
+    - effect_type
+  properties:
+    effect_type:
+      type: string
+      enum: [particles, fluid, gpgpu_simulation, compute_heavy]
+    particle_count:
+      type: number
+      default: 50000
+      minimum: 1000
+      maximum: 500000
+    simulation_params:
+      type: object
+      properties:
+        gravity:
+          type: number
+          default: -9.8
+        friction:
+          type: number
+          default: 0.98
+        wind:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+    performance_budget:
+      type: object
+      properties:
+        memory_mb_max:
+          type: number
+          default: 64
+        fps_min:
+          type: number
+          default: 30
+    fallback_policy:
+      type: string
+      enum: [webgl2, canvas2d, css, poster]
+      default: webgl2
