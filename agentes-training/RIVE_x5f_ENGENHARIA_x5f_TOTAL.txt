@@ -1,0 +1,271 @@
+
+================================================================================
+RIVE - ENGENHARIA REVERSA TOTAL - 2026
+Site: rive.app - Animações vetoriais interativas com State Machine (substituto do Lottie)
+================================================================================
+
+O QUE É:
+Rive é o novo Lottie, mas interativo. Você cria animação no editor Rive (rive.app) com vetores, bones, constraints, e cria State Machine (máquina de estados) com inputs (boolean, number, trigger). Depois exporta .riv (muito leve, ~10-100KB) e controla na web via runtime.
+
+Diferença vs Lottie:
+- Lottie: só play, animação linear
+- Rive: interativo, state machine, inputs, hover, click, controle total, 60fps, muito menor
+
+INSTALAÇÃO:
+
+Vanilla JS (canvas runtime):
+npm install @rive-app/canvas
+import { Rive, Layout, Fit, Alignment } from '@rive-app/canvas'
+
+React:
+npm install @rive-app/react-canvas
+import { useRive, useStateMachineInput } from '@rive-app/react-canvas'
+
+Runtimes:
+- @rive-app/canvas - vanilla, 567KB compressed
+- @rive-app/react-canvas - React
+- @rive-app/webgl - WebGL
+- rive-react-native, rive-ios, rive-android
+
+================================================================================
+1. VANILLA JS - @rive-app/canvas
+================================================================================
+
+import { Rive, Layout, Fit, Alignment } from '@rive-app/canvas'
+
+const rive = new Rive({
+  src: '/animations/mascot.riv', // ou URL https://cdn.rive.app/...
+  canvas: document.getElementById('canvas'),
+  artboard: 'ArtboardName', // opcional, se .riv tem vários artboards
+  stateMachines: 'State Machine 1', // nome da state machine no editor
+  animations: 'Animation1', // ou animação direta se não usa state machine
+  layout: new Layout({
+    fit: Fit.Contain, // Contain, Cover, Fill, FitWidth, FitHeight, etc
+    alignment: Alignment.Center
+  }),
+  autoplay: true,
+  onLoad: () => {
+    console.log('carregou')
+    rive.resizeDrawingSurfaceToCanvas()
+  },
+  onStateChange: (event) => {
+    console.log('state mudou', event.data)
+  }
+})
+
+// Inputs da State Machine:
+const inputs = rive.stateMachineInputs('State Machine 1')
+// inputs é array de { name, type: 'boolean'|'number'|'trigger', value }
+
+const isHappyInput = inputs.find(i => i.name === 'isHappy')
+isHappyInput.value = true // boolean
+
+const numberInput = inputs.find(i => i.name === 'progress')
+numberInput.value = 50 // 0-100
+
+const triggerInput = inputs.find(i => i.name === 'fire')
+triggerInput.fire() // dispara trigger
+
+// Controle:
+rive.play()
+rive.pause()
+rive.stop()
+rive.play('Animation1') // play animação específica
+rive.pause('Animation1')
+
+// Resize:
+window.addEventListener('resize', () => {
+  rive.resizeDrawingSurfaceToCanvas()
+})
+
+================================================================================
+2. REACT - @rive-app/react-canvas - MAIS USADO
+================================================================================
+
+import { useRive, useStateMachineInput, Layout, Fit, Alignment } from '@rive-app/react-canvas'
+
+function Mascot(){
+  const { rive, RiveComponent } = useRive({
+    src: '/mascot.riv',
+    stateMachines: 'MainState',
+    artboard: 'MascotArtboard',
+    autoplay: true,
+    layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
+    onStateChange: (event) => console.log(event.data)
+  })
+
+  // Inputs:
+  const isHappyInput = useStateMachineInput(rive, 'MainState', 'isHappy')
+  const progressInput = useStateMachineInput(rive, 'MainState', 'progress')
+  const fireInput = useStateMachineInput(rive, 'MainState', 'fire')
+
+  return (
+    <div style={{ width: 400, height: 400 }}>
+      <RiveComponent />
+      <button onClick={() => isHappyInput && (isHappyInput.value = !isHappyInput.value)}>
+        Toggle Happy
+      </button>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        onChange={(e) => progressInput && (progressInput.value = parseInt(e.target.value))}
+      />
+      <button onClick={() => fireInput && fireInput.fire()}>Fire</button>
+    </div>
+  )
+}
+
+// Hook custom para simplificar:
+function useRiveInput(rive, stateMachine, inputName){
+  const input = useStateMachineInput(rive, stateMachine, inputName)
+  return input
+}
+
+================================================================================
+3. STATE MACHINE - O CORAÇÃO DO RIVE
+================================================================================
+
+No editor Rive você cria:
+- Artboard: onde desenha
+- Animations: timelines (ex: idle, hover, click)
+- State Machine: grafo de estados
+
+State Machine:
+- States: Animation, Entry, Exit, Any State
+- Transitions: de um state para outro com condições (input)
+- Inputs: Boolean, Number, Trigger
+
+Exemplo State Machine simples:
+Entry -> Idle (animation idle loop)
+Idle --(isHover = true)--> Hover (animation hover)
+Hover --(isHover = false)--> Idle
+Idle --(trigger click)--> Click (animation click, não loop)
+Click --(exit)--> Idle
+
+Inputs no editor:
+- isHover: boolean
+- progress: number 0-100
+- click: trigger
+
+Na web você controla esses inputs via código.
+
+================================================================================
+4. PADRÕES DE CÓDIGO - COPIA E COLA
+================================================================================
+
+Padrão 1 - Botão interativo Rive:
+function RiveButton(){
+  const { rive, RiveComponent } = useRive({
+    src: '/button.riv',
+    stateMachines: 'ButtonState',
+    autoplay: true
+  })
+  const hoverInput = useStateMachineInput(rive, 'ButtonState', 'isHover')
+  const clickInput = useStateMachineInput(rive, 'ButtonState', 'click')
+
+  return (
+    <div
+      onMouseEnter={() => hoverInput && (hoverInput.value = true)}
+      onMouseLeave={() => hoverInput && (hoverInput.value = false)}
+      onClick={() => clickInput && clickInput.fire()}
+      style={{ width: 200, height: 60 }}
+    >
+      <RiveComponent />
+    </div>
+  )
+}
+
+Padrão 2 - Mascote que segue mouse:
+function Mascot(){
+  const { rive, RiveComponent } = useRive({ src: '/mascot.riv', stateMachines: 'Main' })
+  const xInput = useStateMachineInput(rive, 'Main', 'xAxis')
+  const yInput = useStateMachineInput(rive, 'Main', 'yAxis')
+
+  useEffect(()=>{
+    const handleMouse = (e)=>{
+      if(xInput && yInput){
+        xInput.value = (e.clientX / window.innerWidth) * 100 // 0-100
+        yInput.value = (e.clientY / window.innerHeight) * 100
+      }
+    }
+    window.addEventListener('mousemove', handleMouse)
+    return () => window.removeEventListener('mousemove', handleMouse)
+  }, [xInput, yInput])
+
+  return <RiveComponent style={{ width: 400, height: 400 }} />
+}
+
+Padrão 3 - Scroll progress controla Rive:
+function ScrollRive(){
+  const { rive, RiveComponent } = useRive({ src: '/scroll.riv', stateMachines: 'Scroll' })
+  const progressInput = useStateMachineInput(rive, 'Scroll', 'progress')
+
+  useEffect(()=>{
+    ScrollTrigger.create({
+      trigger: '.section',
+      start: 'top bottom',
+      end: 'bottom top',
+      scrub: true,
+      onUpdate: self => {
+        if(progressInput) progressInput.value = self.progress * 100
+      }
+    })
+  }, [progressInput])
+
+  return <RiveComponent />
+}
+
+Padrão 4 - Rive + GSAP:
+const { rive, RiveComponent } = useRive({ src: '/hero.riv', stateMachines: 'Hero' })
+const trigger = useStateMachineInput(rive, 'Hero', 'enter')
+
+useGSAP(()=>{
+  gsap.from('.hero-text', { y: 100, opacity: 0, duration: 1, onComplete: ()=> trigger && trigger.fire() })
+})
+
+Padrão 5 - Loading com Rive:
+function Loading(){
+  const { RiveComponent } = useRive({ src: '/loading.riv', autoplay: true })
+  return <RiveComponent style={{ width: 100, height: 100 }} />
+}
+
+Padrão 6 - Múltiplos artboards:
+const { RiveComponent } = useRive({ src: '/multi.riv', artboard: 'Artboard2', stateMachines: 'State2' })
+
+Padrão 7 - Controle de fit:
+new Layout({ fit: Fit.Cover, alignment: Alignment.TopCenter })
+
+Fits: Contain, Cover, Fill, FitWidth, FitHeight, ScaleDown, Layout, NoChange
+
+================================================================================
+5. PERFORMANCE E COMPARATIVO
+================================================================================
+
+Bundle:
+- @rive-app/canvas: 567KB compressed (WASM), mas .riv é 10-100KB
+- Lottie: 40KB + JSON 100-500KB
+- Rive é menor no total e mais performático (GPU acelerado)
+
+Performance:
+- 60fps mesmo em mobile
+- Vetor, não bitmap, escala infinito
+- State machine roda em WASM, muito rápido
+- Suporta nesting, bones, IK, constraints
+
+Quando usar Rive:
+- Botão interativo, ícone animado, mascote, loading, ilustração interativa, onboarding
+- Precisa interação (hover, click, drag, scroll)
+- Quer arquivo leve e nítido em qualquer resolução
+
+Quando usar Lottie:
+- Animação linear simples, já tem JSON
+- Não precisa interação
+
+Quando usar GSAP/Motion:
+- Animar DOM, não vetor
+- Scroll storytelling
+
+Rive é o futuro dos ícones e ilustrações interativas. Todo site premium 2025+ usa Rive para micro-interações.
+
+FIM RIVE

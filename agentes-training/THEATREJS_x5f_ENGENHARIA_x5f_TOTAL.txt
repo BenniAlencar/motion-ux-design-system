@@ -1,0 +1,89 @@
+
+================================================================================
+THEATRE.JS - ENGENHARIA REVERSA TOTAL - 2026 - STUDIO PARA THREE.JS
+Site: theatrejs.com - Timeline visual igual After Effects para web
+================================================================================
+
+O QUE É:
+Theatre.js é editor visual de animação para web. Você cria animação arrastando keyframes em timeline (igual AE), e exporta JSON que roda na web. Perfeito para Three.js, R3F.
+Usado por Linear, Apple, Stripe para hero 3D.
+
+INSTALAÇÃO:
+npm install @theatre/core @theatre/studio
+npm install @theatre/r3f # para R3F
+
+BÁSICO VANILLA:
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+
+studio.initialize() // só em dev, mostra UI
+
+const project = getProject('My Project')
+const sheet = project.sheet('Scene')
+const obj = sheet.object('Cube', {
+  x: 0,
+  y: 0,
+  rotation: 0
+})
+
+obj.onValuesChange((values)=>{
+  cube.position.x = values.x
+  cube.position.y = values.y
+  cube.rotation.y = values.rotation
+})
+
+// Em loop:
+function animate(){
+  requestAnimationFrame(animate)
+  // Theatre atualiza sozinho
+}
+
+// R3F:
+import { SheetProvider, PerspectiveCamera, useCurrentSheet } from '@theatre/r3f'
+import { getProject } from '@theatre/core'
+
+function App(){
+  const sheet = getProject('Project').sheet('Scene')
+  return (
+    <Canvas>
+      <SheetProvider sheet={sheet}>
+        <Scene />
+      </SheetProvider>
+    </Canvas>
+  )
+}
+
+function Scene(){
+  const sheet = useCurrentSheet()
+  const obj = sheet.object('Cube', { x: 0, y: 0 })
+
+  return (
+    <editable.mesh theatreKey="Cube">
+      <boxGeometry />
+      <meshStandardMaterial />
+    </editable.mesh>
+  )
+}
+
+// Scroll sync:
+import { onChange } from '@theatre/core'
+sheet.sequence.onChange((pos)=>{
+  // pos.position = tempo atual
+})
+
+ScrollTrigger.create({
+  trigger: '.section',
+  scrub: true,
+  onUpdate: self => {
+    sheet.sequence.position = self.progress * sheet.sequence.duration
+  }
+})
+
+// Exportar para produção:
+studio.initialize() só em dev
+Em prod, remova studio, deixe só core, JSON da animação é embutido
+
+THEATRE + R3F + GSAP:
+- Theatre controla 3D (posição, rotação, material)
+- GSAP controla scroll e DOM
+- Ambos sincronizados via ScrollTrigger

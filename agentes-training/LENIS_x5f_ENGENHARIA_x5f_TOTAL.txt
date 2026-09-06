@@ -1,0 +1,79 @@
+
+================================================================================
+LENIS - ENGENHARIA REVERSA TOTAL - 2026 - O PADRÃO OURO DE SMOOTH SCROLL
+Site: lenis.darkroom.engineering - 4.5kB gzipped, successor do Locomotive
+================================================================================
+
+O QUE É:
+Lenis é smooth scroll moderno, leve, performático, criado pela Darkroom Engineering. Substituiu Locomotive Scroll em 2024+. Usado em Apple, Linear, Stripe.
+4.5kB gzipped, zero dependência, funciona com GSAP ScrollTrigger nativo.
+
+INSTALAÇÃO:
+npm install lenis
+import Lenis from 'lenis'
+import 'lenis/dist/lenis.css' // CSS obrigatório para evitar scroll duplo
+
+API BÁSICA:
+const lenis = new Lenis({
+  duration: 1.2, // duração do lerp 0-10, quanto maior mais suave
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // easing custom
+  orientation: 'vertical', // vertical | horizontal
+  gestureOrientation: 'vertical', // direção do gesto
+  smoothWheel: true, // smooth no wheel
+  smoothTouch: false, // false em mobile para não bugar
+  wheelMultiplier: 1, // velocidade wheel
+  touchMultiplier: 2, // velocidade touch
+  infinite: false, // scroll infinito
+  autoResize: true
+})
+
+function raf(time){
+  lenis.raf(time)
+  requestAnimationFrame(raf)
+}
+requestAnimationFrame(raf)
+
+// Métodos:
+lenis.scrollTo(target, { offset: 0, duration: 1, easing, immediate: false, lock: false, onComplete: ()=>{} })
+lenis.start()
+lenis.stop()
+lenis.destroy()
+
+// Eventos:
+lenis.on('scroll', ({ scroll, progress, velocity, direction }) => {
+  console.log(scroll, progress) // progress 0-1
+})
+
+// Com GSAP ScrollTrigger (OBRIGATÓRIO):
+lenis.on('scroll', ScrollTrigger.update)
+gsap.ticker.add((time) => lenis.raf(time * 1000))
+gsap.ticker.lagSmoothing(0)
+
+// React:
+import { useEffect } from 'react'
+import Lenis from 'lenis'
+export function useLenis(){
+  useEffect(()=>{
+    const lenis = new Lenis({ duration: 1.2 })
+    lenis.on('scroll', ScrollTrigger.update)
+    gsap.ticker.add((time)=> lenis.raf(time * 1000))
+    return ()=> lenis.destroy()
+  },[])
+}
+
+// Next.js hook:
+import { ReactLenis } from 'lenis/react' // wrapper oficial
+<ReactLenis root><App /></ReactLenis>
+
+// Parallax com Lenis + GSAP:
+lenis.on('scroll', ({ scroll })=>{
+  gsap.to('.parallax', { y: scroll * 0.5, ease: 'none' })
+})
+
+// Parallax com data-lenis-speed (plugin):
+<div data-lenis-speed="0.5">lento</div>
+
+CSS OBRIGATÓRIO:
+html.lenis, html.lenis body { height: auto }
+.lenis:not(.lenis-autoToggle).lenis-stopped { overflow: hidden }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain }

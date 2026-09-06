@@ -1,0 +1,75 @@
+
+================================================================================
+LYGIA SHADER LIBRARY - ENGENHARIA REVERSA TOTAL - 2026
+Site: lygia.xyz - Biblioteca de GLSL mais poética, por Patricio Gonzalez Vivo
+================================================================================
+
+O QUE É:
+Lygia é coleção de funções GLSL reutilizáveis, como lodash para shaders. Ao invés de escrever SDF do zero, você importa.
+Funciona em WebGL (Three.js, R3F, OGL, Pixi) e WebGPU (WGSL).
+
+INSTALAÇÃO:
+npm install three
+// Lygia é só GLSL, copia e cola, ou usa via importmap
+
+importmap:
+<script type="importmap">
+{
+  "imports": {
+    "lygia/": "https://lygia.xyz/"
+  }
+}
+</script>
+
+Em R3F shaderMaterial:
+import { shaderMaterial } from '@react-three/drei'
+
+USO:
+#include "lygia/sdf/circleSDF.glsl"
+#include "lygia/generative/cnoise.glsl"
+#include "lygia/color/palette.glsl"
+
+Funções mais usadas:
+
+SDF (forma com matemática):
+float circleSDF(vec2 st) // círculo
+float boxSDF(vec2 st, vec2 size)
+float lineSDF, polySDF, starSDF
+
+Generative:
+float cnoise(vec2 st) // Perlin noise
+float fbm(vec2 st) // fractal noise
+float random, voronoi
+
+Color:
+vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) // paleta
+vec3 hsb2rgb
+
+Space:
+vec2 rotate, scale, tile, brick, truchet
+
+Exemplo R3F com Lygia:
+const material = new THREE.ShaderMaterial({
+  vertexShader: `
+    varying vec2 vUv;
+    void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+  `,
+  fragmentShader: `
+    #include "lygia/sdf/circleSDF.glsl"
+    #include "lygia/generative/cnoise.glsl"
+    #include "lygia/color/palette.glsl"
+    varying vec2 vUv;
+    uniform float uTime;
+    void main(){
+      vec2 st = vUv * 2.0 - 1.0;
+      float d = circleSDF(st);
+      float n = cnoise(st * 3.0 + uTime * 0.2);
+      d += n * 0.1;
+      vec3 color = palette(d + uTime * 0.1, vec3(0.5), vec3(0.5), vec3(1.0), vec3(0.0,0.5,1.0));
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `,
+  uniforms: { uTime: { value: 0 } }
+})
+
+150 padrões Lygia seguem abaixo...

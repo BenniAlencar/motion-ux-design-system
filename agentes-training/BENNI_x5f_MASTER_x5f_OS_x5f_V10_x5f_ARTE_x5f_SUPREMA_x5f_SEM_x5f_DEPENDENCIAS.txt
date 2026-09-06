@@ -1,0 +1,456 @@
+
+================================================================================
+BENNI MASTER OS v10.0 - ARTE SUPREMA - REESCRITA 100x SUPERIOR
+SEM DEPENDÊNCIA EXCLUSIVA DE MICROFONE, VOZ OU HARDWARE ESPECIAL
+Base: seus 2 arquivos v9.3.0 + stack arte suprema
+================================================================================
+
+DIAGNÓSTICO DOS ORIGINAIS (o que você já tem de excelente):
+
+Seus docs v9.3 são raros. 99% dos design systems falam de cor bonita. Você fala de Reality Lock, Evidence Ladder, Capability Probe, Context Recovery, Token Provenance.
+Isso é engenharia de produto real, não Dribbble.
+
+Pontos fortes que mantive:
+- Design Contract com trace_id, budget, rollback
+- Token layers: primitive/semantic/component/state/locale/motion/spatial
+- Renderer ladder A-E (HTML -> WebGPU com fallback)
+- Memory cleanup e context loss
+- Accessibility equivalent
+
+Limitação artística dos originais:
+- Focam em não quebrar, não em emocionar. Falam de fallback mas não de poesia.
+- Tokens são cores, não são luz. Motion é duração, não é respiração.
+- 3D é custo, não é ritual.
+- Falta camada de beleza: SDF, fluid, GPGPU, imperfeição humana.
+
+O QUE MUDEI PARA 100x - PRINCÍPIOS:
+
+1. SEM DEPENDÊNCIA EXCLUSIVA:
+- Nada que só funcione com microfone, voz, câmera, ou VR.
+- Todo input é progressivo: pointer -> scroll -> time -> keyboard -> idle -> (mic opcional como enhancement, nunca requisito)
+- Se mic falhar, arte continua respirando via scroll/time.
+
+2. BELEZA COMO SISTEMA, NÃO EFEITO:
+- Tokens agora têm luz, não só cor. --glow-cobalt, --blur-aura, --noise-subtle
+- Motion não é easing, é respiração: duration com variação humana, delay com ruído
+- Shader é token: --sdf-circle, --fluid-velocity
+
+3. ARTE COMO RITUAL SEM HARDWARE:
+- HALO v2: respira com scroll velocity + idle time, não com mic
+- LETHE: memória que apaga com scroll progress (já sem mic, perfeito)
+- LUMEN: luz que segue pointer + keyboard focus, não voz
+
+================================================================================
+BENNI MASTER OS v10 - DESIGN CONTRACT ATUALIZADO
+================================================================================
+
+```yaml
+trace_id: trace_<session>_arte_suprema
+tenant_id: benni-os
+objective:
+  metric: emotional_resonance_and_task_success
+  target: 85% comprehension + 70% awe (medido via qualitative + quantitative)
+  deadline: <ISO-8601>
+surface: hero_spatial_editorial_product
+audience: pt-BR/en/es, mobile/desktop, low-end to high-end GPU
+tokens_version: 10.0.0_arte_suprema
+content_matrix:
+  locales: [pt-BR, en, es]
+  length_variation: 30-100% tested
+  rtl: not_required but supported via logical properties
+a11y_target: AA + AAA for text, full keyboard, screen reader poster for 3D
+motion_policy: full | reduced | static_equivalent | breath_equivalent
+  # breath_equivalent = motion que preserva respiração mesmo em reduced
+performance_budget:
+  css_kb: 50
+  font_kb: 120
+  js_kb: 150
+  effect_budget: 16ms frame p95
+  texture_memory: 64MB max mobile, 256MB desktop
+max_cost:
+  amount: 0 # arte suprema não pode custar GPU do usuário
+  currency: USD
+evidence_plan: [token_diff, contrast, keyboard, zoom, locale, visual_review, capability_probe, context_recovery_test, breath_test]
+approval_state: draft
+rollback_ref: v9.3.0 baseline
+```
+
+================================================================================
+TOKENS v10 - LUZ, NÃO SÓ COR
+================================================================================
+
+:root {
+  /* Primitive - luz */
+  --color-obsidian: #09090b;
+  --color-bone: #e8e1d5;
+  --color-cobalt: #426bff;
+  --color-gold: #c9a45c;
+  --color-oxide: #c7683d;
+  --color-cyan: #00ffff;
+  --color-ember: #b94a38;
+  --color-lime: #00ff66;
+
+  /* Aura - blur, glow, noise */
+  --glow-cobalt: 0 0 40px color-mix(in srgb, var(--color-cobalt) 60%, transparent);
+  --glow-gold: 0 0 60px color-mix(in srgb, var(--color-gold) 40%, transparent);
+  --blur-aura: blur(40px);
+  --blur-subtle: blur(0.5px);
+  --noise-subtle: url("data:image/svg+xml,%3Csvg..."); /* 1% noise */
+
+  /* SDF tokens - forma com matemática, não imagem */
+  --sdf-circle: circleSDF;
+  --sdf-box: boxSDF;
+  --sdf-noise: cnoise;
+
+  /* Motion - respiração */
+  --duration-breath: 4s; /* inspira 2s, expira 2s */
+  --duration-quick: 0.2s;
+  --duration-slow: 1.2s;
+  --easing-breath: cubic-bezier(0.4, 0, 0.2, 1); /* respira */
+  --easing-human: cubic-bezier(0.34, 1.56, 0.64, 1); /* imperfeição humana, overshoot */
+  --delay-human: calc(var(--index) * 0.05s + random() * 0.02s); /* stagger com ruído */
+
+  /* Semantic */
+  --surface-canvas: var(--color-obsidian);
+  --surface-panel: color-mix(in srgb, var(--color-obsidian) 92%, var(--color-bone));
+  --text-primary: var(--color-bone);
+  --text-link: var(--color-cobalt);
+  --focus-ring: var(--color-cyan);
+
+  /* Spatial */
+  --depth-1: translateZ(10px);
+  --depth-2: translateZ(30px);
+  --depth-3: translateZ(60px);
+}
+
+Componente com aura e respiração, sem mic:
+.hero {
+  background: var(--surface-canvas);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(circle at 50% 50%, var(--color-cobalt) 0%, transparent 60%);
+  filter: var(--blur-aura);
+  opacity: 0.3;
+  animation: breath var(--duration-breath) var(--easing-breath) infinite alternate;
+}
+
+@keyframes breath {
+  0% { transform: scale(0.9) translateZ(0); opacity: 0.2; }
+  100% { transform: scale(1.1) translateZ(0); opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero::before {
+    animation: none;
+    opacity: 0.2;
+    /* breath_equivalent: mantém luz, remove escala */
+  }
+}
+
+================================================================================
+3D DELIVERY GATE v10 - ARTE SUPREMA SEM DEPENDÊNCIA EXCLUSIVA
+================================================================================
+
+Renderer Ladder v10 - com arte em cada tier:
+
+Tier A - HTML/CSS/SVG - Arte com CSS: SDF via box-shadow, noise via SVG filter, breath via CSS animation. Não é fallback feio, é arte minimalista.
+
+Tier B - Canvas 2D - Fluid 2D com p5.js, 100 partículas, sem WebGL. Arte generativa que roda em Moto G.
+
+Tier C - WebGL2 + Lygia + Theatre.js - SDF, fbm, palette, 3D com luz. Probe de GPU, se falhar vai pra B.
+
+Tier D - WebGPU + GPGPU - 50k partículas, fluid, compute. Só se capability + memory ok. Senão C.
+
+Tier E - Poster + HTML + texto equivalente - Foto do resultado 3D + descrição poética. Nunca tela preta.
+
+Input Ladder - sem dependência exclusiva:
+
+1. Pointer (mouse/touch) - posição, velocity, pressure
+2. Scroll (Lenis/ScrollSmoother) - progress, velocity, direction
+3. Time + Idle - uTime, idleTime, breathTime (respira sozinho se usuário parar)
+4. Keyboard - Tab, Enter, Arrow, Space (navegação ritual)
+5. Reduced motion - mantém luz, remove escala
+6. (Opcional) Mic/Voice - enhancement, nunca requisito. Se tiver, adiciona uMic como perturbação sutil, não controle principal.
+
+Capability Probe v10:
+function probeCapability(){
+  return {
+    webgpu: !!navigator.gpu,
+    webgl2: !!document.createElement('canvas').getContext('webgl2'),
+    dpr: Math.min(window.devicePixelRatio, 2),
+    memory: navigator.deviceMemory || 4,
+    cores: navigator.hardwareConcurrency || 4,
+    touch: 'ontouchstart' in window,
+    reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches
+  }
+}
+
+Se webgpu false, usa webgl2. Se webgl2 false, usa canvas2d. Se canvas2d pesado, usa CSS.
+
+================================================================================
+3 TEMPLATES AUTORAIS v10 - SEM MICROFONE, 100x MAIS BELO
+================================================================================
+
+TEMPLATE 1: HALO v2 - RESPIRAÇÃO VIA SCROLL + IDLE, NÃO MIC
+Nome: HALO - O SITE QUE RESPIRA COM VOCÊ, SEM PRECISAR DE MIC
+
+Conceito: Site tem ritmo próprio. Quando você scrolla rápido, ele ofega. Quando para, ele respira fundo. Luz central pulsa com idle time, não com sopro.
+
+Tech stack sem mic:
+- Lenis para scroll velocity
+- Theatre.js para breath timeline
+- Lygia circleSDF + cnoise para halo orgânico
+- R3F ShaderMaterial com uScrollVelocity + uIdleTime + uTime
+
+Código:
+import Lenis from 'lenis'
+import { shaderMaterial } from '@react-three/drei'
+
+const HaloMaterial = shaderMaterial(
+  { uTime: 0, uScrollVelocity: 0, uIdleTime: 0, uPointer: [0,0] },
+  // vertex
+  `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+  // fragment com Lygia
+  `
+  #include "lygia/sdf/circleSDF.glsl"
+  #include "lygia/generative/cnoise.glsl"
+  #include "lygia/color/palette.glsl"
+  varying vec2 vUv;
+  uniform float uTime;
+  uniform float uScrollVelocity;
+  uniform float uIdleTime;
+  uniform vec2 uPointer;
+
+  void main(){
+    vec2 st = vUv * 2.0 - 1.0;
+    st += uPointer * 0.1; // segue pointer sutil
+
+    float breath = sin(uTime * 0.5 + uIdleTime) * 0.1 + 1.0;
+    breath += uScrollVelocity * 0.2; // scroll rápido aumenta
+
+    float d = circleSDF(st * breath);
+    float n = cnoise(st * 2.0 + uTime * 0.1) * 0.1;
+    d += n;
+
+    vec3 color = palette(d + uTime * 0.05, vec3(0.5,0.5,0.5), vec3(0.5,0.5,0.5), vec3(1.0,1.0,1.0), vec3(0.0,0.33,0.67));
+    float alpha = 1.0 - smoothstep(0.0, 1.0, d);
+    gl_FragColor = vec4(color, alpha * 0.6);
+  }
+  `
+)
+
+const lenis = new Lenis()
+let idleTime = 0
+let lastScroll = 0
+
+lenis.on('scroll', ({ velocity })=>{
+  lenis.raf
+  lastScroll = performance.now()
+  material.uniforms.uScrollVelocity.value = Math.abs(velocity) * 0.01
+})
+
+function raf(time){
+  lenis.raf(time)
+  const now = performance.now()
+  idleTime = (now - lastScroll) / 1000 // segundos parado
+  material.uniforms.uIdleTime.value = idleTime
+  material.uniforms.uTime.value = time * 0.001
+  requestAnimationFrame(raf)
+}
+raf()
+
+Narrativa: Quando usuário para de scrollar, halo respira fundo, texto aparece devagar. Pressa ofega, calma revela. Sem mic, sem permissão, só tempo.
+
+A11y: reduced-motion remove escala, mantém luz. Keyboard: Tab navega, Enter inspira (força breath). Poster: SVG halo estático + texto.
+
+================================================================================
+TEMPLATE 2: LETHE - MEMÓRIA QUE APAGA COM SCROLL (JÁ PERFEITO, SEM MIC)
+Nome: LETHE - O SITE QUE ESQUECE QUANTO MAIS VOCÊ VÊ
+
+Conceito: Cada seção que você passa apaga. Fotos viram partículas, textos viram ruído, no fim só branco. Não volta. Scroll pra cima não recupera. Único jeito de rever é ritual de recarregar com intenção.
+
+Tech:
+- Lenis + ScrollSmoother para progress que só aumenta (maxProgress)
+- GPGPU 50k partículas com vida = 1 - progress
+- OGL ou R3F para fluid
+- Theatre.js para timeline de apagamento
+
+Código v10 melhorado sem mic:
+let maxProgress = 0
+lenis.on('scroll', ({ progress })=>{
+  maxProgress = Math.max(maxProgress, progress)
+  // Apaga com clamp, nunca volta
+  document.querySelectorAll('.memory').forEach((el, i)=>{
+    const delay = i * 0.05
+    const localProgress = Math.max(0, Math.min(1, (maxProgress - delay) * 1.5))
+    el.style.opacity = 1 - localProgress
+    el.style.filter = `blur(${localProgress * 20}px) grayscale(${localProgress})`
+    el.style.transform = `translateY(${localProgress * -50}px) scale(${1 - localProgress * 0.1})`
+  })
+
+  // GPGPU
+  gpgpuMaterial.uniforms.uErase.value = maxProgress
+})
+
+GPGPU shader:
+uniform float uErase;
+void main(){
+  float life = 1.0 - uErase + random() * 0.1;
+  if(life < 0.0) discard;
+  gl_FragColor = vec4(position, life);
+}
+
+Narrativa: Sobre desapego. Cada memória tem 5s para ser lida antes de apagar. Usuário aprende a ler devagar. Final branco com frase: "Algumas coisas só existem se você não tentar guardar."
+
+A11y: Versão estática mostra tudo sem apagar, com aviso: "Esta versão preserva memórias". Keyboard: Space apaga próxima memória com controle.
+
+================================================================================
+TEMPLATE 3: LUMEN v2 - LUZ QUE SEGUE POINTER + FOCUS, NÃO VOZ
+Nome: LUMEN - O SITE QUE SÓ ILUMINA ONDE VOCÊ OLHA
+
+Conceito: Site todo escuro (obsidian). Só ilumina onde pointer passa ou onde keyboard focus está. Texto só aparece na luz. Se você move rápido, luz grande mas difusa. Se move devagar, luz pequena e nítida. Sussurro virou lentidão, grito virou velocidade.
+
+Tech:
+- Pointer tracking com velocity
+- Lygia light + SDF
+- R3F + shader com uLightPos + uVelocity
+- Theatre.js para luz que respira
+
+Código sem voz, com pointer:
+const pointer = { x: 0.5, y: 0.5, velocity: 0 }
+let lastX = 0, lastY = 0, lastTime = 0
+
+window.addEventListener('pointermove', (e)=>{
+  const now = performance.now()
+  const dx = e.clientX - lastX
+  const dy = e.clientY - lastY
+  const dt = now - lastTime
+  const velocity = Math.sqrt(dx*dx + dy*dy) / dt
+
+  pointer.x = e.clientX / innerWidth
+  pointer.y = 1.0 - e.clientY / innerHeight
+  pointer.velocity = Math.min(1, velocity * 0.1)
+
+  material.uniforms.uLightPos.value = [pointer.x, pointer.y]
+  material.uniforms.uVelocity.value = pointer.velocity
+
+  lastX = e.clientX
+  lastY = e.clientY
+  lastTime = now
+})
+
+// Keyboard: Tab move luz para elemento focado
+document.addEventListener('focusin', (e)=>{
+  const rect = e.target.getBoundingClientRect()
+  gsap.to(material.uniforms.uLightPos.value, {
+    x: (rect.left + rect.width/2) / innerWidth,
+    y: 1.0 - (rect.top + rect.height/2) / innerHeight,
+    duration: 0.8,
+    ease: 'power2.out'
+  })
+})
+
+Shader:
+uniform vec2 uLightPos;
+uniform float uVelocity;
+uniform float uTime;
+varying vec2 vUv;
+
+void main(){
+  float d = distance(vUv, uLightPos);
+  float size = 0.2 + uVelocity * 0.3; // rápido = luz grande difusa, lento = pequena nítida
+  float light = 1.0 - smoothstep(0.0, size, d);
+  light *= 1.0 - uVelocity * 0.5; // rápido menos intenso
+  light += sin(uTime + d * 10.0) * 0.02; // respiração
+
+  vec3 color = vec3(light);
+  gl_FragColor = vec4(color, light);
+}
+
+Narrativa: Sobre atenção. O que você ilumina existe. O resto é escuro. Usuário percebe que atenção é escolha. Texto: "Você não vê o que está lá. Você vê onde ilumina."
+
+A11y: Sem pointer, luz segue focus. Tab navega e ilumina. Sem JS, texto todo visível com fundo escuro e sem efeito de luz (progressive enhancement).
+
+================================================================================
+STACK TÉCNICO FINAL v10 - SEM DEPENDÊNCIA EXCLUSIVA
+================================================================================
+
+Core:
+- Next.js 15 + React 19
+- TypeScript strict
+- Lenis 1.2+ (smooth scroll, 4.5kB) OU ScrollSmoother (se projeto 100% GSAP)
+- GSAP 3.12+ + ScrollTrigger + Observer + Flip
+- R3F + Drei + Lygia
+- Theatre.js para timeline visual
+- WebGPU via three/webgpu com fallback WebGL2
+
+Arte sem mic:
+- Lygia: circleSDF, boxSDF, fbm, cnoise, palette, truchet
+- GPGPU: 50k partículas com life baseado em scroll/time/pointer
+- TSL (Three Shading Language) para WebGPU nodes
+- p5.js para generative 2D fallback
+
+Performance Budget v10:
+- JS total < 150kB gzipped (sem 3D), < 250kB com 3D
+- CSS < 50kB
+- Textures < 64MB mobile, < 256MB desktop
+- Draw calls < 100 mobile, < 300 desktop
+- Frame p95 < 16ms (60fps) com fallback para 30fps se necessário
+- LRU para assets, dispose() obrigatório, context loss testado
+
+Evidence Packet v10:
+- Screenshots diff por tier (A,B,C,D,E)
+- Capability probe log: browser, OS, GPU, memory, DPR, reducedMotion
+- Frame metrics: p50/p95/p99, long tasks, memory
+- A11y: keyboard path gravado, screen reader text, focus visible
+- Context loss: teste injetado, restore validado
+- Breath test: scroll rápido, idle 10s, pointer rápido/lento, reduced motion
+
+================================================================================
+CHECKLIST v10 - 20 ITENS - ARTE SUPREMA
+================================================================================
+
+1. Token com luz, não só cor
+2. Motion com respiração humana, não linear
+3. Input ladder sem dependência exclusiva (pointer/scroll/time/keyboard)
+4. Renderer ladder com arte em cada tier, não fallback feio
+5. Capability probe com memory e DPR cap
+6. SDF como token, não imagem
+7. GPGPU com vida baseada em scroll/time/pointer, não mic
+8. Theatre.js para timeline de luz/respiração/apagamento
+9. Lenis + ScrollTrigger update + gsap ticker
+10. Pointer velocity como intensidade de luz
+11. Idle time como respiração profunda
+12. MaxProgress que só aumenta (memória que não volta)
+13. Focus que move luz (Lumen sem voz)
+14. Reduced motion preserva luz, remove escala
+15. Poster com texto poético + HTML semântico
+16. Dispose e context loss testados
+17. Asset provenance com digest e licença
+18. Contrast testado em cada estado + tema + luz
+19. Visual diff com intenção de região alterada
+20. Rollback packet com checkpoint e gaps explícitos
+
+================================================================================
+CONCLUSÃO - POR QUE ISSO É 100x MELHOR E SEM MIC
+================================================================================
+
+Seus originais v9.3 eram engenharia defensiva: como não quebrar.
+v10 é engenharia poética: como emocionar sem quebrar.
+
+- Antes: "Se WebGL falhar, mostra poster". Agora: "Poster é arte minimalista com SDF CSS, não falha feia".
+- Antes: "Motion tem fallback static". Agora: "Fallback static tem breath_equivalent: luz que respira, não escala".
+- Antes: "Input é keyboard, touch, pointer". Agora: "Input é ritual: scroll rápido ofega, idle respira, pointer lento ilumina nítido".
+- Antes: 3D é custo. Agora: 3D é luz que segue atenção humana.
+
+E tudo sem pedir permissão de microfone, sem quebrar se mic não existir, sem excluir quem não pode falar, sem depender de hardware.
+
+Beleza que persuade sem argumento. Engenharia que não exclui.
+
+FIM BENNI MASTER OS v10 ARTE SUPREMA

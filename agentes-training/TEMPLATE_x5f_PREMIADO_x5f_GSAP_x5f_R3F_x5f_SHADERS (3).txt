@@ -1,0 +1,290 @@
+
+================================================================================
+TEMPLATE PREMIADO - GSAP SCROLLTRIGGER + R3F SCROLLCONTROLS + SHADERS + BLOOM
+Stack: Next.js 14 + GSAP 3.13 + Three.js r160 + R3F 8.15 + Drei 9.100 + Postprocessing 2.15
+================================================================================
+
+ESTRUTURA DO PROJETO:
+/app
+  /page.tsx <- página principal
+  /components
+    /Scene.tsx <- Canvas R3F
+    /Models.tsx <- modelos 3D
+    /Shaders.tsx <- shaders custom
+    /Overlay.tsx <- HTML com ScrollTrigger
+  /hooks
+    /useGSAPScroll.ts
+
+INSTALAÇÃO:
+npm install gsap three @react-three/fiber @react-three/drei @react-three/postprocessing postprocessing
+npm install @gsap/react
+
+================================================================================
+1. APP/PAGE.TSX - PÁGINA PRINCIPAL
+================================================================================
+'use client'
+import { Canvas } from '@react-three/fiber'
+import { ScrollControls } from '@react-three/drei'
+import { useGSAP } from '@gsap/react'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import Scene from './components/Scene'
+import Overlay from './components/Overlay'
+
+gsap.registerPlugin(ScrollTrigger)
+
+export default function Home(){
+  useGSAP(()=>{
+    // GSAP controla DOM, R3F controla 3D, mas sincronizados pelo scroll
+    
+    // Navbar hide/show
+    let last = 0
+    ScrollTrigger.create({
+      start: "top top",
+      end: 99999,
+      onUpdate: self => {
+        let curr = self.scroll()
+        if(curr > last && curr > 100) gsap.to("nav", {yPercent:-100, duration:0.3, overwrite:true})
+        else gsap.to("nav", {yPercent:0, duration:0.3, overwrite:true})
+        last = curr
+      }
+    })
+
+    // Parallax textos
+    gsap.utils.toArray(".reveal").forEach((el:any)=>{
+      gsap.from(el, {
+        y: 100,
+        opacity: 0,
+        duration: 1,
+        ease: "power4.out",
+        scrollTrigger: {
+          trigger: el,
+          start: "top 85%",
+          toggleActions: "play none none reverse"
+        }
+      })
+    })
+
+    // Pin seção com timeline
+    let tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: ".pin-section",
+        pin: true,
+        start: "top top",
+        end: "+=2000",
+        scrub: 1
+      }
+    })
+    tl.to(".pin-title", {scale: 1.5, opacity:0})
+      .from(".pin-text", {y:100, opacity:0}, "<")
+  })
+
+  return (
+    <main className="relative">
+      <nav className="fixed top-0 w-full z-50 p-6 flex justify-between text-white mix-blend-difference">LOGO MENU</nav>
+      
+      {/* 3D FIXO ATRÁS */}
+      <div className="fixed inset-0">
+        <Canvas camera={{position:[0,0,5], fov:45}} dpr={[1,2]} shadows gl={{antialias:true}}>
+          <ScrollControls pages={5} damping={0.2}>
+            <Scene />
+          </ScrollControls>
+        </Canvas>
+      </div>
+
+      {/* DOM COM SCROLL */}
+      <Overlay />
+    </main>
+  )
+}
+
+================================================================================
+2. COMPONENTS/SCENE.TSX - CENA 3D QUE RESPONDE AO SCROLL
+================================================================================
+'use client'
+import { useRef, useMemo } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { useScroll, Float, Environment, ContactShadows, MeshTransmissionMaterial, Text, Html, Sparkles } from '@react-three/drei'
+import { EffectComposer, Bloom, Vignette, ChromaticAberration } from '@react-three/postprocessing'
+import * as THREE from 'three'
+
+function ShaderTorus(){
+  const meshRef = useRef<THREE.Mesh>(null)
+  const matRef = useRef<THREE.ShaderMaterial>(null)
+  const scroll = useScroll()
+
+  const uniforms = useMemo(()=>({
+    uTime: {value: 0},
+    uColor: {value: new THREE.Color('#ff00ff')},
+    uScroll: {value: 0}
+  }),[])
+
+  useFrame((state, delta)=>{
+    const offset = scroll.offset // 0-1 progresso total da página
+    if(matRef.current){
+      matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+      matRef.current.uniforms.uScroll.value = offset
+    }
+    if(meshRef.current){
+      meshRef.current.rotation.y = offset * Math.PI * 4
+      meshRef.current.rotation.x = offset * Math.PI * 2
+      meshRef.current.position.y = Math.sin(offset * 10) * 0.5
+    }
+  })
+
+  return (
+    <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
+      <mesh ref={meshRef}>
+        <torusKnotGeometry args={[1, 0.3, 256, 32]} />
+        <shaderMaterial
+          ref={matRef}
+          uniforms={uniforms}
+          vertexShader={`
+            uniform float uTime;
+            uniform float uScroll;
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            void main(){
+              vUv = uv;
+              vNormal = normalize(normalMatrix * normal);
+              vec3 pos = position;
+              // deforma com scroll + time
+              pos += normal * sin(pos.x * 5.0 + uTime * 2.0 + uScroll * 10.0) * 0.1;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+          `}
+          fragmentShader={`
+            uniform vec3 uColor;
+            uniform float uTime;
+            uniform float uScroll;
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            void main(){
+              // fresnel
+              float fresnel = pow(1.0 - dot(vNormal, vec3(0.0,0.0,1.0)), 3.0);
+              // gradiente que muda com scroll
+              vec3 color1 = vec3(1.0, 0.0, 1.0);
+              vec3 color2 = vec3(0.0, 1.0, 1.0);
+              vec3 mixed = mix(color1, color2, uScroll + sin(uTime)*0.2);
+              vec3 finalColor = mixed + fresnel * 0.8;
+              gl_FragColor = vec4(finalColor, 1.0);
+            }
+          `}
+        />
+      </mesh>
+    </Float>
+  )
+}
+
+function GlassSphere(){
+  const scroll = useScroll()
+  const ref = useRef<THREE.Mesh>(null)
+  useFrame(()=>{
+    if(ref.current) ref.current.rotation.y = scroll.offset * Math.PI * 2
+  })
+  return (
+    <mesh ref={ref} position={[2,0,0]}>
+      <sphereGeometry args={[0.5, 64, 64]} />
+      <MeshTransmissionMaterial
+        transmission={1}
+        thickness={0.5}
+        roughness={0.1}
+        chromaticAberration={0.06}
+        distortion={0.1}
+        color="#ffffff"
+      />
+      <Html distanceFactor={5} position={[0,1,0]}><div className="bg-white text-black px-2 py-1 rounded text-xs">Vidro Real</div></Html>
+    </mesh>
+  )
+}
+
+export default function Scene(){
+  return (
+    <>
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[5,5,5]} intensity={1} castShadow shadow-mapSize={2048} />
+      
+      <ShaderTorus />
+      <GlassSphere />
+
+      <Text position={[0,2,0]} fontSize={0.5} color="white" anchorX="center" anchorY="middle" font="/fonts/Inter-Bold.woff">
+        SCROLL
+      </Text>
+
+      <Sparkles count={100} scale={10} size={0.1} speed={0.3} />
+
+      <Environment preset="city" />
+      <ContactShadows position={[0,-2,0]} opacity={0.5} scale={10} blur={2} far={4} />
+
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.15} luminanceSmoothing={0.9} mipmapBlur />
+        <ChromaticAberration offset={[0.0005,0.0005]} />
+        <Vignette eskil={false} offset={0.1} darkness={0.4} />
+      </EffectComposer>
+    </>
+  )
+}
+
+================================================================================
+3. COMPONENTS/OVERLAY.TSX - HTML QUE SINCRONIZA COM 3D
+================================================================================
+export default function Overlay(){
+  return (
+    <div className="relative z-10 pointer-events-none">
+      <section className="h-screen flex items-center justify-center">
+        <h1 className="text-8xl font-black text-white reveal">HELLO</h1>
+      </section>
+      <section className="h-screen flex items-center justify-center">
+        <h1 className="text-6xl font-bold text-white reveal">SCROLL 3D + GSAP</h1>
+      </section>
+      <section className="pin-section h-screen flex flex-col items-center justify-center bg-black/50 backdrop-blur">
+        <h2 className="pin-title text-8xl text-white">PIN</h2>
+        <p className="pin-text text-white mt-10 max-w-md text-center">Essa seção é pinnada com GSAP ScrollTrigger enquanto o modelo 3D rotaciona com R3F ScrollControls. Os dois sincronizados.</p>
+      </section>
+      <section className="h-[200vh]"></section>
+      <section className="h-screen flex items-center justify-center bg-white text-black">
+        <h2 className="text-6xl reveal">FIM</h2>
+      </section>
+    </div>
+  )
+}
+
+================================================================================
+4. HOOKS/useGSAPScroll.ts - SINCRONIA GSAP + R3F
+================================================================================
+import { useScroll } from '@react-three/drei'
+import gsap from 'gsap'
+import { useFrame } from '@react-three/fiber'
+
+// Sincroniza progresso do ScrollControls com ScrollTrigger
+export function useGSAPSync(){
+  const scroll = useScroll()
+  useFrame(()=>{
+    // scroll.offset = 0-1
+    // Você pode disparar GSAP baseado nisso
+    // Ex: gsap.set(".progress", {scaleX: scroll.offset})
+  })
+}
+
+================================================================================
+5. ESTILOS GLOBAIS
+================================================================================
+html, body { margin:0; padding:0; overflow-x:hidden; background:black }
+canvas { position:fixed; top:0; left:0 }
+.reveal { will-change: transform }
+
+================================================================================
+COMO ISSO GANHA AWWWARDS:
+- 3D com shader custom + vidro transmission + bloom = visual premium
+- ScrollControls faz 3D reagir ao scroll
+- GSAP ScrollTrigger faz DOM pinnar, reveal, parallax
+- Os dois juntos = storytelling imersivo
+- Performance: dpr [1,2], Float, ContactShadows barato, BakeShadows se estático
+
+PRÓXIMOS PASSOS:
+1. Substitua ShaderTorus por seu modelo GLB com useGLTF
+2. Troque Environment preset por seu HDR
+3. Adicione Lenis para smooth scroll (opcional, ScrollSmoother conflita com R3F, use Lenis)
+4. Deploy na Vercel
+
+FIM TEMPLATE PREMIADO

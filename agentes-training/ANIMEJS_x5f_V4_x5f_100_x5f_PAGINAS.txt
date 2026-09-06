@@ -1,0 +1,6657 @@
+
+================================================================================
+ANIME.JS v4 - ENGENHARIA REVERSA TOTAL - 2026
+Versão: v4.2+ - Reescrita total, modular, tree-shakeable, ~9kB gzipped
+Site: animejs.com
+================================================================================
+
+O QUE MUDOU v3 -> v4 (BREAKING TOTAL):
+v3: import anime from 'animejs'; anime({targets: '.el', translateX: 100})
+v4: import { animate, createTimeline, stagger, utils, createScope, onScroll, svg } from 'animejs'
+    animate('.el', { x: 100 })
+
+v3 tinha objeto global anime. v4 é ESM com named exports, modular, tree-shakeable.
+Você importa só o que usa, bundle menor.
+
+INSTALAÇÃO:
+npm install animejs
+import { animate, createTimeline, stagger, utils, createScope, onScroll, svg } from 'animejs'
+
+// Ou standalone para tree-shaking máximo:
+import { animate } from 'animejs/animation'
+import { createTimeline } from 'animejs/timeline'
+import { stagger } from 'animejs/stagger'
+
+CDN:
+import { animate } from 'https://cdn.jsdelivr.net/npm/animejs/+esm'
+
+================================================================================
+1. CORE - ANIMATE - A FUNÇÃO PRINCIPAL
+================================================================================
+
+animate(targets, params)
+
+targets:
+- string selector: '.box'
+- Element: document.querySelector('.box')
+- NodeList: document.querySelectorAll('.box')
+- Array de elements: [el1, el2]
+- Objeto JS: { myValue: 0 }
+- Array de objetos
+
+params:
+{
+  // Propriedades animáveis:
+  x: 100, // translateX
+  y: 100, // translateY
+  z: 100,
+  translateX, translateY, translateZ,
+  rotate: 360, // deg
+  rotateX, rotateY, rotateZ,
+  scale: 2,
+  scaleX, scaleY,
+  skewX, skewY,
+  // CSS:
+  opacity: [0,1], // de 0 para 1
+  backgroundColor: '#ff0000',
+  color,
+  // Objeto:
+  myValue: 100,
+
+  // Timing:
+  duration: 1000, // ms! (não segundos como GSAP) - 1000 = 1s
+  delay: 500, // ms
+  // ou função: delay: (el, i) => i * 100
+  // ou stagger: delay: stagger(100, {from: 'center', grid: [3,3]})
+
+  ease: 'inOutQuad', // ou 'linear', 'inOutQuint', 'outElastic', etc
+  // ou spring: ease: 'outElastic(1, .5)' ou objeto spring
+
+  loop: true | number, // true = infinito, 2 = 2 vezes
+  alternate: true, // vai e volta (yoyo do GSAP)
+  autoplay: true, // default true
+
+  // Callbacks:
+  onBegin: (anim) => {},
+  onUpdate: (anim) => {},
+  onComplete: (anim) => {},
+  onLoop: (anim) => {},
+
+  // Composição:
+  composition: 'replace' | 'add' | 'blend' // como lida com conflitos
+}
+
+Exemplos:
+
+// Básico:
+animate('.box', { x: 100, duration: 1000, ease: 'outQuad' })
+
+// De/para:
+animate('.box', { 
+  x: { from: 0, to: 100 },
+  opacity: { from: 0, to: 1 },
+  duration: 1000
+})
+
+// Array de valores (keyframes):
+animate('.box', {
+  x: [0, 100, 0],
+  rotate: [0, 180, 360],
+  duration: 2000,
+  ease: 'inOutQuad'
+})
+
+// Objeto JS (contador):
+let obj = { score: 0 }
+animate(obj, {
+  score: 100,
+  duration: 2000,
+  onUpdate: () => console.log(obj.score)
+})
+
+// Stagger:
+import { stagger } from 'animejs'
+animate('.box', {
+  x: 100,
+  delay: stagger(100, { from: 'center', grid: [3,3], axis: 'y', ease: 'inOutQuad' }),
+  duration: 1000
+})
+
+// Controle da instância:
+const anim = animate('.box', { x: 100, duration: 1000, autoplay: false })
+anim.play()
+anim.pause()
+anim.restart()
+anim.reverse()
+anim.seek(500) // ms
+
+================================================================================
+2. TIMELINE - CREATETIMELINE
+================================================================================
+
+Substitui anime.timeline() do v3. Agora é createTimeline().
+
+import { createTimeline } from 'animejs'
+
+const tl = createTimeline({
+  defaults: { duration: 1000, ease: 'outQuad' },
+  loop: true,
+  alternate: true,
+  autoplay: true,
+  onComplete: () => {}
+})
+
+tl.add('.box1', { x: 100 }) // começa em 0
+  .add('.box2', { x: 100 }, '-=500') // 500ms antes do fim anterior (overlap)
+  .add('.box3', { x: 100 }, '+=200') // 200ms depois
+  .add('.box4', { x: 100 }, '<') // junto com anterior
+  .add('.box5', { x: 100 }, '<<') // junto com início do anterior? (checar docs)
+
+Position parameter v4:
+- Sem segundo param = após anterior
+- '+=500' = 500ms depois do fim do anterior
+- '-=500' = 500ms antes do fim do anterior
+- '<' = início do anterior
+- Números absolutos: 1000 = em 1000ms da timeline
+
+Exemplo completo:
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title', { y: [100, 0], opacity: [0,1] })
+  .add('.subtitle', { y: [50, 0], opacity: [0,1] }, '-=400')
+  .add('.button', { scale: [0,1], opacity: [0,1] }, '-=200')
+
+Controle:
+tl.play()
+tl.pause()
+tl.restart()
+tl.seek(1000)
+
+================================================================================
+3. STAGGER - ATRASO ENTRE ELEMENTOS
+================================================================================
+
+import { stagger } from 'animejs'
+
+stagger(value, options)
+
+value: número ms ou valor de propriedade
+options:
+{
+  from: 'first' | 'last' | 'center' | 'random' | number (índice),
+  grid: [columns, rows], // para grid
+  axis: 'x' | 'y', // só em um eixo
+  ease: 'inOutQuad' // ease da distribuição
+}
+
+Exemplos:
+delay: stagger(100) // 0, 100, 200, 300...
+delay: stagger(100, { from: 'center' }) // do centro para fora
+delay: stagger(100, { from: 'random' }) // aleatório
+delay: stagger(100, { grid: [3,3], from: 'center', axis: 'y' }) // grid
+
+Pode usar em qualquer propriedade, não só delay:
+x: stagger(100, { from: 'center' }) // x = 0, 100, 200... mas com distribuição
+
+================================================================================
+4. UTILS - UTILITÁRIOS
+================================================================================
+
+import { utils } from 'animejs'
+
+utils.round(value, precision) // arredonda
+utils.clamp(value, min, max)
+utils.mapRange(inMin, inMax, outMin, outMax, value)
+utils.random(min, max)
+utils.get(obj, path) // pega valor
+utils.set(obj, path, value) // seta valor
+utils.$ - querySelectorAll wrapper
+
+Exemplo com round:
+animate('.box', { x: 100, modifier: utils.round(1) })
+
+// ou v4:
+animate('.box', { x: { to: 100, modifier: utils.round(1) } })
+
+================================================================================
+5. SVG - MÓDULO SVG
+================================================================================
+
+import { svg } from 'animejs'
+
+svg.createDrawable(selector) - para DrawSVG
+svg.createMotionPath(path) - motion path
+svg.morphTo(target)
+
+Exemplo DrawSVG:
+const drawable = svg.createDrawable('.path')
+animate(drawable, { draw: ['0 0', '0 1'], duration: 2000 }) // desenha
+
+Exemplo MotionPath:
+const path = svg.createMotionPath('#path')
+animate('.box', { ...path, duration: 3000 })
+
+Morph:
+animate('#circle', { d: svg.morphTo('#square'), duration: 1000 })
+
+================================================================================
+6. SCROLL - ONSCROLL - SCROLLTRIGGER DO ANIME.JS
+================================================================================
+
+import { onScroll } from 'animejs'
+
+onScroll(params)
+
+params:
+{
+  target: '.box',
+  enter: 'bottom top', // quando entra
+  leave: 'top bottom', // quando sai
+  sync: true | number, // amarra ao scroll (scrub)
+  onEnter: () => {},
+  onLeave: () => {},
+  onUpdate: (self) => { self.progress } // 0-1
+}
+
+Exemplo:
+onScroll({
+  target: '.box',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5, // 0.5s de suavização
+  onUpdate: self => {
+    animate('.box', { x: self.progress * 500, duration: 0 })
+  }
+})
+
+// Parallax simples:
+onScroll({
+  target: '.parallax',
+  sync: true,
+  onUpdate: self => {
+    animate('.parallax', { y: self.progress * -200, duration: 0 })
+  }
+})
+
+================================================================================
+7. SCOPE - CREATESCOPE - PARA REACT/VUE
+================================================================================
+
+import { createScope } from 'animejs'
+
+const scope = createScope({ root: '.container' })
+
+scope.add(self => {
+  self.add('.box', { x: 100 })
+})
+
+scope.revert() // mata tudo
+
+Para React:
+function Component(){
+  const root = useRef(null)
+  const scope = useRef(null)
+  
+  useEffect(()=>{
+    scope.current = createScope({ root: root.current }).add(self=>{
+      self.add('.box', { x: 100, duration: 1000 })
+    })
+    return () => scope.current.revert()
+  },[])
+
+  return <div ref={root}><div className="box" /></div>
+}
+
+================================================================================
+8. DRAGGABLE - CREATEDRAGGABLE
+================================================================================
+
+import { createDraggable } from 'animejs'
+
+createDraggable('.box', {
+  x: true,
+  y: true,
+  container: '.container',
+  onGrab: () => {},
+  onDrag: () => {},
+  onRelease: () => {}
+})
+
+================================================================================
+9. EASES - TODAS CURVAS
+================================================================================
+
+Built-in:
+'linear'
+'inQuad', 'outQuad', 'inOutQuad'
+'inCubic', 'outCubic', 'inOutCubic'
+'inQuart', 'outQuart', 'inOutQuart'
+'inQuint', 'outQuint', 'inOutQuint'
+'inSine', 'outSine', 'inOutSine'
+'inExpo', 'outExpo', 'inOutExpo'
+'inCirc', 'outCirc', 'inOutCirc'
+'inBack', 'outBack', 'inOutBack'
+'inBounce', 'outBounce', 'inOutBounce'
+'inElastic', 'outElastic', 'inOutElastic'
+
+Com params:
+'outElastic(1, .5)' // amplitude, period
+'outBack(1.7)'
+'inOutBounce'
+
+Spring (novo v4):
+ease: {
+  type: 'spring',
+  stiffness: 100,
+  damping: 10,
+  mass: 1,
+  velocity: 0
+}
+
+Ou string: 'outSpring(1, 80, 10, 0)' - mass, stiffness, damping, velocity
+
+================================================================================
+10. COMPARATIVO ANIME.JS v4 vs GSAP vs MOTION
+================================================================================
+
+Bundle:
+- Anime.js v4: ~9kB gzipped, modular
+- GSAP: 20kB core + plugins, ~35kB com ScrollTrigger
+- Motion: ~20kB
+
+Sintaxe:
+- Anime.js: animate(targets, {x:100, duration:1000}) - ms, simples
+- GSAP: gsap.to(targets, {x:100, duration:1}) - segundos, mais verboso mas mais controle
+- Motion: <motion.div animate={{x:100}} transition={{duration:1}} /> - declarativo React
+
+Timeline:
+- Anime.js: createTimeline().add().add()
+- GSAP: gsap.timeline().to().to() com position "<", "+=0.5" (mais poderoso)
+- Motion: variants + staggerChildren
+
+Stagger:
+- Anime.js: stagger(100, {from:'center', grid:[3,3]}) - excelente
+- GSAP: stagger: {each:0.1, from:'center', grid:[3,3]} - similar, mais opções
+- Motion: staggerChildren
+
+Scroll:
+- Anime.js: onScroll({sync:true}) - básico, bom para parallax simples
+- GSAP: ScrollTrigger com pin, scrub, snap, horizontal, markers - padrão ouro
+- Motion: useScroll + useTransform - bom para React
+
+SVG:
+- Anime.js: svg.createDrawable, morphTo, motionPath - bom
+- GSAP: DrawSVG, MorphSVG, MotionPath - mais avançado e testado
+
+Performance:
+- Anime.js v4: ótima, 60fps, leve
+- GSAP: melhor para 1000+ elementos, ticker único, transform cache
+- Motion: melhor para React, MotionValues sem re-render
+
+QUANDO USAR ANIME.JS v4:
+- Projeto vanilla JS leve que precisa de animação sem peso
+- Quer bundle pequeno (~9kB)
+- Sintaxe simples, rápida de aprender
+- Não precisa de scroll storytelling complexo
+- Alternativa moderna ao GSAP para casos simples
+
+QUANDO USAR GSAP:
+- Scroll storytelling, pin, horizontal
+- Timeline complexa
+- SVG avançado
+- 1000+ elementos
+- Precisa controle absoluto
+
+QUANDO USAR MOTION:
+- React / Next.js
+- Layout animations
+- Micro-interações
+
+================================================================================
+11. 30 PADRÕES ANIME.JS v4 - COPIA E COLA
+================================================================================
+
+1. Básico:
+animate('.box', { x: 100, duration: 1000, ease: 'outQuad' })
+
+2. Stagger grid:
+animate('.grid-item', { scale: [0,1], delay: stagger(50, {grid:[4,4], from:'center'}), duration: 600, ease: 'outBack' })
+
+3. Timeline:
+createTimeline({ defaults: { duration: 800 } })
+  .add('.title', { y: [100,0], opacity: [0,1] })
+  .add('.sub', { y: [50,0], opacity: [0,1] }, '-=400')
+
+4. Contador:
+let obj = { count: 0 }
+animate(obj, { count: 100, duration: 2000, onUpdate: ()=>{ el.textContent = Math.round(obj.count) } })
+
+5. Parallax scroll:
+onScroll({ target: '.parallax', sync: true, onUpdate: s => animate('.parallax', { y: s.progress * -100, duration: 0 }) })
+
+6. DrawSVG:
+const d = svg.createDrawable('.path')
+animate(d, { draw: ['0 0', '0 1'], duration: 2000, ease: 'inOutQuad' })
+
+7. Morph:
+animate('#path', { d: svg.morphTo('#path2'), duration: 1000, ease: 'inOutQuad' })
+
+8. Motion path:
+const p = svg.createMotionPath('#path')
+animate('.box', { ...p, duration: 3000, ease: 'linear' })
+
+9. Texto split (com SplitText externo ou manual):
+document.querySelectorAll('.char').forEach((char,i)=>{
+  animate(char, { y: [100,0], opacity: [0,1], delay: stagger(30, {from:'first'}), duration: 800, ease: 'outQuad' })
+})
+
+10. Scope React:
+const scope = createScope({ root: ref.current })
+scope.add(self=>{ self.add('.box', { x: 100 }) })
+return () => scope.revert()
+
+... (20 padrões adicionais seguem mesma lógica)
+
+FIM ANIME.JS v4 - Leve, moderno, modular. Perfeito para quem quer GSAP-like sem peso.
+
+
+EXTRA 200 PADRÕES ANIME.JS V4
+
+--- PADRÃO 1 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-1', {
+  x: 10,
+  y: 20,
+  rotate: 3,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(51, { from: 'center', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-1', { y: [100,0], opacity: [0,1] })
+  .add('.sub-1', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-1', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-1',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-1', { y: self.progress * -2, duration: 0 })
+})
+
+const drawable1 = svg.createDrawable('.path-1')
+animate(drawable1, { draw: ['0 0', '0 1'], duration: 2000, delay: 10 })
+
+--- PADRÃO 2 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-2', {
+  x: 20,
+  y: 40,
+  rotate: 6,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(52, { from: 'last', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-2', { y: [100,0], opacity: [0,1] })
+  .add('.sub-2', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-2', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-2',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-2', { y: self.progress * -4, duration: 0 })
+})
+
+const drawable2 = svg.createDrawable('.path-2')
+animate(drawable2, { draw: ['0 0', '0 1'], duration: 2000, delay: 20 })
+
+--- PADRÃO 3 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-3', {
+  x: 30,
+  y: 60,
+  rotate: 9,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(53, { from: 'random', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-3', { y: [100,0], opacity: [0,1] })
+  .add('.sub-3', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-3', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-3',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-3', { y: self.progress * -6, duration: 0 })
+})
+
+const drawable3 = svg.createDrawable('.path-3')
+animate(drawable3, { draw: ['0 0', '0 1'], duration: 2000, delay: 30 })
+
+--- PADRÃO 4 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-4', {
+  x: 40,
+  y: 80,
+  rotate: 12,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(54, { from: 'first', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-4', { y: [100,0], opacity: [0,1] })
+  .add('.sub-4', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-4', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-4',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-4', { y: self.progress * -8, duration: 0 })
+})
+
+const drawable4 = svg.createDrawable('.path-4')
+animate(drawable4, { draw: ['0 0', '0 1'], duration: 2000, delay: 40 })
+
+--- PADRÃO 5 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-5', {
+  x: 50,
+  y: 0,
+  rotate: 15,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(55, { from: 'center', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-5', { y: [100,0], opacity: [0,1] })
+  .add('.sub-5', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-5', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-5',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-5', { y: self.progress * -10, duration: 0 })
+})
+
+const drawable5 = svg.createDrawable('.path-5')
+animate(drawable5, { draw: ['0 0', '0 1'], duration: 2000, delay: 50 })
+
+--- PADRÃO 6 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-6', {
+  x: 60,
+  y: 20,
+  rotate: 18,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(56, { from: 'last', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-6', { y: [100,0], opacity: [0,1] })
+  .add('.sub-6', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-6', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-6',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-6', { y: self.progress * -12, duration: 0 })
+})
+
+const drawable6 = svg.createDrawable('.path-6')
+animate(drawable6, { draw: ['0 0', '0 1'], duration: 2000, delay: 60 })
+
+--- PADRÃO 7 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-7', {
+  x: 70,
+  y: 40,
+  rotate: 21,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(57, { from: 'random', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-7', { y: [100,0], opacity: [0,1] })
+  .add('.sub-7', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-7', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-7',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-7', { y: self.progress * -14, duration: 0 })
+})
+
+const drawable7 = svg.createDrawable('.path-7')
+animate(drawable7, { draw: ['0 0', '0 1'], duration: 2000, delay: 70 })
+
+--- PADRÃO 8 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-8', {
+  x: 80,
+  y: 60,
+  rotate: 24,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(58, { from: 'first', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-8', { y: [100,0], opacity: [0,1] })
+  .add('.sub-8', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-8', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-8',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-8', { y: self.progress * -16, duration: 0 })
+})
+
+const drawable8 = svg.createDrawable('.path-8')
+animate(drawable8, { draw: ['0 0', '0 1'], duration: 2000, delay: 80 })
+
+--- PADRÃO 9 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-9', {
+  x: 90,
+  y: 80,
+  rotate: 27,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(59, { from: 'center', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-9', { y: [100,0], opacity: [0,1] })
+  .add('.sub-9', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-9', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-9',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-9', { y: self.progress * -18, duration: 0 })
+})
+
+const drawable9 = svg.createDrawable('.path-9')
+animate(drawable9, { draw: ['0 0', '0 1'], duration: 2000, delay: 90 })
+
+--- PADRÃO 10 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-10', {
+  x: 100,
+  y: 0,
+  rotate: 30,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(60, { from: 'last', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-10', { y: [100,0], opacity: [0,1] })
+  .add('.sub-10', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-10', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-10',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-10', { y: self.progress * -20, duration: 0 })
+})
+
+const drawable10 = svg.createDrawable('.path-10')
+animate(drawable10, { draw: ['0 0', '0 1'], duration: 2000, delay: 100 })
+
+--- PADRÃO 11 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-11', {
+  x: 110,
+  y: 20,
+  rotate: 33,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(61, { from: 'random', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-11', { y: [100,0], opacity: [0,1] })
+  .add('.sub-11', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-11', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-11',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-11', { y: self.progress * -22, duration: 0 })
+})
+
+const drawable11 = svg.createDrawable('.path-11')
+animate(drawable11, { draw: ['0 0', '0 1'], duration: 2000, delay: 110 })
+
+--- PADRÃO 12 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-12', {
+  x: 120,
+  y: 40,
+  rotate: 36,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(62, { from: 'first', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-12', { y: [100,0], opacity: [0,1] })
+  .add('.sub-12', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-12', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-12',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-12', { y: self.progress * -24, duration: 0 })
+})
+
+const drawable12 = svg.createDrawable('.path-12')
+animate(drawable12, { draw: ['0 0', '0 1'], duration: 2000, delay: 120 })
+
+--- PADRÃO 13 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-13', {
+  x: 130,
+  y: 60,
+  rotate: 39,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(63, { from: 'center', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-13', { y: [100,0], opacity: [0,1] })
+  .add('.sub-13', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-13', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-13',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-13', { y: self.progress * -26, duration: 0 })
+})
+
+const drawable13 = svg.createDrawable('.path-13')
+animate(drawable13, { draw: ['0 0', '0 1'], duration: 2000, delay: 130 })
+
+--- PADRÃO 14 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-14', {
+  x: 140,
+  y: 80,
+  rotate: 42,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(64, { from: 'last', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-14', { y: [100,0], opacity: [0,1] })
+  .add('.sub-14', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-14', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-14',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-14', { y: self.progress * -28, duration: 0 })
+})
+
+const drawable14 = svg.createDrawable('.path-14')
+animate(drawable14, { draw: ['0 0', '0 1'], duration: 2000, delay: 140 })
+
+--- PADRÃO 15 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-15', {
+  x: 150,
+  y: 0,
+  rotate: 45,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(65, { from: 'random', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-15', { y: [100,0], opacity: [0,1] })
+  .add('.sub-15', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-15', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-15',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-15', { y: self.progress * -30, duration: 0 })
+})
+
+const drawable15 = svg.createDrawable('.path-15')
+animate(drawable15, { draw: ['0 0', '0 1'], duration: 2000, delay: 150 })
+
+--- PADRÃO 16 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-16', {
+  x: 160,
+  y: 20,
+  rotate: 48,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(66, { from: 'first', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-16', { y: [100,0], opacity: [0,1] })
+  .add('.sub-16', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-16', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-16',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-16', { y: self.progress * -32, duration: 0 })
+})
+
+const drawable16 = svg.createDrawable('.path-16')
+animate(drawable16, { draw: ['0 0', '0 1'], duration: 2000, delay: 160 })
+
+--- PADRÃO 17 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-17', {
+  x: 170,
+  y: 40,
+  rotate: 51,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(67, { from: 'center', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-17', { y: [100,0], opacity: [0,1] })
+  .add('.sub-17', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-17', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-17',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-17', { y: self.progress * -34, duration: 0 })
+})
+
+const drawable17 = svg.createDrawable('.path-17')
+animate(drawable17, { draw: ['0 0', '0 1'], duration: 2000, delay: 170 })
+
+--- PADRÃO 18 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-18', {
+  x: 180,
+  y: 60,
+  rotate: 54,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(68, { from: 'last', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-18', { y: [100,0], opacity: [0,1] })
+  .add('.sub-18', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-18', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-18',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-18', { y: self.progress * -36, duration: 0 })
+})
+
+const drawable18 = svg.createDrawable('.path-18')
+animate(drawable18, { draw: ['0 0', '0 1'], duration: 2000, delay: 180 })
+
+--- PADRÃO 19 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-19', {
+  x: 190,
+  y: 80,
+  rotate: 57,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(69, { from: 'random', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-19', { y: [100,0], opacity: [0,1] })
+  .add('.sub-19', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-19', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-19',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-19', { y: self.progress * -38, duration: 0 })
+})
+
+const drawable19 = svg.createDrawable('.path-19')
+animate(drawable19, { draw: ['0 0', '0 1'], duration: 2000, delay: 190 })
+
+--- PADRÃO 20 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-20', {
+  x: 200,
+  y: 0,
+  rotate: 60,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(50, { from: 'first', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-20', { y: [100,0], opacity: [0,1] })
+  .add('.sub-20', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-20', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-20',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-20', { y: self.progress * -40, duration: 0 })
+})
+
+const drawable20 = svg.createDrawable('.path-20')
+animate(drawable20, { draw: ['0 0', '0 1'], duration: 2000, delay: 200 })
+
+--- PADRÃO 21 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-21', {
+  x: 210,
+  y: 20,
+  rotate: 63,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(51, { from: 'center', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-21', { y: [100,0], opacity: [0,1] })
+  .add('.sub-21', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-21', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-21',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-21', { y: self.progress * -42, duration: 0 })
+})
+
+const drawable21 = svg.createDrawable('.path-21')
+animate(drawable21, { draw: ['0 0', '0 1'], duration: 2000, delay: 210 })
+
+--- PADRÃO 22 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-22', {
+  x: 220,
+  y: 40,
+  rotate: 66,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(52, { from: 'last', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-22', { y: [100,0], opacity: [0,1] })
+  .add('.sub-22', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-22', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-22',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-22', { y: self.progress * -44, duration: 0 })
+})
+
+const drawable22 = svg.createDrawable('.path-22')
+animate(drawable22, { draw: ['0 0', '0 1'], duration: 2000, delay: 220 })
+
+--- PADRÃO 23 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-23', {
+  x: 230,
+  y: 60,
+  rotate: 69,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(53, { from: 'random', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-23', { y: [100,0], opacity: [0,1] })
+  .add('.sub-23', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-23', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-23',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-23', { y: self.progress * -46, duration: 0 })
+})
+
+const drawable23 = svg.createDrawable('.path-23')
+animate(drawable23, { draw: ['0 0', '0 1'], duration: 2000, delay: 230 })
+
+--- PADRÃO 24 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-24', {
+  x: 240,
+  y: 80,
+  rotate: 72,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(54, { from: 'first', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-24', { y: [100,0], opacity: [0,1] })
+  .add('.sub-24', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-24', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-24',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-24', { y: self.progress * -48, duration: 0 })
+})
+
+const drawable24 = svg.createDrawable('.path-24')
+animate(drawable24, { draw: ['0 0', '0 1'], duration: 2000, delay: 240 })
+
+--- PADRÃO 25 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-25', {
+  x: 250,
+  y: 0,
+  rotate: 75,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(55, { from: 'center', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-25', { y: [100,0], opacity: [0,1] })
+  .add('.sub-25', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-25', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-25',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-25', { y: self.progress * -50, duration: 0 })
+})
+
+const drawable25 = svg.createDrawable('.path-25')
+animate(drawable25, { draw: ['0 0', '0 1'], duration: 2000, delay: 250 })
+
+--- PADRÃO 26 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-26', {
+  x: 260,
+  y: 20,
+  rotate: 78,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(56, { from: 'last', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-26', { y: [100,0], opacity: [0,1] })
+  .add('.sub-26', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-26', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-26',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-26', { y: self.progress * -52, duration: 0 })
+})
+
+const drawable26 = svg.createDrawable('.path-26')
+animate(drawable26, { draw: ['0 0', '0 1'], duration: 2000, delay: 260 })
+
+--- PADRÃO 27 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-27', {
+  x: 270,
+  y: 40,
+  rotate: 81,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(57, { from: 'random', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-27', { y: [100,0], opacity: [0,1] })
+  .add('.sub-27', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-27', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-27',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-27', { y: self.progress * -54, duration: 0 })
+})
+
+const drawable27 = svg.createDrawable('.path-27')
+animate(drawable27, { draw: ['0 0', '0 1'], duration: 2000, delay: 270 })
+
+--- PADRÃO 28 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-28', {
+  x: 280,
+  y: 60,
+  rotate: 84,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(58, { from: 'first', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-28', { y: [100,0], opacity: [0,1] })
+  .add('.sub-28', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-28', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-28',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-28', { y: self.progress * -56, duration: 0 })
+})
+
+const drawable28 = svg.createDrawable('.path-28')
+animate(drawable28, { draw: ['0 0', '0 1'], duration: 2000, delay: 280 })
+
+--- PADRÃO 29 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-29', {
+  x: 290,
+  y: 80,
+  rotate: 87,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(59, { from: 'center', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-29', { y: [100,0], opacity: [0,1] })
+  .add('.sub-29', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-29', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-29',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-29', { y: self.progress * -58, duration: 0 })
+})
+
+const drawable29 = svg.createDrawable('.path-29')
+animate(drawable29, { draw: ['0 0', '0 1'], duration: 2000, delay: 290 })
+
+--- PADRÃO 30 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-30', {
+  x: 300,
+  y: 0,
+  rotate: 90,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(60, { from: 'last', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-30', { y: [100,0], opacity: [0,1] })
+  .add('.sub-30', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-30', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-30',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-30', { y: self.progress * -60, duration: 0 })
+})
+
+const drawable30 = svg.createDrawable('.path-30')
+animate(drawable30, { draw: ['0 0', '0 1'], duration: 2000, delay: 300 })
+
+--- PADRÃO 31 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-31', {
+  x: 310,
+  y: 20,
+  rotate: 93,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(61, { from: 'random', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-31', { y: [100,0], opacity: [0,1] })
+  .add('.sub-31', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-31', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-31',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-31', { y: self.progress * -62, duration: 0 })
+})
+
+const drawable31 = svg.createDrawable('.path-31')
+animate(drawable31, { draw: ['0 0', '0 1'], duration: 2000, delay: 310 })
+
+--- PADRÃO 32 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-32', {
+  x: 320,
+  y: 40,
+  rotate: 96,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(62, { from: 'first', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-32', { y: [100,0], opacity: [0,1] })
+  .add('.sub-32', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-32', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-32',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-32', { y: self.progress * -64, duration: 0 })
+})
+
+const drawable32 = svg.createDrawable('.path-32')
+animate(drawable32, { draw: ['0 0', '0 1'], duration: 2000, delay: 320 })
+
+--- PADRÃO 33 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-33', {
+  x: 330,
+  y: 60,
+  rotate: 99,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(63, { from: 'center', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-33', { y: [100,0], opacity: [0,1] })
+  .add('.sub-33', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-33', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-33',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-33', { y: self.progress * -66, duration: 0 })
+})
+
+const drawable33 = svg.createDrawable('.path-33')
+animate(drawable33, { draw: ['0 0', '0 1'], duration: 2000, delay: 330 })
+
+--- PADRÃO 34 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-34', {
+  x: 340,
+  y: 80,
+  rotate: 102,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(64, { from: 'last', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-34', { y: [100,0], opacity: [0,1] })
+  .add('.sub-34', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-34', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-34',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-34', { y: self.progress * -68, duration: 0 })
+})
+
+const drawable34 = svg.createDrawable('.path-34')
+animate(drawable34, { draw: ['0 0', '0 1'], duration: 2000, delay: 340 })
+
+--- PADRÃO 35 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-35', {
+  x: 350,
+  y: 0,
+  rotate: 105,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(65, { from: 'random', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-35', { y: [100,0], opacity: [0,1] })
+  .add('.sub-35', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-35', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-35',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-35', { y: self.progress * -70, duration: 0 })
+})
+
+const drawable35 = svg.createDrawable('.path-35')
+animate(drawable35, { draw: ['0 0', '0 1'], duration: 2000, delay: 350 })
+
+--- PADRÃO 36 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-36', {
+  x: 360,
+  y: 20,
+  rotate: 108,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(66, { from: 'first', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-36', { y: [100,0], opacity: [0,1] })
+  .add('.sub-36', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-36', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-36',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-36', { y: self.progress * -72, duration: 0 })
+})
+
+const drawable36 = svg.createDrawable('.path-36')
+animate(drawable36, { draw: ['0 0', '0 1'], duration: 2000, delay: 360 })
+
+--- PADRÃO 37 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-37', {
+  x: 370,
+  y: 40,
+  rotate: 111,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(67, { from: 'center', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-37', { y: [100,0], opacity: [0,1] })
+  .add('.sub-37', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-37', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-37',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-37', { y: self.progress * -74, duration: 0 })
+})
+
+const drawable37 = svg.createDrawable('.path-37')
+animate(drawable37, { draw: ['0 0', '0 1'], duration: 2000, delay: 370 })
+
+--- PADRÃO 38 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-38', {
+  x: 380,
+  y: 60,
+  rotate: 114,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(68, { from: 'last', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-38', { y: [100,0], opacity: [0,1] })
+  .add('.sub-38', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-38', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-38',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-38', { y: self.progress * -76, duration: 0 })
+})
+
+const drawable38 = svg.createDrawable('.path-38')
+animate(drawable38, { draw: ['0 0', '0 1'], duration: 2000, delay: 380 })
+
+--- PADRÃO 39 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-39', {
+  x: 390,
+  y: 80,
+  rotate: 117,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(69, { from: 'random', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-39', { y: [100,0], opacity: [0,1] })
+  .add('.sub-39', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-39', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-39',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-39', { y: self.progress * -78, duration: 0 })
+})
+
+const drawable39 = svg.createDrawable('.path-39')
+animate(drawable39, { draw: ['0 0', '0 1'], duration: 2000, delay: 390 })
+
+--- PADRÃO 40 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-40', {
+  x: 400,
+  y: 0,
+  rotate: 120,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(50, { from: 'first', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-40', { y: [100,0], opacity: [0,1] })
+  .add('.sub-40', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-40', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-40',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-40', { y: self.progress * -80, duration: 0 })
+})
+
+const drawable40 = svg.createDrawable('.path-40')
+animate(drawable40, { draw: ['0 0', '0 1'], duration: 2000, delay: 400 })
+
+--- PADRÃO 41 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-41', {
+  x: 410,
+  y: 20,
+  rotate: 123,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(51, { from: 'center', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-41', { y: [100,0], opacity: [0,1] })
+  .add('.sub-41', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-41', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-41',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-41', { y: self.progress * -82, duration: 0 })
+})
+
+const drawable41 = svg.createDrawable('.path-41')
+animate(drawable41, { draw: ['0 0', '0 1'], duration: 2000, delay: 410 })
+
+--- PADRÃO 42 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-42', {
+  x: 420,
+  y: 40,
+  rotate: 126,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(52, { from: 'last', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-42', { y: [100,0], opacity: [0,1] })
+  .add('.sub-42', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-42', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-42',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-42', { y: self.progress * -84, duration: 0 })
+})
+
+const drawable42 = svg.createDrawable('.path-42')
+animate(drawable42, { draw: ['0 0', '0 1'], duration: 2000, delay: 420 })
+
+--- PADRÃO 43 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-43', {
+  x: 430,
+  y: 60,
+  rotate: 129,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(53, { from: 'random', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-43', { y: [100,0], opacity: [0,1] })
+  .add('.sub-43', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-43', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-43',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-43', { y: self.progress * -86, duration: 0 })
+})
+
+const drawable43 = svg.createDrawable('.path-43')
+animate(drawable43, { draw: ['0 0', '0 1'], duration: 2000, delay: 430 })
+
+--- PADRÃO 44 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-44', {
+  x: 440,
+  y: 80,
+  rotate: 132,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(54, { from: 'first', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-44', { y: [100,0], opacity: [0,1] })
+  .add('.sub-44', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-44', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-44',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-44', { y: self.progress * -88, duration: 0 })
+})
+
+const drawable44 = svg.createDrawable('.path-44')
+animate(drawable44, { draw: ['0 0', '0 1'], duration: 2000, delay: 440 })
+
+--- PADRÃO 45 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-45', {
+  x: 450,
+  y: 0,
+  rotate: 135,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(55, { from: 'center', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-45', { y: [100,0], opacity: [0,1] })
+  .add('.sub-45', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-45', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-45',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-45', { y: self.progress * -90, duration: 0 })
+})
+
+const drawable45 = svg.createDrawable('.path-45')
+animate(drawable45, { draw: ['0 0', '0 1'], duration: 2000, delay: 450 })
+
+--- PADRÃO 46 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-46', {
+  x: 460,
+  y: 20,
+  rotate: 138,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(56, { from: 'last', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-46', { y: [100,0], opacity: [0,1] })
+  .add('.sub-46', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-46', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-46',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-46', { y: self.progress * -92, duration: 0 })
+})
+
+const drawable46 = svg.createDrawable('.path-46')
+animate(drawable46, { draw: ['0 0', '0 1'], duration: 2000, delay: 460 })
+
+--- PADRÃO 47 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-47', {
+  x: 470,
+  y: 40,
+  rotate: 141,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(57, { from: 'random', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-47', { y: [100,0], opacity: [0,1] })
+  .add('.sub-47', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-47', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-47',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-47', { y: self.progress * -94, duration: 0 })
+})
+
+const drawable47 = svg.createDrawable('.path-47')
+animate(drawable47, { draw: ['0 0', '0 1'], duration: 2000, delay: 470 })
+
+--- PADRÃO 48 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-48', {
+  x: 480,
+  y: 60,
+  rotate: 144,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(58, { from: 'first', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-48', { y: [100,0], opacity: [0,1] })
+  .add('.sub-48', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-48', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-48',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-48', { y: self.progress * -96, duration: 0 })
+})
+
+const drawable48 = svg.createDrawable('.path-48')
+animate(drawable48, { draw: ['0 0', '0 1'], duration: 2000, delay: 480 })
+
+--- PADRÃO 49 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-49', {
+  x: 490,
+  y: 80,
+  rotate: 147,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(59, { from: 'center', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-49', { y: [100,0], opacity: [0,1] })
+  .add('.sub-49', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-49', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-49',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-49', { y: self.progress * -98, duration: 0 })
+})
+
+const drawable49 = svg.createDrawable('.path-49')
+animate(drawable49, { draw: ['0 0', '0 1'], duration: 2000, delay: 490 })
+
+--- PADRÃO 50 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-50', {
+  x: 500,
+  y: 0,
+  rotate: 150,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(60, { from: 'last', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-50', { y: [100,0], opacity: [0,1] })
+  .add('.sub-50', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-50', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-50',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-50', { y: self.progress * -100, duration: 0 })
+})
+
+const drawable50 = svg.createDrawable('.path-50')
+animate(drawable50, { draw: ['0 0', '0 1'], duration: 2000, delay: 500 })
+
+--- PADRÃO 51 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-51', {
+  x: 510,
+  y: 20,
+  rotate: 153,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(61, { from: 'random', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-51', { y: [100,0], opacity: [0,1] })
+  .add('.sub-51', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-51', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-51',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-51', { y: self.progress * -102, duration: 0 })
+})
+
+const drawable51 = svg.createDrawable('.path-51')
+animate(drawable51, { draw: ['0 0', '0 1'], duration: 2000, delay: 510 })
+
+--- PADRÃO 52 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-52', {
+  x: 520,
+  y: 40,
+  rotate: 156,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(62, { from: 'first', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-52', { y: [100,0], opacity: [0,1] })
+  .add('.sub-52', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-52', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-52',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-52', { y: self.progress * -104, duration: 0 })
+})
+
+const drawable52 = svg.createDrawable('.path-52')
+animate(drawable52, { draw: ['0 0', '0 1'], duration: 2000, delay: 520 })
+
+--- PADRÃO 53 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-53', {
+  x: 530,
+  y: 60,
+  rotate: 159,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(63, { from: 'center', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-53', { y: [100,0], opacity: [0,1] })
+  .add('.sub-53', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-53', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-53',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-53', { y: self.progress * -106, duration: 0 })
+})
+
+const drawable53 = svg.createDrawable('.path-53')
+animate(drawable53, { draw: ['0 0', '0 1'], duration: 2000, delay: 530 })
+
+--- PADRÃO 54 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-54', {
+  x: 540,
+  y: 80,
+  rotate: 162,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(64, { from: 'last', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-54', { y: [100,0], opacity: [0,1] })
+  .add('.sub-54', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-54', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-54',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-54', { y: self.progress * -108, duration: 0 })
+})
+
+const drawable54 = svg.createDrawable('.path-54')
+animate(drawable54, { draw: ['0 0', '0 1'], duration: 2000, delay: 540 })
+
+--- PADRÃO 55 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-55', {
+  x: 550,
+  y: 0,
+  rotate: 165,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(65, { from: 'random', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-55', { y: [100,0], opacity: [0,1] })
+  .add('.sub-55', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-55', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-55',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-55', { y: self.progress * -110, duration: 0 })
+})
+
+const drawable55 = svg.createDrawable('.path-55')
+animate(drawable55, { draw: ['0 0', '0 1'], duration: 2000, delay: 550 })
+
+--- PADRÃO 56 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-56', {
+  x: 560,
+  y: 20,
+  rotate: 168,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(66, { from: 'first', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-56', { y: [100,0], opacity: [0,1] })
+  .add('.sub-56', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-56', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-56',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-56', { y: self.progress * -112, duration: 0 })
+})
+
+const drawable56 = svg.createDrawable('.path-56')
+animate(drawable56, { draw: ['0 0', '0 1'], duration: 2000, delay: 560 })
+
+--- PADRÃO 57 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-57', {
+  x: 570,
+  y: 40,
+  rotate: 171,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(67, { from: 'center', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-57', { y: [100,0], opacity: [0,1] })
+  .add('.sub-57', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-57', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-57',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-57', { y: self.progress * -114, duration: 0 })
+})
+
+const drawable57 = svg.createDrawable('.path-57')
+animate(drawable57, { draw: ['0 0', '0 1'], duration: 2000, delay: 570 })
+
+--- PADRÃO 58 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-58', {
+  x: 580,
+  y: 60,
+  rotate: 174,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(68, { from: 'last', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-58', { y: [100,0], opacity: [0,1] })
+  .add('.sub-58', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-58', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-58',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-58', { y: self.progress * -116, duration: 0 })
+})
+
+const drawable58 = svg.createDrawable('.path-58')
+animate(drawable58, { draw: ['0 0', '0 1'], duration: 2000, delay: 580 })
+
+--- PADRÃO 59 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-59', {
+  x: 590,
+  y: 80,
+  rotate: 177,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(69, { from: 'random', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-59', { y: [100,0], opacity: [0,1] })
+  .add('.sub-59', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-59', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-59',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-59', { y: self.progress * -118, duration: 0 })
+})
+
+const drawable59 = svg.createDrawable('.path-59')
+animate(drawable59, { draw: ['0 0', '0 1'], duration: 2000, delay: 590 })
+
+--- PADRÃO 60 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-60', {
+  x: 600,
+  y: 0,
+  rotate: 180,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(50, { from: 'first', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-60', { y: [100,0], opacity: [0,1] })
+  .add('.sub-60', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-60', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-60',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-60', { y: self.progress * -120, duration: 0 })
+})
+
+const drawable60 = svg.createDrawable('.path-60')
+animate(drawable60, { draw: ['0 0', '0 1'], duration: 2000, delay: 600 })
+
+--- PADRÃO 61 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-61', {
+  x: 610,
+  y: 20,
+  rotate: 183,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(51, { from: 'center', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-61', { y: [100,0], opacity: [0,1] })
+  .add('.sub-61', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-61', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-61',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-61', { y: self.progress * -122, duration: 0 })
+})
+
+const drawable61 = svg.createDrawable('.path-61')
+animate(drawable61, { draw: ['0 0', '0 1'], duration: 2000, delay: 610 })
+
+--- PADRÃO 62 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-62', {
+  x: 620,
+  y: 40,
+  rotate: 186,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(52, { from: 'last', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-62', { y: [100,0], opacity: [0,1] })
+  .add('.sub-62', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-62', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-62',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-62', { y: self.progress * -124, duration: 0 })
+})
+
+const drawable62 = svg.createDrawable('.path-62')
+animate(drawable62, { draw: ['0 0', '0 1'], duration: 2000, delay: 620 })
+
+--- PADRÃO 63 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-63', {
+  x: 630,
+  y: 60,
+  rotate: 189,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(53, { from: 'random', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-63', { y: [100,0], opacity: [0,1] })
+  .add('.sub-63', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-63', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-63',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-63', { y: self.progress * -126, duration: 0 })
+})
+
+const drawable63 = svg.createDrawable('.path-63')
+animate(drawable63, { draw: ['0 0', '0 1'], duration: 2000, delay: 630 })
+
+--- PADRÃO 64 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-64', {
+  x: 640,
+  y: 80,
+  rotate: 192,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(54, { from: 'first', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-64', { y: [100,0], opacity: [0,1] })
+  .add('.sub-64', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-64', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-64',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-64', { y: self.progress * -128, duration: 0 })
+})
+
+const drawable64 = svg.createDrawable('.path-64')
+animate(drawable64, { draw: ['0 0', '0 1'], duration: 2000, delay: 640 })
+
+--- PADRÃO 65 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-65', {
+  x: 650,
+  y: 0,
+  rotate: 195,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(55, { from: 'center', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-65', { y: [100,0], opacity: [0,1] })
+  .add('.sub-65', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-65', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-65',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-65', { y: self.progress * -130, duration: 0 })
+})
+
+const drawable65 = svg.createDrawable('.path-65')
+animate(drawable65, { draw: ['0 0', '0 1'], duration: 2000, delay: 650 })
+
+--- PADRÃO 66 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-66', {
+  x: 660,
+  y: 20,
+  rotate: 198,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(56, { from: 'last', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-66', { y: [100,0], opacity: [0,1] })
+  .add('.sub-66', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-66', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-66',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-66', { y: self.progress * -132, duration: 0 })
+})
+
+const drawable66 = svg.createDrawable('.path-66')
+animate(drawable66, { draw: ['0 0', '0 1'], duration: 2000, delay: 660 })
+
+--- PADRÃO 67 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-67', {
+  x: 670,
+  y: 40,
+  rotate: 201,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(57, { from: 'random', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-67', { y: [100,0], opacity: [0,1] })
+  .add('.sub-67', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-67', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-67',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-67', { y: self.progress * -134, duration: 0 })
+})
+
+const drawable67 = svg.createDrawable('.path-67')
+animate(drawable67, { draw: ['0 0', '0 1'], duration: 2000, delay: 670 })
+
+--- PADRÃO 68 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-68', {
+  x: 680,
+  y: 60,
+  rotate: 204,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(58, { from: 'first', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-68', { y: [100,0], opacity: [0,1] })
+  .add('.sub-68', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-68', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-68',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-68', { y: self.progress * -136, duration: 0 })
+})
+
+const drawable68 = svg.createDrawable('.path-68')
+animate(drawable68, { draw: ['0 0', '0 1'], duration: 2000, delay: 680 })
+
+--- PADRÃO 69 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-69', {
+  x: 690,
+  y: 80,
+  rotate: 207,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(59, { from: 'center', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-69', { y: [100,0], opacity: [0,1] })
+  .add('.sub-69', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-69', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-69',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-69', { y: self.progress * -138, duration: 0 })
+})
+
+const drawable69 = svg.createDrawable('.path-69')
+animate(drawable69, { draw: ['0 0', '0 1'], duration: 2000, delay: 690 })
+
+--- PADRÃO 70 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-70', {
+  x: 700,
+  y: 0,
+  rotate: 210,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(60, { from: 'last', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-70', { y: [100,0], opacity: [0,1] })
+  .add('.sub-70', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-70', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-70',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-70', { y: self.progress * -140, duration: 0 })
+})
+
+const drawable70 = svg.createDrawable('.path-70')
+animate(drawable70, { draw: ['0 0', '0 1'], duration: 2000, delay: 700 })
+
+--- PADRÃO 71 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-71', {
+  x: 710,
+  y: 20,
+  rotate: 213,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(61, { from: 'random', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-71', { y: [100,0], opacity: [0,1] })
+  .add('.sub-71', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-71', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-71',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-71', { y: self.progress * -142, duration: 0 })
+})
+
+const drawable71 = svg.createDrawable('.path-71')
+animate(drawable71, { draw: ['0 0', '0 1'], duration: 2000, delay: 710 })
+
+--- PADRÃO 72 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-72', {
+  x: 720,
+  y: 40,
+  rotate: 216,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(62, { from: 'first', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-72', { y: [100,0], opacity: [0,1] })
+  .add('.sub-72', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-72', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-72',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-72', { y: self.progress * -144, duration: 0 })
+})
+
+const drawable72 = svg.createDrawable('.path-72')
+animate(drawable72, { draw: ['0 0', '0 1'], duration: 2000, delay: 720 })
+
+--- PADRÃO 73 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-73', {
+  x: 730,
+  y: 60,
+  rotate: 219,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(63, { from: 'center', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-73', { y: [100,0], opacity: [0,1] })
+  .add('.sub-73', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-73', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-73',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-73', { y: self.progress * -146, duration: 0 })
+})
+
+const drawable73 = svg.createDrawable('.path-73')
+animate(drawable73, { draw: ['0 0', '0 1'], duration: 2000, delay: 730 })
+
+--- PADRÃO 74 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-74', {
+  x: 740,
+  y: 80,
+  rotate: 222,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(64, { from: 'last', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-74', { y: [100,0], opacity: [0,1] })
+  .add('.sub-74', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-74', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-74',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-74', { y: self.progress * -148, duration: 0 })
+})
+
+const drawable74 = svg.createDrawable('.path-74')
+animate(drawable74, { draw: ['0 0', '0 1'], duration: 2000, delay: 740 })
+
+--- PADRÃO 75 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-75', {
+  x: 750,
+  y: 0,
+  rotate: 225,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(65, { from: 'random', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-75', { y: [100,0], opacity: [0,1] })
+  .add('.sub-75', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-75', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-75',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-75', { y: self.progress * -150, duration: 0 })
+})
+
+const drawable75 = svg.createDrawable('.path-75')
+animate(drawable75, { draw: ['0 0', '0 1'], duration: 2000, delay: 750 })
+
+--- PADRÃO 76 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-76', {
+  x: 760,
+  y: 20,
+  rotate: 228,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(66, { from: 'first', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-76', { y: [100,0], opacity: [0,1] })
+  .add('.sub-76', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-76', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-76',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-76', { y: self.progress * -152, duration: 0 })
+})
+
+const drawable76 = svg.createDrawable('.path-76')
+animate(drawable76, { draw: ['0 0', '0 1'], duration: 2000, delay: 760 })
+
+--- PADRÃO 77 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-77', {
+  x: 770,
+  y: 40,
+  rotate: 231,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(67, { from: 'center', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-77', { y: [100,0], opacity: [0,1] })
+  .add('.sub-77', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-77', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-77',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-77', { y: self.progress * -154, duration: 0 })
+})
+
+const drawable77 = svg.createDrawable('.path-77')
+animate(drawable77, { draw: ['0 0', '0 1'], duration: 2000, delay: 770 })
+
+--- PADRÃO 78 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-78', {
+  x: 780,
+  y: 60,
+  rotate: 234,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(68, { from: 'last', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-78', { y: [100,0], opacity: [0,1] })
+  .add('.sub-78', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-78', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-78',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-78', { y: self.progress * -156, duration: 0 })
+})
+
+const drawable78 = svg.createDrawable('.path-78')
+animate(drawable78, { draw: ['0 0', '0 1'], duration: 2000, delay: 780 })
+
+--- PADRÃO 79 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-79', {
+  x: 790,
+  y: 80,
+  rotate: 237,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(69, { from: 'random', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-79', { y: [100,0], opacity: [0,1] })
+  .add('.sub-79', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-79', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-79',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-79', { y: self.progress * -158, duration: 0 })
+})
+
+const drawable79 = svg.createDrawable('.path-79')
+animate(drawable79, { draw: ['0 0', '0 1'], duration: 2000, delay: 790 })
+
+--- PADRÃO 80 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-80', {
+  x: 800,
+  y: 0,
+  rotate: 240,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(50, { from: 'first', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-80', { y: [100,0], opacity: [0,1] })
+  .add('.sub-80', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-80', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-80',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-80', { y: self.progress * -160, duration: 0 })
+})
+
+const drawable80 = svg.createDrawable('.path-80')
+animate(drawable80, { draw: ['0 0', '0 1'], duration: 2000, delay: 800 })
+
+--- PADRÃO 81 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-81', {
+  x: 810,
+  y: 20,
+  rotate: 243,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(51, { from: 'center', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-81', { y: [100,0], opacity: [0,1] })
+  .add('.sub-81', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-81', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-81',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-81', { y: self.progress * -162, duration: 0 })
+})
+
+const drawable81 = svg.createDrawable('.path-81')
+animate(drawable81, { draw: ['0 0', '0 1'], duration: 2000, delay: 810 })
+
+--- PADRÃO 82 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-82', {
+  x: 820,
+  y: 40,
+  rotate: 246,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(52, { from: 'last', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-82', { y: [100,0], opacity: [0,1] })
+  .add('.sub-82', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-82', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-82',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-82', { y: self.progress * -164, duration: 0 })
+})
+
+const drawable82 = svg.createDrawable('.path-82')
+animate(drawable82, { draw: ['0 0', '0 1'], duration: 2000, delay: 820 })
+
+--- PADRÃO 83 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-83', {
+  x: 830,
+  y: 60,
+  rotate: 249,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(53, { from: 'random', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-83', { y: [100,0], opacity: [0,1] })
+  .add('.sub-83', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-83', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-83',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-83', { y: self.progress * -166, duration: 0 })
+})
+
+const drawable83 = svg.createDrawable('.path-83')
+animate(drawable83, { draw: ['0 0', '0 1'], duration: 2000, delay: 830 })
+
+--- PADRÃO 84 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-84', {
+  x: 840,
+  y: 80,
+  rotate: 252,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(54, { from: 'first', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-84', { y: [100,0], opacity: [0,1] })
+  .add('.sub-84', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-84', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-84',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-84', { y: self.progress * -168, duration: 0 })
+})
+
+const drawable84 = svg.createDrawable('.path-84')
+animate(drawable84, { draw: ['0 0', '0 1'], duration: 2000, delay: 840 })
+
+--- PADRÃO 85 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-85', {
+  x: 850,
+  y: 0,
+  rotate: 255,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(55, { from: 'center', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-85', { y: [100,0], opacity: [0,1] })
+  .add('.sub-85', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-85', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-85',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-85', { y: self.progress * -170, duration: 0 })
+})
+
+const drawable85 = svg.createDrawable('.path-85')
+animate(drawable85, { draw: ['0 0', '0 1'], duration: 2000, delay: 850 })
+
+--- PADRÃO 86 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-86', {
+  x: 860,
+  y: 20,
+  rotate: 258,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(56, { from: 'last', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-86', { y: [100,0], opacity: [0,1] })
+  .add('.sub-86', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-86', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-86',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-86', { y: self.progress * -172, duration: 0 })
+})
+
+const drawable86 = svg.createDrawable('.path-86')
+animate(drawable86, { draw: ['0 0', '0 1'], duration: 2000, delay: 860 })
+
+--- PADRÃO 87 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-87', {
+  x: 870,
+  y: 40,
+  rotate: 261,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(57, { from: 'random', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-87', { y: [100,0], opacity: [0,1] })
+  .add('.sub-87', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-87', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-87',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-87', { y: self.progress * -174, duration: 0 })
+})
+
+const drawable87 = svg.createDrawable('.path-87')
+animate(drawable87, { draw: ['0 0', '0 1'], duration: 2000, delay: 870 })
+
+--- PADRÃO 88 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-88', {
+  x: 880,
+  y: 60,
+  rotate: 264,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(58, { from: 'first', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-88', { y: [100,0], opacity: [0,1] })
+  .add('.sub-88', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-88', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-88',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-88', { y: self.progress * -176, duration: 0 })
+})
+
+const drawable88 = svg.createDrawable('.path-88')
+animate(drawable88, { draw: ['0 0', '0 1'], duration: 2000, delay: 880 })
+
+--- PADRÃO 89 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-89', {
+  x: 890,
+  y: 80,
+  rotate: 267,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(59, { from: 'center', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-89', { y: [100,0], opacity: [0,1] })
+  .add('.sub-89', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-89', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-89',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-89', { y: self.progress * -178, duration: 0 })
+})
+
+const drawable89 = svg.createDrawable('.path-89')
+animate(drawable89, { draw: ['0 0', '0 1'], duration: 2000, delay: 890 })
+
+--- PADRÃO 90 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-90', {
+  x: 900,
+  y: 0,
+  rotate: 270,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(60, { from: 'last', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-90', { y: [100,0], opacity: [0,1] })
+  .add('.sub-90', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-90', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-90',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-90', { y: self.progress * -180, duration: 0 })
+})
+
+const drawable90 = svg.createDrawable('.path-90')
+animate(drawable90, { draw: ['0 0', '0 1'], duration: 2000, delay: 900 })
+
+--- PADRÃO 91 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-91', {
+  x: 910,
+  y: 20,
+  rotate: 273,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(61, { from: 'random', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-91', { y: [100,0], opacity: [0,1] })
+  .add('.sub-91', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-91', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-91',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-91', { y: self.progress * -182, duration: 0 })
+})
+
+const drawable91 = svg.createDrawable('.path-91')
+animate(drawable91, { draw: ['0 0', '0 1'], duration: 2000, delay: 910 })
+
+--- PADRÃO 92 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-92', {
+  x: 920,
+  y: 40,
+  rotate: 276,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(62, { from: 'first', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-92', { y: [100,0], opacity: [0,1] })
+  .add('.sub-92', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-92', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-92',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-92', { y: self.progress * -184, duration: 0 })
+})
+
+const drawable92 = svg.createDrawable('.path-92')
+animate(drawable92, { draw: ['0 0', '0 1'], duration: 2000, delay: 920 })
+
+--- PADRÃO 93 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-93', {
+  x: 930,
+  y: 60,
+  rotate: 279,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(63, { from: 'center', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-93', { y: [100,0], opacity: [0,1] })
+  .add('.sub-93', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-93', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-93',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-93', { y: self.progress * -186, duration: 0 })
+})
+
+const drawable93 = svg.createDrawable('.path-93')
+animate(drawable93, { draw: ['0 0', '0 1'], duration: 2000, delay: 930 })
+
+--- PADRÃO 94 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-94', {
+  x: 940,
+  y: 80,
+  rotate: 282,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(64, { from: 'last', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-94', { y: [100,0], opacity: [0,1] })
+  .add('.sub-94', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-94', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-94',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-94', { y: self.progress * -188, duration: 0 })
+})
+
+const drawable94 = svg.createDrawable('.path-94')
+animate(drawable94, { draw: ['0 0', '0 1'], duration: 2000, delay: 940 })
+
+--- PADRÃO 95 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-95', {
+  x: 950,
+  y: 0,
+  rotate: 285,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(65, { from: 'random', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-95', { y: [100,0], opacity: [0,1] })
+  .add('.sub-95', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-95', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-95',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-95', { y: self.progress * -190, duration: 0 })
+})
+
+const drawable95 = svg.createDrawable('.path-95')
+animate(drawable95, { draw: ['0 0', '0 1'], duration: 2000, delay: 950 })
+
+--- PADRÃO 96 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-96', {
+  x: 960,
+  y: 20,
+  rotate: 288,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(66, { from: 'first', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-96', { y: [100,0], opacity: [0,1] })
+  .add('.sub-96', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-96', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-96',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-96', { y: self.progress * -192, duration: 0 })
+})
+
+const drawable96 = svg.createDrawable('.path-96')
+animate(drawable96, { draw: ['0 0', '0 1'], duration: 2000, delay: 960 })
+
+--- PADRÃO 97 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-97', {
+  x: 970,
+  y: 40,
+  rotate: 291,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(67, { from: 'center', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-97', { y: [100,0], opacity: [0,1] })
+  .add('.sub-97', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-97', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-97',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-97', { y: self.progress * -194, duration: 0 })
+})
+
+const drawable97 = svg.createDrawable('.path-97')
+animate(drawable97, { draw: ['0 0', '0 1'], duration: 2000, delay: 970 })
+
+--- PADRÃO 98 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-98', {
+  x: 980,
+  y: 60,
+  rotate: 294,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(68, { from: 'last', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-98', { y: [100,0], opacity: [0,1] })
+  .add('.sub-98', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-98', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-98',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-98', { y: self.progress * -196, duration: 0 })
+})
+
+const drawable98 = svg.createDrawable('.path-98')
+animate(drawable98, { draw: ['0 0', '0 1'], duration: 2000, delay: 980 })
+
+--- PADRÃO 99 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-99', {
+  x: 990,
+  y: 80,
+  rotate: 297,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(69, { from: 'random', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-99', { y: [100,0], opacity: [0,1] })
+  .add('.sub-99', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-99', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-99',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-99', { y: self.progress * -198, duration: 0 })
+})
+
+const drawable99 = svg.createDrawable('.path-99')
+animate(drawable99, { draw: ['0 0', '0 1'], duration: 2000, delay: 990 })
+
+--- PADRÃO 100 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-100', {
+  x: 1000,
+  y: 0,
+  rotate: 300,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(50, { from: 'first', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-100', { y: [100,0], opacity: [0,1] })
+  .add('.sub-100', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-100', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-100',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-100', { y: self.progress * -200, duration: 0 })
+})
+
+const drawable100 = svg.createDrawable('.path-100')
+animate(drawable100, { draw: ['0 0', '0 1'], duration: 2000, delay: 1000 })
+
+--- PADRÃO 101 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-101', {
+  x: 1010,
+  y: 20,
+  rotate: 303,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(51, { from: 'center', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-101', { y: [100,0], opacity: [0,1] })
+  .add('.sub-101', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-101', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-101',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-101', { y: self.progress * -202, duration: 0 })
+})
+
+const drawable101 = svg.createDrawable('.path-101')
+animate(drawable101, { draw: ['0 0', '0 1'], duration: 2000, delay: 1010 })
+
+--- PADRÃO 102 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-102', {
+  x: 1020,
+  y: 40,
+  rotate: 306,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(52, { from: 'last', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-102', { y: [100,0], opacity: [0,1] })
+  .add('.sub-102', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-102', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-102',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-102', { y: self.progress * -204, duration: 0 })
+})
+
+const drawable102 = svg.createDrawable('.path-102')
+animate(drawable102, { draw: ['0 0', '0 1'], duration: 2000, delay: 1020 })
+
+--- PADRÃO 103 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-103', {
+  x: 1030,
+  y: 60,
+  rotate: 309,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(53, { from: 'random', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-103', { y: [100,0], opacity: [0,1] })
+  .add('.sub-103', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-103', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-103',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-103', { y: self.progress * -206, duration: 0 })
+})
+
+const drawable103 = svg.createDrawable('.path-103')
+animate(drawable103, { draw: ['0 0', '0 1'], duration: 2000, delay: 1030 })
+
+--- PADRÃO 104 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-104', {
+  x: 1040,
+  y: 80,
+  rotate: 312,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(54, { from: 'first', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-104', { y: [100,0], opacity: [0,1] })
+  .add('.sub-104', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-104', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-104',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-104', { y: self.progress * -208, duration: 0 })
+})
+
+const drawable104 = svg.createDrawable('.path-104')
+animate(drawable104, { draw: ['0 0', '0 1'], duration: 2000, delay: 1040 })
+
+--- PADRÃO 105 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-105', {
+  x: 1050,
+  y: 0,
+  rotate: 315,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(55, { from: 'center', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-105', { y: [100,0], opacity: [0,1] })
+  .add('.sub-105', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-105', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-105',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-105', { y: self.progress * -210, duration: 0 })
+})
+
+const drawable105 = svg.createDrawable('.path-105')
+animate(drawable105, { draw: ['0 0', '0 1'], duration: 2000, delay: 1050 })
+
+--- PADRÃO 106 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-106', {
+  x: 1060,
+  y: 20,
+  rotate: 318,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(56, { from: 'last', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-106', { y: [100,0], opacity: [0,1] })
+  .add('.sub-106', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-106', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-106',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-106', { y: self.progress * -212, duration: 0 })
+})
+
+const drawable106 = svg.createDrawable('.path-106')
+animate(drawable106, { draw: ['0 0', '0 1'], duration: 2000, delay: 1060 })
+
+--- PADRÃO 107 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-107', {
+  x: 1070,
+  y: 40,
+  rotate: 321,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(57, { from: 'random', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-107', { y: [100,0], opacity: [0,1] })
+  .add('.sub-107', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-107', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-107',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-107', { y: self.progress * -214, duration: 0 })
+})
+
+const drawable107 = svg.createDrawable('.path-107')
+animate(drawable107, { draw: ['0 0', '0 1'], duration: 2000, delay: 1070 })
+
+--- PADRÃO 108 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-108', {
+  x: 1080,
+  y: 60,
+  rotate: 324,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(58, { from: 'first', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-108', { y: [100,0], opacity: [0,1] })
+  .add('.sub-108', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-108', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-108',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-108', { y: self.progress * -216, duration: 0 })
+})
+
+const drawable108 = svg.createDrawable('.path-108')
+animate(drawable108, { draw: ['0 0', '0 1'], duration: 2000, delay: 1080 })
+
+--- PADRÃO 109 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-109', {
+  x: 1090,
+  y: 80,
+  rotate: 327,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(59, { from: 'center', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-109', { y: [100,0], opacity: [0,1] })
+  .add('.sub-109', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-109', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-109',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-109', { y: self.progress * -218, duration: 0 })
+})
+
+const drawable109 = svg.createDrawable('.path-109')
+animate(drawable109, { draw: ['0 0', '0 1'], duration: 2000, delay: 1090 })
+
+--- PADRÃO 110 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-110', {
+  x: 1100,
+  y: 0,
+  rotate: 330,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(60, { from: 'last', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-110', { y: [100,0], opacity: [0,1] })
+  .add('.sub-110', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-110', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-110',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-110', { y: self.progress * -220, duration: 0 })
+})
+
+const drawable110 = svg.createDrawable('.path-110')
+animate(drawable110, { draw: ['0 0', '0 1'], duration: 2000, delay: 1100 })
+
+--- PADRÃO 111 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-111', {
+  x: 1110,
+  y: 20,
+  rotate: 333,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(61, { from: 'random', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-111', { y: [100,0], opacity: [0,1] })
+  .add('.sub-111', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-111', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-111',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-111', { y: self.progress * -222, duration: 0 })
+})
+
+const drawable111 = svg.createDrawable('.path-111')
+animate(drawable111, { draw: ['0 0', '0 1'], duration: 2000, delay: 1110 })
+
+--- PADRÃO 112 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-112', {
+  x: 1120,
+  y: 40,
+  rotate: 336,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(62, { from: 'first', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-112', { y: [100,0], opacity: [0,1] })
+  .add('.sub-112', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-112', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-112',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-112', { y: self.progress * -224, duration: 0 })
+})
+
+const drawable112 = svg.createDrawable('.path-112')
+animate(drawable112, { draw: ['0 0', '0 1'], duration: 2000, delay: 1120 })
+
+--- PADRÃO 113 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-113', {
+  x: 1130,
+  y: 60,
+  rotate: 339,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(63, { from: 'center', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-113', { y: [100,0], opacity: [0,1] })
+  .add('.sub-113', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-113', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-113',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-113', { y: self.progress * -226, duration: 0 })
+})
+
+const drawable113 = svg.createDrawable('.path-113')
+animate(drawable113, { draw: ['0 0', '0 1'], duration: 2000, delay: 1130 })
+
+--- PADRÃO 114 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-114', {
+  x: 1140,
+  y: 80,
+  rotate: 342,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(64, { from: 'last', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-114', { y: [100,0], opacity: [0,1] })
+  .add('.sub-114', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-114', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-114',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-114', { y: self.progress * -228, duration: 0 })
+})
+
+const drawable114 = svg.createDrawable('.path-114')
+animate(drawable114, { draw: ['0 0', '0 1'], duration: 2000, delay: 1140 })
+
+--- PADRÃO 115 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-115', {
+  x: 1150,
+  y: 0,
+  rotate: 345,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(65, { from: 'random', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-115', { y: [100,0], opacity: [0,1] })
+  .add('.sub-115', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-115', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-115',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-115', { y: self.progress * -230, duration: 0 })
+})
+
+const drawable115 = svg.createDrawable('.path-115')
+animate(drawable115, { draw: ['0 0', '0 1'], duration: 2000, delay: 1150 })
+
+--- PADRÃO 116 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-116', {
+  x: 1160,
+  y: 20,
+  rotate: 348,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(66, { from: 'first', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-116', { y: [100,0], opacity: [0,1] })
+  .add('.sub-116', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-116', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-116',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-116', { y: self.progress * -232, duration: 0 })
+})
+
+const drawable116 = svg.createDrawable('.path-116')
+animate(drawable116, { draw: ['0 0', '0 1'], duration: 2000, delay: 1160 })
+
+--- PADRÃO 117 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-117', {
+  x: 1170,
+  y: 40,
+  rotate: 351,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(67, { from: 'center', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-117', { y: [100,0], opacity: [0,1] })
+  .add('.sub-117', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-117', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-117',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-117', { y: self.progress * -234, duration: 0 })
+})
+
+const drawable117 = svg.createDrawable('.path-117')
+animate(drawable117, { draw: ['0 0', '0 1'], duration: 2000, delay: 1170 })
+
+--- PADRÃO 118 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-118', {
+  x: 1180,
+  y: 60,
+  rotate: 354,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(68, { from: 'last', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-118', { y: [100,0], opacity: [0,1] })
+  .add('.sub-118', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-118', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-118',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-118', { y: self.progress * -236, duration: 0 })
+})
+
+const drawable118 = svg.createDrawable('.path-118')
+animate(drawable118, { draw: ['0 0', '0 1'], duration: 2000, delay: 1180 })
+
+--- PADRÃO 119 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-119', {
+  x: 1190,
+  y: 80,
+  rotate: 357,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(69, { from: 'random', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-119', { y: [100,0], opacity: [0,1] })
+  .add('.sub-119', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-119', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-119',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-119', { y: self.progress * -238, duration: 0 })
+})
+
+const drawable119 = svg.createDrawable('.path-119')
+animate(drawable119, { draw: ['0 0', '0 1'], duration: 2000, delay: 1190 })
+
+--- PADRÃO 120 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-120', {
+  x: 1200,
+  y: 0,
+  rotate: 360,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(50, { from: 'first', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-120', { y: [100,0], opacity: [0,1] })
+  .add('.sub-120', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-120', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-120',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-120', { y: self.progress * -240, duration: 0 })
+})
+
+const drawable120 = svg.createDrawable('.path-120')
+animate(drawable120, { draw: ['0 0', '0 1'], duration: 2000, delay: 1200 })
+
+--- PADRÃO 121 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-121', {
+  x: 1210,
+  y: 20,
+  rotate: 363,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(51, { from: 'center', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-121', { y: [100,0], opacity: [0,1] })
+  .add('.sub-121', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-121', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-121',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-121', { y: self.progress * -242, duration: 0 })
+})
+
+const drawable121 = svg.createDrawable('.path-121')
+animate(drawable121, { draw: ['0 0', '0 1'], duration: 2000, delay: 1210 })
+
+--- PADRÃO 122 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-122', {
+  x: 1220,
+  y: 40,
+  rotate: 366,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(52, { from: 'last', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-122', { y: [100,0], opacity: [0,1] })
+  .add('.sub-122', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-122', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-122',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-122', { y: self.progress * -244, duration: 0 })
+})
+
+const drawable122 = svg.createDrawable('.path-122')
+animate(drawable122, { draw: ['0 0', '0 1'], duration: 2000, delay: 1220 })
+
+--- PADRÃO 123 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-123', {
+  x: 1230,
+  y: 60,
+  rotate: 369,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(53, { from: 'random', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-123', { y: [100,0], opacity: [0,1] })
+  .add('.sub-123', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-123', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-123',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-123', { y: self.progress * -246, duration: 0 })
+})
+
+const drawable123 = svg.createDrawable('.path-123')
+animate(drawable123, { draw: ['0 0', '0 1'], duration: 2000, delay: 1230 })
+
+--- PADRÃO 124 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-124', {
+  x: 1240,
+  y: 80,
+  rotate: 372,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(54, { from: 'first', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-124', { y: [100,0], opacity: [0,1] })
+  .add('.sub-124', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-124', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-124',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-124', { y: self.progress * -248, duration: 0 })
+})
+
+const drawable124 = svg.createDrawable('.path-124')
+animate(drawable124, { draw: ['0 0', '0 1'], duration: 2000, delay: 1240 })
+
+--- PADRÃO 125 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-125', {
+  x: 1250,
+  y: 0,
+  rotate: 375,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(55, { from: 'center', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-125', { y: [100,0], opacity: [0,1] })
+  .add('.sub-125', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-125', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-125',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-125', { y: self.progress * -250, duration: 0 })
+})
+
+const drawable125 = svg.createDrawable('.path-125')
+animate(drawable125, { draw: ['0 0', '0 1'], duration: 2000, delay: 1250 })
+
+--- PADRÃO 126 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-126', {
+  x: 1260,
+  y: 20,
+  rotate: 378,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(56, { from: 'last', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-126', { y: [100,0], opacity: [0,1] })
+  .add('.sub-126', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-126', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-126',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-126', { y: self.progress * -252, duration: 0 })
+})
+
+const drawable126 = svg.createDrawable('.path-126')
+animate(drawable126, { draw: ['0 0', '0 1'], duration: 2000, delay: 1260 })
+
+--- PADRÃO 127 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-127', {
+  x: 1270,
+  y: 40,
+  rotate: 381,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(57, { from: 'random', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-127', { y: [100,0], opacity: [0,1] })
+  .add('.sub-127', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-127', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-127',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-127', { y: self.progress * -254, duration: 0 })
+})
+
+const drawable127 = svg.createDrawable('.path-127')
+animate(drawable127, { draw: ['0 0', '0 1'], duration: 2000, delay: 1270 })
+
+--- PADRÃO 128 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-128', {
+  x: 1280,
+  y: 60,
+  rotate: 384,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(58, { from: 'first', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-128', { y: [100,0], opacity: [0,1] })
+  .add('.sub-128', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-128', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-128',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-128', { y: self.progress * -256, duration: 0 })
+})
+
+const drawable128 = svg.createDrawable('.path-128')
+animate(drawable128, { draw: ['0 0', '0 1'], duration: 2000, delay: 1280 })
+
+--- PADRÃO 129 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-129', {
+  x: 1290,
+  y: 80,
+  rotate: 387,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(59, { from: 'center', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-129', { y: [100,0], opacity: [0,1] })
+  .add('.sub-129', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-129', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-129',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-129', { y: self.progress * -258, duration: 0 })
+})
+
+const drawable129 = svg.createDrawable('.path-129')
+animate(drawable129, { draw: ['0 0', '0 1'], duration: 2000, delay: 1290 })
+
+--- PADRÃO 130 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-130', {
+  x: 1300,
+  y: 0,
+  rotate: 390,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(60, { from: 'last', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-130', { y: [100,0], opacity: [0,1] })
+  .add('.sub-130', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-130', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-130',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-130', { y: self.progress * -260, duration: 0 })
+})
+
+const drawable130 = svg.createDrawable('.path-130')
+animate(drawable130, { draw: ['0 0', '0 1'], duration: 2000, delay: 1300 })
+
+--- PADRÃO 131 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-131', {
+  x: 1310,
+  y: 20,
+  rotate: 393,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(61, { from: 'random', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-131', { y: [100,0], opacity: [0,1] })
+  .add('.sub-131', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-131', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-131',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-131', { y: self.progress * -262, duration: 0 })
+})
+
+const drawable131 = svg.createDrawable('.path-131')
+animate(drawable131, { draw: ['0 0', '0 1'], duration: 2000, delay: 1310 })
+
+--- PADRÃO 132 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-132', {
+  x: 1320,
+  y: 40,
+  rotate: 396,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(62, { from: 'first', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-132', { y: [100,0], opacity: [0,1] })
+  .add('.sub-132', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-132', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-132',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-132', { y: self.progress * -264, duration: 0 })
+})
+
+const drawable132 = svg.createDrawable('.path-132')
+animate(drawable132, { draw: ['0 0', '0 1'], duration: 2000, delay: 1320 })
+
+--- PADRÃO 133 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-133', {
+  x: 1330,
+  y: 60,
+  rotate: 399,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(63, { from: 'center', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-133', { y: [100,0], opacity: [0,1] })
+  .add('.sub-133', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-133', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-133',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-133', { y: self.progress * -266, duration: 0 })
+})
+
+const drawable133 = svg.createDrawable('.path-133')
+animate(drawable133, { draw: ['0 0', '0 1'], duration: 2000, delay: 1330 })
+
+--- PADRÃO 134 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-134', {
+  x: 1340,
+  y: 80,
+  rotate: 402,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(64, { from: 'last', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-134', { y: [100,0], opacity: [0,1] })
+  .add('.sub-134', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-134', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-134',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-134', { y: self.progress * -268, duration: 0 })
+})
+
+const drawable134 = svg.createDrawable('.path-134')
+animate(drawable134, { draw: ['0 0', '0 1'], duration: 2000, delay: 1340 })
+
+--- PADRÃO 135 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-135', {
+  x: 1350,
+  y: 0,
+  rotate: 405,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(65, { from: 'random', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-135', { y: [100,0], opacity: [0,1] })
+  .add('.sub-135', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-135', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-135',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-135', { y: self.progress * -270, duration: 0 })
+})
+
+const drawable135 = svg.createDrawable('.path-135')
+animate(drawable135, { draw: ['0 0', '0 1'], duration: 2000, delay: 1350 })
+
+--- PADRÃO 136 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-136', {
+  x: 1360,
+  y: 20,
+  rotate: 408,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(66, { from: 'first', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-136', { y: [100,0], opacity: [0,1] })
+  .add('.sub-136', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-136', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-136',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-136', { y: self.progress * -272, duration: 0 })
+})
+
+const drawable136 = svg.createDrawable('.path-136')
+animate(drawable136, { draw: ['0 0', '0 1'], duration: 2000, delay: 1360 })
+
+--- PADRÃO 137 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-137', {
+  x: 1370,
+  y: 40,
+  rotate: 411,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(67, { from: 'center', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-137', { y: [100,0], opacity: [0,1] })
+  .add('.sub-137', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-137', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-137',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-137', { y: self.progress * -274, duration: 0 })
+})
+
+const drawable137 = svg.createDrawable('.path-137')
+animate(drawable137, { draw: ['0 0', '0 1'], duration: 2000, delay: 1370 })
+
+--- PADRÃO 138 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-138', {
+  x: 1380,
+  y: 60,
+  rotate: 414,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(68, { from: 'last', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-138', { y: [100,0], opacity: [0,1] })
+  .add('.sub-138', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-138', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-138',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-138', { y: self.progress * -276, duration: 0 })
+})
+
+const drawable138 = svg.createDrawable('.path-138')
+animate(drawable138, { draw: ['0 0', '0 1'], duration: 2000, delay: 1380 })
+
+--- PADRÃO 139 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-139', {
+  x: 1390,
+  y: 80,
+  rotate: 417,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(69, { from: 'random', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-139', { y: [100,0], opacity: [0,1] })
+  .add('.sub-139', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-139', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-139',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-139', { y: self.progress * -278, duration: 0 })
+})
+
+const drawable139 = svg.createDrawable('.path-139')
+animate(drawable139, { draw: ['0 0', '0 1'], duration: 2000, delay: 1390 })
+
+--- PADRÃO 140 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-140', {
+  x: 1400,
+  y: 0,
+  rotate: 420,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(50, { from: 'first', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-140', { y: [100,0], opacity: [0,1] })
+  .add('.sub-140', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-140', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-140',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-140', { y: self.progress * -280, duration: 0 })
+})
+
+const drawable140 = svg.createDrawable('.path-140')
+animate(drawable140, { draw: ['0 0', '0 1'], duration: 2000, delay: 1400 })
+
+--- PADRÃO 141 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-141', {
+  x: 1410,
+  y: 20,
+  rotate: 423,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(51, { from: 'center', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-141', { y: [100,0], opacity: [0,1] })
+  .add('.sub-141', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-141', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-141',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-141', { y: self.progress * -282, duration: 0 })
+})
+
+const drawable141 = svg.createDrawable('.path-141')
+animate(drawable141, { draw: ['0 0', '0 1'], duration: 2000, delay: 1410 })
+
+--- PADRÃO 142 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-142', {
+  x: 1420,
+  y: 40,
+  rotate: 426,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(52, { from: 'last', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-142', { y: [100,0], opacity: [0,1] })
+  .add('.sub-142', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-142', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-142',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-142', { y: self.progress * -284, duration: 0 })
+})
+
+const drawable142 = svg.createDrawable('.path-142')
+animate(drawable142, { draw: ['0 0', '0 1'], duration: 2000, delay: 1420 })
+
+--- PADRÃO 143 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-143', {
+  x: 1430,
+  y: 60,
+  rotate: 429,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(53, { from: 'random', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-143', { y: [100,0], opacity: [0,1] })
+  .add('.sub-143', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-143', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-143',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-143', { y: self.progress * -286, duration: 0 })
+})
+
+const drawable143 = svg.createDrawable('.path-143')
+animate(drawable143, { draw: ['0 0', '0 1'], duration: 2000, delay: 1430 })
+
+--- PADRÃO 144 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-144', {
+  x: 1440,
+  y: 80,
+  rotate: 432,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(54, { from: 'first', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-144', { y: [100,0], opacity: [0,1] })
+  .add('.sub-144', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-144', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-144',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-144', { y: self.progress * -288, duration: 0 })
+})
+
+const drawable144 = svg.createDrawable('.path-144')
+animate(drawable144, { draw: ['0 0', '0 1'], duration: 2000, delay: 1440 })
+
+--- PADRÃO 145 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-145', {
+  x: 1450,
+  y: 0,
+  rotate: 435,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(55, { from: 'center', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-145', { y: [100,0], opacity: [0,1] })
+  .add('.sub-145', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-145', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-145',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-145', { y: self.progress * -290, duration: 0 })
+})
+
+const drawable145 = svg.createDrawable('.path-145')
+animate(drawable145, { draw: ['0 0', '0 1'], duration: 2000, delay: 1450 })
+
+--- PADRÃO 146 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-146', {
+  x: 1460,
+  y: 20,
+  rotate: 438,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(56, { from: 'last', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-146', { y: [100,0], opacity: [0,1] })
+  .add('.sub-146', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-146', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-146',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-146', { y: self.progress * -292, duration: 0 })
+})
+
+const drawable146 = svg.createDrawable('.path-146')
+animate(drawable146, { draw: ['0 0', '0 1'], duration: 2000, delay: 1460 })
+
+--- PADRÃO 147 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-147', {
+  x: 1470,
+  y: 40,
+  rotate: 441,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(57, { from: 'random', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-147', { y: [100,0], opacity: [0,1] })
+  .add('.sub-147', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-147', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-147',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-147', { y: self.progress * -294, duration: 0 })
+})
+
+const drawable147 = svg.createDrawable('.path-147')
+animate(drawable147, { draw: ['0 0', '0 1'], duration: 2000, delay: 1470 })
+
+--- PADRÃO 148 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-148', {
+  x: 1480,
+  y: 60,
+  rotate: 444,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(58, { from: 'first', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-148', { y: [100,0], opacity: [0,1] })
+  .add('.sub-148', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-148', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-148',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-148', { y: self.progress * -296, duration: 0 })
+})
+
+const drawable148 = svg.createDrawable('.path-148')
+animate(drawable148, { draw: ['0 0', '0 1'], duration: 2000, delay: 1480 })
+
+--- PADRÃO 149 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-149', {
+  x: 1490,
+  y: 80,
+  rotate: 447,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(59, { from: 'center', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-149', { y: [100,0], opacity: [0,1] })
+  .add('.sub-149', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-149', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-149',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-149', { y: self.progress * -298, duration: 0 })
+})
+
+const drawable149 = svg.createDrawable('.path-149')
+animate(drawable149, { draw: ['0 0', '0 1'], duration: 2000, delay: 1490 })
+
+--- PADRÃO 150 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-150', {
+  x: 1500,
+  y: 0,
+  rotate: 450,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(60, { from: 'last', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-150', { y: [100,0], opacity: [0,1] })
+  .add('.sub-150', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-150', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-150',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-150', { y: self.progress * -300, duration: 0 })
+})
+
+const drawable150 = svg.createDrawable('.path-150')
+animate(drawable150, { draw: ['0 0', '0 1'], duration: 2000, delay: 1500 })
+
+--- PADRÃO 151 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-151', {
+  x: 1510,
+  y: 20,
+  rotate: 453,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(61, { from: 'random', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-151', { y: [100,0], opacity: [0,1] })
+  .add('.sub-151', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-151', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-151',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-151', { y: self.progress * -302, duration: 0 })
+})
+
+const drawable151 = svg.createDrawable('.path-151')
+animate(drawable151, { draw: ['0 0', '0 1'], duration: 2000, delay: 1510 })
+
+--- PADRÃO 152 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-152', {
+  x: 1520,
+  y: 40,
+  rotate: 456,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(62, { from: 'first', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-152', { y: [100,0], opacity: [0,1] })
+  .add('.sub-152', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-152', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-152',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-152', { y: self.progress * -304, duration: 0 })
+})
+
+const drawable152 = svg.createDrawable('.path-152')
+animate(drawable152, { draw: ['0 0', '0 1'], duration: 2000, delay: 1520 })
+
+--- PADRÃO 153 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-153', {
+  x: 1530,
+  y: 60,
+  rotate: 459,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(63, { from: 'center', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-153', { y: [100,0], opacity: [0,1] })
+  .add('.sub-153', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-153', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-153',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-153', { y: self.progress * -306, duration: 0 })
+})
+
+const drawable153 = svg.createDrawable('.path-153')
+animate(drawable153, { draw: ['0 0', '0 1'], duration: 2000, delay: 1530 })
+
+--- PADRÃO 154 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-154', {
+  x: 1540,
+  y: 80,
+  rotate: 462,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(64, { from: 'last', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-154', { y: [100,0], opacity: [0,1] })
+  .add('.sub-154', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-154', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-154',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-154', { y: self.progress * -308, duration: 0 })
+})
+
+const drawable154 = svg.createDrawable('.path-154')
+animate(drawable154, { draw: ['0 0', '0 1'], duration: 2000, delay: 1540 })
+
+--- PADRÃO 155 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-155', {
+  x: 1550,
+  y: 0,
+  rotate: 465,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(65, { from: 'random', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-155', { y: [100,0], opacity: [0,1] })
+  .add('.sub-155', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-155', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-155',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-155', { y: self.progress * -310, duration: 0 })
+})
+
+const drawable155 = svg.createDrawable('.path-155')
+animate(drawable155, { draw: ['0 0', '0 1'], duration: 2000, delay: 1550 })
+
+--- PADRÃO 156 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-156', {
+  x: 1560,
+  y: 20,
+  rotate: 468,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(66, { from: 'first', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-156', { y: [100,0], opacity: [0,1] })
+  .add('.sub-156', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-156', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-156',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-156', { y: self.progress * -312, duration: 0 })
+})
+
+const drawable156 = svg.createDrawable('.path-156')
+animate(drawable156, { draw: ['0 0', '0 1'], duration: 2000, delay: 1560 })
+
+--- PADRÃO 157 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-157', {
+  x: 1570,
+  y: 40,
+  rotate: 471,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(67, { from: 'center', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-157', { y: [100,0], opacity: [0,1] })
+  .add('.sub-157', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-157', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-157',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-157', { y: self.progress * -314, duration: 0 })
+})
+
+const drawable157 = svg.createDrawable('.path-157')
+animate(drawable157, { draw: ['0 0', '0 1'], duration: 2000, delay: 1570 })
+
+--- PADRÃO 158 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-158', {
+  x: 1580,
+  y: 60,
+  rotate: 474,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(68, { from: 'last', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-158', { y: [100,0], opacity: [0,1] })
+  .add('.sub-158', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-158', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-158',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-158', { y: self.progress * -316, duration: 0 })
+})
+
+const drawable158 = svg.createDrawable('.path-158')
+animate(drawable158, { draw: ['0 0', '0 1'], duration: 2000, delay: 1580 })
+
+--- PADRÃO 159 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-159', {
+  x: 1590,
+  y: 80,
+  rotate: 477,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(69, { from: 'random', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-159', { y: [100,0], opacity: [0,1] })
+  .add('.sub-159', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-159', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-159',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-159', { y: self.progress * -318, duration: 0 })
+})
+
+const drawable159 = svg.createDrawable('.path-159')
+animate(drawable159, { draw: ['0 0', '0 1'], duration: 2000, delay: 1590 })
+
+--- PADRÃO 160 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-160', {
+  x: 1600,
+  y: 0,
+  rotate: 480,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(50, { from: 'first', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-160', { y: [100,0], opacity: [0,1] })
+  .add('.sub-160', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-160', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-160',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-160', { y: self.progress * -320, duration: 0 })
+})
+
+const drawable160 = svg.createDrawable('.path-160')
+animate(drawable160, { draw: ['0 0', '0 1'], duration: 2000, delay: 1600 })
+
+--- PADRÃO 161 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-161', {
+  x: 1610,
+  y: 20,
+  rotate: 483,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(51, { from: 'center', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-161', { y: [100,0], opacity: [0,1] })
+  .add('.sub-161', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-161', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-161',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-161', { y: self.progress * -322, duration: 0 })
+})
+
+const drawable161 = svg.createDrawable('.path-161')
+animate(drawable161, { draw: ['0 0', '0 1'], duration: 2000, delay: 1610 })
+
+--- PADRÃO 162 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-162', {
+  x: 1620,
+  y: 40,
+  rotate: 486,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(52, { from: 'last', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-162', { y: [100,0], opacity: [0,1] })
+  .add('.sub-162', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-162', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-162',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-162', { y: self.progress * -324, duration: 0 })
+})
+
+const drawable162 = svg.createDrawable('.path-162')
+animate(drawable162, { draw: ['0 0', '0 1'], duration: 2000, delay: 1620 })
+
+--- PADRÃO 163 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-163', {
+  x: 1630,
+  y: 60,
+  rotate: 489,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(53, { from: 'random', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-163', { y: [100,0], opacity: [0,1] })
+  .add('.sub-163', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-163', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-163',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-163', { y: self.progress * -326, duration: 0 })
+})
+
+const drawable163 = svg.createDrawable('.path-163')
+animate(drawable163, { draw: ['0 0', '0 1'], duration: 2000, delay: 1630 })
+
+--- PADRÃO 164 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-164', {
+  x: 1640,
+  y: 80,
+  rotate: 492,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(54, { from: 'first', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-164', { y: [100,0], opacity: [0,1] })
+  .add('.sub-164', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-164', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-164',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-164', { y: self.progress * -328, duration: 0 })
+})
+
+const drawable164 = svg.createDrawable('.path-164')
+animate(drawable164, { draw: ['0 0', '0 1'], duration: 2000, delay: 1640 })
+
+--- PADRÃO 165 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-165', {
+  x: 1650,
+  y: 0,
+  rotate: 495,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(55, { from: 'center', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-165', { y: [100,0], opacity: [0,1] })
+  .add('.sub-165', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-165', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-165',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-165', { y: self.progress * -330, duration: 0 })
+})
+
+const drawable165 = svg.createDrawable('.path-165')
+animate(drawable165, { draw: ['0 0', '0 1'], duration: 2000, delay: 1650 })
+
+--- PADRÃO 166 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-166', {
+  x: 1660,
+  y: 20,
+  rotate: 498,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(56, { from: 'last', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-166', { y: [100,0], opacity: [0,1] })
+  .add('.sub-166', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-166', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-166',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-166', { y: self.progress * -332, duration: 0 })
+})
+
+const drawable166 = svg.createDrawable('.path-166')
+animate(drawable166, { draw: ['0 0', '0 1'], duration: 2000, delay: 1660 })
+
+--- PADRÃO 167 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-167', {
+  x: 1670,
+  y: 40,
+  rotate: 501,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(57, { from: 'random', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-167', { y: [100,0], opacity: [0,1] })
+  .add('.sub-167', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-167', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-167',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-167', { y: self.progress * -334, duration: 0 })
+})
+
+const drawable167 = svg.createDrawable('.path-167')
+animate(drawable167, { draw: ['0 0', '0 1'], duration: 2000, delay: 1670 })
+
+--- PADRÃO 168 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-168', {
+  x: 1680,
+  y: 60,
+  rotate: 504,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(58, { from: 'first', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-168', { y: [100,0], opacity: [0,1] })
+  .add('.sub-168', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-168', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-168',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-168', { y: self.progress * -336, duration: 0 })
+})
+
+const drawable168 = svg.createDrawable('.path-168')
+animate(drawable168, { draw: ['0 0', '0 1'], duration: 2000, delay: 1680 })
+
+--- PADRÃO 169 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-169', {
+  x: 1690,
+  y: 80,
+  rotate: 507,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(59, { from: 'center', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-169', { y: [100,0], opacity: [0,1] })
+  .add('.sub-169', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-169', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-169',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-169', { y: self.progress * -338, duration: 0 })
+})
+
+const drawable169 = svg.createDrawable('.path-169')
+animate(drawable169, { draw: ['0 0', '0 1'], duration: 2000, delay: 1690 })
+
+--- PADRÃO 170 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-170', {
+  x: 1700,
+  y: 0,
+  rotate: 510,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(60, { from: 'last', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-170', { y: [100,0], opacity: [0,1] })
+  .add('.sub-170', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-170', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-170',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-170', { y: self.progress * -340, duration: 0 })
+})
+
+const drawable170 = svg.createDrawable('.path-170')
+animate(drawable170, { draw: ['0 0', '0 1'], duration: 2000, delay: 1700 })
+
+--- PADRÃO 171 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-171', {
+  x: 1710,
+  y: 20,
+  rotate: 513,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(61, { from: 'random', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-171', { y: [100,0], opacity: [0,1] })
+  .add('.sub-171', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-171', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-171',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-171', { y: self.progress * -342, duration: 0 })
+})
+
+const drawable171 = svg.createDrawable('.path-171')
+animate(drawable171, { draw: ['0 0', '0 1'], duration: 2000, delay: 1710 })
+
+--- PADRÃO 172 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-172', {
+  x: 1720,
+  y: 40,
+  rotate: 516,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(62, { from: 'first', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-172', { y: [100,0], opacity: [0,1] })
+  .add('.sub-172', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-172', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-172',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-172', { y: self.progress * -344, duration: 0 })
+})
+
+const drawable172 = svg.createDrawable('.path-172')
+animate(drawable172, { draw: ['0 0', '0 1'], duration: 2000, delay: 1720 })
+
+--- PADRÃO 173 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-173', {
+  x: 1730,
+  y: 60,
+  rotate: 519,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(63, { from: 'center', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-173', { y: [100,0], opacity: [0,1] })
+  .add('.sub-173', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-173', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-173',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-173', { y: self.progress * -346, duration: 0 })
+})
+
+const drawable173 = svg.createDrawable('.path-173')
+animate(drawable173, { draw: ['0 0', '0 1'], duration: 2000, delay: 1730 })
+
+--- PADRÃO 174 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-174', {
+  x: 1740,
+  y: 80,
+  rotate: 522,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(64, { from: 'last', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-174', { y: [100,0], opacity: [0,1] })
+  .add('.sub-174', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-174', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-174',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-174', { y: self.progress * -348, duration: 0 })
+})
+
+const drawable174 = svg.createDrawable('.path-174')
+animate(drawable174, { draw: ['0 0', '0 1'], duration: 2000, delay: 1740 })
+
+--- PADRÃO 175 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-175', {
+  x: 1750,
+  y: 0,
+  rotate: 525,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(65, { from: 'random', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-175', { y: [100,0], opacity: [0,1] })
+  .add('.sub-175', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-175', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-175',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-175', { y: self.progress * -350, duration: 0 })
+})
+
+const drawable175 = svg.createDrawable('.path-175')
+animate(drawable175, { draw: ['0 0', '0 1'], duration: 2000, delay: 1750 })
+
+--- PADRÃO 176 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-176', {
+  x: 1760,
+  y: 20,
+  rotate: 528,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(66, { from: 'first', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-176', { y: [100,0], opacity: [0,1] })
+  .add('.sub-176', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-176', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-176',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-176', { y: self.progress * -352, duration: 0 })
+})
+
+const drawable176 = svg.createDrawable('.path-176')
+animate(drawable176, { draw: ['0 0', '0 1'], duration: 2000, delay: 1760 })
+
+--- PADRÃO 177 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-177', {
+  x: 1770,
+  y: 40,
+  rotate: 531,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(67, { from: 'center', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-177', { y: [100,0], opacity: [0,1] })
+  .add('.sub-177', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-177', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-177',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-177', { y: self.progress * -354, duration: 0 })
+})
+
+const drawable177 = svg.createDrawable('.path-177')
+animate(drawable177, { draw: ['0 0', '0 1'], duration: 2000, delay: 1770 })
+
+--- PADRÃO 178 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-178', {
+  x: 1780,
+  y: 60,
+  rotate: 534,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(68, { from: 'last', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-178', { y: [100,0], opacity: [0,1] })
+  .add('.sub-178', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-178', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-178',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-178', { y: self.progress * -356, duration: 0 })
+})
+
+const drawable178 = svg.createDrawable('.path-178')
+animate(drawable178, { draw: ['0 0', '0 1'], duration: 2000, delay: 1780 })
+
+--- PADRÃO 179 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-179', {
+  x: 1790,
+  y: 80,
+  rotate: 537,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(69, { from: 'random', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-179', { y: [100,0], opacity: [0,1] })
+  .add('.sub-179', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-179', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-179',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-179', { y: self.progress * -358, duration: 0 })
+})
+
+const drawable179 = svg.createDrawable('.path-179')
+animate(drawable179, { draw: ['0 0', '0 1'], duration: 2000, delay: 1790 })
+
+--- PADRÃO 180 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-180', {
+  x: 1800,
+  y: 0,
+  rotate: 540,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(50, { from: 'first', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-180', { y: [100,0], opacity: [0,1] })
+  .add('.sub-180', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-180', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-180',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-180', { y: self.progress * -360, duration: 0 })
+})
+
+const drawable180 = svg.createDrawable('.path-180')
+animate(drawable180, { draw: ['0 0', '0 1'], duration: 2000, delay: 1800 })
+
+--- PADRÃO 181 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-181', {
+  x: 1810,
+  y: 20,
+  rotate: 543,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(51, { from: 'center', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-181', { y: [100,0], opacity: [0,1] })
+  .add('.sub-181', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-181', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-181',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-181', { y: self.progress * -362, duration: 0 })
+})
+
+const drawable181 = svg.createDrawable('.path-181')
+animate(drawable181, { draw: ['0 0', '0 1'], duration: 2000, delay: 1810 })
+
+--- PADRÃO 182 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-182', {
+  x: 1820,
+  y: 40,
+  rotate: 546,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(52, { from: 'last', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-182', { y: [100,0], opacity: [0,1] })
+  .add('.sub-182', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-182', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-182',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-182', { y: self.progress * -364, duration: 0 })
+})
+
+const drawable182 = svg.createDrawable('.path-182')
+animate(drawable182, { draw: ['0 0', '0 1'], duration: 2000, delay: 1820 })
+
+--- PADRÃO 183 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-183', {
+  x: 1830,
+  y: 60,
+  rotate: 549,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(53, { from: 'random', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-183', { y: [100,0], opacity: [0,1] })
+  .add('.sub-183', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-183', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-183',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-183', { y: self.progress * -366, duration: 0 })
+})
+
+const drawable183 = svg.createDrawable('.path-183')
+animate(drawable183, { draw: ['0 0', '0 1'], duration: 2000, delay: 1830 })
+
+--- PADRÃO 184 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-184', {
+  x: 1840,
+  y: 80,
+  rotate: 552,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(54, { from: 'first', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-184', { y: [100,0], opacity: [0,1] })
+  .add('.sub-184', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-184', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-184',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-184', { y: self.progress * -368, duration: 0 })
+})
+
+const drawable184 = svg.createDrawable('.path-184')
+animate(drawable184, { draw: ['0 0', '0 1'], duration: 2000, delay: 1840 })
+
+--- PADRÃO 185 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-185', {
+  x: 1850,
+  y: 0,
+  rotate: 555,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(55, { from: 'center', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-185', { y: [100,0], opacity: [0,1] })
+  .add('.sub-185', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-185', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-185',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-185', { y: self.progress * -370, duration: 0 })
+})
+
+const drawable185 = svg.createDrawable('.path-185')
+animate(drawable185, { draw: ['0 0', '0 1'], duration: 2000, delay: 1850 })
+
+--- PADRÃO 186 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-186', {
+  x: 1860,
+  y: 20,
+  rotate: 558,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(56, { from: 'last', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-186', { y: [100,0], opacity: [0,1] })
+  .add('.sub-186', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-186', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-186',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-186', { y: self.progress * -372, duration: 0 })
+})
+
+const drawable186 = svg.createDrawable('.path-186')
+animate(drawable186, { draw: ['0 0', '0 1'], duration: 2000, delay: 1860 })
+
+--- PADRÃO 187 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-187', {
+  x: 1870,
+  y: 40,
+  rotate: 561,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(57, { from: 'random', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-187', { y: [100,0], opacity: [0,1] })
+  .add('.sub-187', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-187', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-187',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-187', { y: self.progress * -374, duration: 0 })
+})
+
+const drawable187 = svg.createDrawable('.path-187')
+animate(drawable187, { draw: ['0 0', '0 1'], duration: 2000, delay: 1870 })
+
+--- PADRÃO 188 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-188', {
+  x: 1880,
+  y: 60,
+  rotate: 564,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(58, { from: 'first', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-188', { y: [100,0], opacity: [0,1] })
+  .add('.sub-188', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-188', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-188',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-188', { y: self.progress * -376, duration: 0 })
+})
+
+const drawable188 = svg.createDrawable('.path-188')
+animate(drawable188, { draw: ['0 0', '0 1'], duration: 2000, delay: 1880 })
+
+--- PADRÃO 189 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-189', {
+  x: 1890,
+  y: 80,
+  rotate: 567,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(59, { from: 'center', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-189', { y: [100,0], opacity: [0,1] })
+  .add('.sub-189', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-189', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-189',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-189', { y: self.progress * -378, duration: 0 })
+})
+
+const drawable189 = svg.createDrawable('.path-189')
+animate(drawable189, { draw: ['0 0', '0 1'], duration: 2000, delay: 1890 })
+
+--- PADRÃO 190 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-190', {
+  x: 1900,
+  y: 0,
+  rotate: 570,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(60, { from: 'last', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-190', { y: [100,0], opacity: [0,1] })
+  .add('.sub-190', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-190', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-190',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-190', { y: self.progress * -380, duration: 0 })
+})
+
+const drawable190 = svg.createDrawable('.path-190')
+animate(drawable190, { draw: ['0 0', '0 1'], duration: 2000, delay: 1900 })
+
+--- PADRÃO 191 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-191', {
+  x: 1910,
+  y: 20,
+  rotate: 573,
+  scale: 1.1,
+  duration: 600,
+  delay: stagger(61, { from: 'random', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-191', { y: [100,0], opacity: [0,1] })
+  .add('.sub-191', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-191', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-191',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-191', { y: self.progress * -382, duration: 0 })
+})
+
+const drawable191 = svg.createDrawable('.path-191')
+animate(drawable191, { draw: ['0 0', '0 1'], duration: 2000, delay: 1910 })
+
+--- PADRÃO 192 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-192', {
+  x: 1920,
+  y: 40,
+  rotate: 576,
+  scale: 1.2,
+  duration: 700,
+  delay: stagger(62, { from: 'first', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-192', { y: [100,0], opacity: [0,1] })
+  .add('.sub-192', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-192', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-192',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-192', { y: self.progress * -384, duration: 0 })
+})
+
+const drawable192 = svg.createDrawable('.path-192')
+animate(drawable192, { draw: ['0 0', '0 1'], duration: 2000, delay: 1920 })
+
+--- PADRÃO 193 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-193', {
+  x: 1930,
+  y: 60,
+  rotate: 579,
+  scale: 1.3,
+  duration: 800,
+  delay: stagger(63, { from: 'center', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-193', { y: [100,0], opacity: [0,1] })
+  .add('.sub-193', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-193', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-193',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-193', { y: self.progress * -386, duration: 0 })
+})
+
+const drawable193 = svg.createDrawable('.path-193')
+animate(drawable193, { draw: ['0 0', '0 1'], duration: 2000, delay: 1930 })
+
+--- PADRÃO 194 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-194', {
+  x: 1940,
+  y: 80,
+  rotate: 582,
+  scale: 1.4,
+  duration: 900,
+  delay: stagger(64, { from: 'last', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-194', { y: [100,0], opacity: [0,1] })
+  .add('.sub-194', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-194', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-194',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-194', { y: self.progress * -388, duration: 0 })
+})
+
+const drawable194 = svg.createDrawable('.path-194')
+animate(drawable194, { draw: ['0 0', '0 1'], duration: 2000, delay: 1940 })
+
+--- PADRÃO 195 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-195', {
+  x: 1950,
+  y: 0,
+  rotate: 585,
+  scale: 1.5,
+  duration: 1000,
+  delay: stagger(65, { from: 'random', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-195', { y: [100,0], opacity: [0,1] })
+  .add('.sub-195', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-195', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-195',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-195', { y: self.progress * -390, duration: 0 })
+})
+
+const drawable195 = svg.createDrawable('.path-195')
+animate(drawable195, { draw: ['0 0', '0 1'], duration: 2000, delay: 1950 })
+
+--- PADRÃO 196 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-196', {
+  x: 1960,
+  y: 20,
+  rotate: 588,
+  scale: 1.6,
+  duration: 1100,
+  delay: stagger(66, { from: 'first', grid: [3,3] }),
+  ease: 'outBack',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-196', { y: [100,0], opacity: [0,1] })
+  .add('.sub-196', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-196', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-196',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-196', { y: self.progress * -392, duration: 0 })
+})
+
+const drawable196 = svg.createDrawable('.path-196')
+animate(drawable196, { draw: ['0 0', '0 1'], duration: 2000, delay: 1960 })
+
+--- PADRÃO 197 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-197', {
+  x: 1970,
+  y: 40,
+  rotate: 591,
+  scale: 1.7,
+  duration: 1200,
+  delay: stagger(67, { from: 'center', grid: [3,3] }),
+  ease: 'outElastic',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-197', { y: [100,0], opacity: [0,1] })
+  .add('.sub-197', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-197', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-197',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-197', { y: self.progress * -394, duration: 0 })
+})
+
+const drawable197 = svg.createDrawable('.path-197')
+animate(drawable197, { draw: ['0 0', '0 1'], duration: 2000, delay: 1970 })
+
+--- PADRÃO 198 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-198', {
+  x: 1980,
+  y: 60,
+  rotate: 594,
+  scale: 1.8,
+  duration: 1300,
+  delay: stagger(68, { from: 'last', grid: [3,3] }),
+  ease: 'inOutQuad',
+  loop: False,
+  alternate: True
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-198', { y: [100,0], opacity: [0,1] })
+  .add('.sub-198', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-198', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-198',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-198', { y: self.progress * -396, duration: 0 })
+})
+
+const drawable198 = svg.createDrawable('.path-198')
+animate(drawable198, { draw: ['0 0', '0 1'], duration: 2000, delay: 1980 })
+
+--- PADRÃO 199 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-199', {
+  x: 1990,
+  y: 80,
+  rotate: 597,
+  scale: 1.9,
+  duration: 1400,
+  delay: stagger(69, { from: 'random', grid: [3,3] }),
+  ease: 'outQuint',
+  loop: False,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-199', { y: [100,0], opacity: [0,1] })
+  .add('.sub-199', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-199', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-199',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: True,
+  onUpdate: self => animate('.parallax-199', { y: self.progress * -398, duration: 0 })
+})
+
+const drawable199 = svg.createDrawable('.path-199')
+animate(drawable199, { draw: ['0 0', '0 1'], duration: 2000, delay: 1990 })
+
+--- PADRÃO 200 ---
+import { animate, createTimeline, stagger, onScroll, svg, createScope } from 'animejs'
+
+animate('.box-200', {
+  x: 2000,
+  y: 0,
+  rotate: 600,
+  scale: 1.0,
+  duration: 500,
+  delay: stagger(50, { from: 'first', grid: [3,3] }),
+  ease: 'outQuad',
+  loop: True,
+  alternate: False
+})
+
+createTimeline({ defaults: { duration: 800, ease: 'outQuad' } })
+  .add('.title-200', { y: [100,0], opacity: [0,1] })
+  .add('.sub-200', { y: [50,0], opacity: [0,1] }, '-=400')
+  .add('.btn-200', { scale: [0,1] }, '-=200')
+
+onScroll({
+  target: '.trigger-200',
+  enter: 'bottom top',
+  leave: 'top bottom',
+  sync: 0.5,
+  onUpdate: self => animate('.parallax-200', { y: self.progress * -400, duration: 0 })
+})
+
+const drawable200 = svg.createDrawable('.path-200')
+animate(drawable200, { draw: ['0 0', '0 1'], duration: 2000, delay: 2000 })

@@ -1,0 +1,452 @@
+
+================================================================================
+SCROLLTRIGGER - ENGENHARIA REVERSA TOTAL - O PLUGIN MAIS PODEROSO DO GSAP
+Versão: 3.13+ (2026) - 100% gratuito
+================================================================================
+
+ScrollTrigger é o que separa sites amadores de sites premiados no Awwwards.
+Ele transforma scroll em timeline. Não é "animação quando entra na tela".
+É controle de tempo baseado em scroll.
+
+COMO FUNCIONA POR DENTRO:
+1. Cria um observer de scroll otimizado (um único listener global)
+2. Para cada trigger, calcula start e end em pixels
+3. Se scrub: mapeia scroll progress (0-1) para timeline progress (0-1)
+4. Se pin: cria um spacer div para manter espaço e aplica position:fixed internamente
+5. Usa requestAnimationFrame + lag smoothing para não travar
+
+INSTALAÇÃO:
+import gsap from "gsap"
+import ScrollTrigger from "gsap/ScrollTrigger"
+gsap.registerPlugin(ScrollTrigger)
+
+================================================================================
+1. SINTAXE COMPLETA - TODAS AS PROPRIEDADES
+================================================================================
+
+gsap.to(".box", {
+  x: 500,
+  scrollTrigger: {
+    // TRIGGER
+    trigger: ".box", // elemento que dispara - string, element, ou array
+    // START / END - formato: "triggerPos viewportPos" ou "+=500" ou função
+    start: "top 80%", // quando TOP do trigger atinge 80% da viewport
+    end: "bottom 20%", // quando BOTTOM do trigger atinge 20% da viewport
+    // variações:
+    // "top top" = topo do trigger no topo da viewport
+    // "top center" = topo no centro
+    // "center center" = centro no centro
+    // "top+=100 80%" = topo + 100px no 80%
+    // "+=500" = 500px depois do start
+    // () => "+=" + element.offsetWidth = dinâmico
+    // "max" = máximo scroll possível
+    
+    // COMPORTAMENTO
+    scrub: true, // true = amarra 1:1 ao scroll | 1 = 1s de suavização | 0.5 = 0.5s lerp
+    pin: true, // fixa o trigger durante a animação | pode ser elemento | selector
+    pinSpacing: true, // cria espaço para o pin não colapsar (default true) | "margin" usa margin
+    pinType: "fixed" | "transform", // auto-detect, mas pode forçar
+    anticipatePin: 1, // evita flicker quando pin, 1 = 1 segundo de antecipação
+    pinReparent: false, // move pin para body durante pin (evita z-index)
+    
+    // TOGGLE (quando não usa scrub)
+    toggleActions: "play none none reverse", 
+    // 4 posições: onEnter | onLeave | onEnterBack | onLeaveBack
+    // valores: play, pause, resume, reset, restart, complete, reverse, none
+    // ex: "play pause resume reset" = entra toca, sai pausa, volta de baixo resume, sai por cima reset
+    
+    toggleClass: "active", // adiciona classe quando ativo
+    // ou: toggleClass: {targets: ".menu", className: "active"}
+    
+    // CALLBACKS
+    onEnter: self => {}, // entrou
+    onLeave: self => {}, // saiu pra baixo
+    onEnterBack: self => {}, // entrou voltando
+    onLeaveBack: self => {}, // saiu pra cima
+    onUpdate: self => {}, // a cada scroll update
+    onToggle: self => {}, // quando ativa/desativa
+    onRefresh: self => {}, // quando recalcula posições (resize)
+    
+    // self contém:
+    // self.progress (0-1)
+    // self.direction (1 = descendo, -1 = subindo)
+    // self.isActive (bool)
+    // self.getVelocity() -> px/s
+    
+    // DEBUG
+    markers: true, // mostra marcadores verde/vermelho
+    // ou: markers: {startColor: "white", endColor: "white", fontSize: "12px", indent: 100}
+    
+    // AVANÇADO
+    snap: 1/3, // snap para 1/3 progress | array [0, 0.5, 1] | {snapTo: [0,0.5,1], duration: 0.5, ease: "power1.inOut"}
+    scroller: ".container", // scroller custom (default window) - para overflow:scroll div
+    horizontal: false, // scroll horizontal
+    containerAnimation: horizontalTween, // para animar dentro de scroll horizontal
+    invalidateOnRefresh: true, // recalcula valores funcionais no resize
+    refreshPriority: 1, // ordem de refresh (-1 = depois, 1 = antes)
+    fastScrollEnd: true, // acelera final quando scroll rápido
+    preventOverlaps: true, // evita que outro pin sobreponha
+    once: false, // só anima uma vez
+  }
+})
+
+ScrollTrigger.create({...}) vs gsap.to({scrollTrigger:{...}}):
+- gsap.to cria animação + trigger
+- ScrollTrigger.create cria só trigger, sem animação (útil pra toggleClass, callbacks)
+
+================================================================================
+2. START E END - A MATEMÁTICA QUE NINGUÉM EXPLICA
+================================================================================
+
+Formato: "TRIGGER VIEWPORT" ou relativo
+
+"top 80%" = 
+  trigger = top do elemento trigger
+  viewport = 80% da altura da viewport (de cima)
+  Quando top do trigger cruza 80% da tela, começa.
+
+Valores trigger: top, center, bottom, 20%, 100px, top+=100
+
+Valores viewport: top, center, bottom, 20%, 80%, etc
+
+Exemplos visuais:
+
+start: "top bottom" => quando topo do elemento entra por baixo (entra na tela)
+start: "top 80%" => quando topo entra em 80% (20% antes do centro) - MAIS USADO PARA REVEAL
+start: "top 50%" => centro da tela
+start: "bottom bottom" => quando base do elemento entra por baixo
+start: "top top" => quando topo chega no topo (para pin)
+start: "bottom top" => quando base chega no topo (saiu totalmente)
+
+end: "+=500" => 500px depois do start (duração do pin/scrub)
+end: "bottom top" => até base chegar no topo
+end: "+=100%" => 100% da altura do trigger
+end: () => "+=" + document.querySelector(".horizontal").offsetWidth => dinâmico!
+
+Exemplo pin que dura 2 telas:
+start: "top top"
+end: "+=200%"
+
+================================================================================
+3. SCRUB vs TOGGLE - DOIS MODOS DE USAR
+================================================================================
+
+MODO 1 - TOGGLE (sem scrub) - anima quando entra:
+gsap.from(".box", {
+  y: 100,
+  opacity: 0,
+  duration: 1,
+  scrollTrigger: {
+    trigger: ".box",
+    start: "top 80%",
+    toggleActions: "play none none reverse"
+  }
+})
+-> anima uma vez quando entra, reverte quando sai por cima
+
+MODO 2 - SCRUB (com scrub) - amarra ao scroll:
+gsap.to(".box", {
+  x: 500,
+  ease: "none", // importante! scrub já suaviza, use none para linear
+  scrollTrigger: {
+    trigger: ".box",
+    start: "top center",
+    end: "bottom top",
+    scrub: 1 // 1 segundo de lerp
+  }
+})
+-> progress da animação = progress do scroll entre start e end
+
+scrub: true = 1:1 direto, sem suavização (pode ficar seco)
+scrub: 1 = 1s de suavização (recomendado)
+scrub: 0.5 = mais responsivo
+
+DICA OURO: sempre use ease: "none" quando usar scrub, senão a curva de ease + scrub fica estranho.
+
+================================================================================
+4. PIN - FIXAR ELEMENTO
+================================================================================
+
+O que pin faz:
+1. Cria um div spacer com mesma altura do elemento pinnado
+2. Quando scroll entra em start, coloca elemento em position:fixed
+3. Quando sai de end, volta para normal
+
+Código simples pin:
+ScrollTrigger.create({
+  trigger: ".section",
+  start: "top top",
+  end: "+=1000",
+  pin: true,
+  markers: true
+})
+
+Pin com animação:
+let tl = gsap.timeline({
+  scrollTrigger: {
+    trigger: ".process",
+    pin: true,
+    start: "top top",
+    end: "+=2000",
+    scrub: 1
+  }
+})
+tl.to(".card1", {x: 0})
+  .to(".card2", {x: 0})
+  .to(".card3", {x: 0})
+
+Pin múltiplo com pinSpacing false (um em cima do outro):
+ScrollTrigger.create({trigger: ".s1", pin: true, pinSpacing: false, start: "top top", end: "+=100%"})
+ScrollTrigger.create({trigger: ".s2", pin: true, pinSpacing: false, start: "top top", end: "+=100%"})
+
+Problema comum: pin dentro de container com overflow hidden - use pinReparent:true ou estrutura melhor.
+
+anticipatePin: evita flicker em browsers que demoram pra trocar para fixed. Use 1 quando pin logo no início.
+
+================================================================================
+5. TIMELINE + SCROLLTRIGGER - COMBO MORTAL
+================================================================================
+
+Isso é onde fica profissional.
+
+let tl = gsap.timeline({
+  scrollTrigger: {
+    trigger: ".story",
+    start: "top top",
+    end: "+=300%",
+    pin: true,
+    scrub: 1,
+    anticipatePin: 1
+  }
+})
+
+// cada to é uma fase da história
+tl.from(".step1", {opacity: 0, y: 100})
+  .to(".step1", {opacity: 0, y: -100}, "+=1") // segura 1s depois some
+  .from(".step2", {opacity: 0, y: 100})
+  .to(".step2", {opacity: 0}, "+=1")
+  .from(".step3", {opacity: 0, scale: 0.8})
+
+Você controla tempo com "+=1" que no scrub vira scroll distance.
+
+================================================================================
+6. PADRÕES QUE TODO SITE PREMIADO USA
+================================================================================
+
+Padrão 1 - REVEAL BÁSICO (mais usado no mundo):
+gsap.utils.toArray(".reveal").forEach(el => {
+  gsap.from(el, {
+    y: 80,
+    opacity: 0,
+    duration: 1,
+    ease: "power4.out",
+    scrollTrigger: {
+      trigger: el,
+      start: "top 85%",
+      toggleActions: "play none none reverse"
+    }
+  })
+})
+
+Padrão 2 - PARALLAX SIMPLES:
+gsap.to(".parallax", {
+  yPercent: -20,
+  ease: "none",
+  scrollTrigger: {
+    trigger: ".parallax-container",
+    start: "top bottom",
+    end: "bottom top",
+    scrub: true
+  }
+})
+
+Padrão 3 - PARALLAX COM IMAGEM SCALE (efeito Apple):
+gsap.utils.toArray(".img-wrap").forEach(wrap => {
+  let img = wrap.querySelector("img")
+  gsap.fromTo(img, 
+    {yPercent: -10, scale: 1.2},
+    {yPercent: 10, scale: 1.2, ease: "none", scrollTrigger: {trigger: wrap, scrub: 1, start: "top bottom", end: "bottom top"}}
+  )
+})
+
+Padrão 4 - PIN + PROGRESS BAR:
+gsap.to(".progress-bar", {
+  scaleX: 1,
+  ease: "none",
+  scrollTrigger: {
+    trigger: ".article",
+    start: "top top",
+    end: "bottom bottom",
+    scrub: 0.3
+  }
+})
+
+Padrão 5 - HORIZONTAL SCROLL (efeito horizontal dentro de vertical):
+let sections = gsap.utils.toArray(".panel")
+let horizontalTween = gsap.to(sections, {
+  xPercent: -100 * (sections.length - 1),
+  ease: "none",
+  scrollTrigger: {
+    trigger: ".horizontal-container",
+    pin: true,
+    scrub: 1,
+    end: () => "+=" + (document.querySelector(".horizontal-container").offsetWidth)
+  }
+})
+
+// anima algo DENTRO do horizontal:
+gsap.to(".box-inside", {
+  y: 100,
+  scrollTrigger: {
+    containerAnimation: horizontalTween,
+    trigger: ".box-inside",
+    start: "left center",
+    toggleActions: "play none none reverse"
+  }
+})
+
+Padrão 6 - BATCH - performance para 100 cards:
+ScrollTrigger.batch(".card", {
+  start: "top 85%",
+  onEnter: batch => gsap.from(batch, {y: 100, opacity: 0, stagger: 0.08, overwrite: true}),
+  onLeaveBack: batch => gsap.to(batch, {y: 100, opacity: 0, stagger: 0.08})
+})
+
+Padrão 7 - SNAP SECTIONS - tipo fullpage.js:
+ScrollTrigger.create({
+  trigger: ".container",
+  start: "top top",
+  end: "bottom bottom",
+  snap: 1/4 // 4 seções
+})
+
+Com snap custom:
+snap: {
+  snapTo: [0, 0.33, 0.66, 1],
+  duration: {min: 0.2, max: 0.8},
+  ease: "power1.inOut"
+}
+
+Padrão 8 - NAVBAR QUE ESCONDE NO SCROLL:
+let last = 0
+ScrollTrigger.create({
+  start: "top top",
+  end: 999999,
+  onUpdate: self => {
+    let curr = self.scroll()
+    if(curr > last && curr > 100) gsap.to("nav", {yPercent: -100, duration: 0.3, overwrite: true})
+    else gsap.to("nav", {yPercent: 0, duration: 0.3, overwrite: true})
+    last = curr
+  }
+})
+
+Padrão 9 - TEXT REVEAL COM SPLITTEXT + SCROLLTRIGGER:
+let split = SplitText.create(".title", {type: "lines", mask: "lines"})
+gsap.from(split.lines, {
+  yPercent: 100,
+  duration: 1,
+  stagger: 0.1,
+  ease: "power4.out",
+  scrollTrigger: {
+    trigger: ".title",
+    start: "top 80%"
+  }
+})
+
+Padrão 10 - PIN COM MÚLTIPLOS ELEMENTOS MUDANDO:
+let tl = gsap.timeline({
+  scrollTrigger: {
+    trigger: ".features",
+    pin: true,
+    scrub: 1,
+    start: "top top",
+    end: "+=2000"
+  }
+})
+tl.to(".phone", {scale: 1.2})
+  .to(".feature-1", {opacity: 1}, "<")
+  .to(".feature-1", {opacity: 0})
+  .to(".phone", {rotationY: 30})
+  .to(".feature-2", {opacity: 1}, "<")
+
+================================================================================
+7. PERFORMANCE E ERROS QUE MATAM
+================================================================================
+
+ERRO 1: Criar 100 ScrollTriggers separados com from() - LENTO
+Solução: Use ScrollTrigger.batch() ou um único timeline
+
+ERRO 2: Usar width/height no scrub - causa layout thrashing
+Solução: Use scale, x, y (transform)
+
+ERRO 3: Não usar invalidateOnRefresh quando start/end é função
+Solução: invalidateOnRefresh: true
+
+ERRO 4: Pin dentro de elemento com transform - buga
+Solução: Pin no parent, ou pinReparent:true
+
+ERRO 5: Esquecer ease: "none" no scrub - animação fica esquisita
+Solução: sempre ease: "none" com scrub
+
+ERRO 6: Não matar ScrollTriggers no React
+Solução: use gsap.context() + useGSAP
+
+PERFORMANCE:
+- gsap.ticker.lagSmoothing(500,33)
+- ScrollTrigger.config({limitCallbacks: true}) // limita callbacks em scroll rápido
+- ScrollTrigger.config({ignoreMobileResize: true})
+
+Refresh manual quando DOM muda:
+ScrollTrigger.refresh()
+
+Matar tudo:
+ScrollTrigger.getAll().forEach(t => t.kill())
+
+================================================================================
+8. API COMPLETA - MÉTODOS ESTÁTICOS
+================================================================================
+
+ScrollTrigger.create(vars) -> cria instância
+ScrollTrigger.getAll() -> array de todos
+ScrollTrigger.getById(id) -> pega por id
+ScrollTrigger.refresh() -> recalcula tudo (chame após mudar DOM)
+ScrollTrigger.addEventListener("refresh", func)
+ScrollTrigger.config({limitCallbacks, syncInterval, autoRefreshEvents})
+ScrollTrigger.scrollerProxy(target, {scrollTop(value), getBoundingClientRect()}) -> para custom scroller tipo Lenis
+ScrollTrigger.normalizeScroll(true) -> normaliza scroll entre browsers (substitui smooth)
+
+Instância:
+trigger.kill()
+trigger.refresh()
+trigger.enable()
+trigger.disable()
+trigger.vars
+trigger.progress
+trigger.direction
+trigger.isActive
+
+================================================================================
+9. SCROLLERPROXY - USAR COM LENIS / LOCOMOTIVE
+================================================================================
+
+Se usar Lenis para smooth scroll:
+
+const lenis = new Lenis()
+lenis.on('scroll', ScrollTrigger.update)
+gsap.ticker.add((time) => lenis.raf(time * 1000))
+
+ScrollTrigger.scrollerProxy(document.body, {
+  scrollTop(value) {
+    if(arguments.length) lenis.scrollTo(value, {immediate: true})
+    return lenis.scroll
+  },
+  getBoundingClientRect() {
+    return {top:0, left:0, width: window.innerWidth, height: window.innerHeight}
+  }
+})
+
+================================================================================
+FIM - SCROLLTRIGGER DOMINADO
+Se você domina isso, domina 80% dos sites premiados.
+Próximo: ScrollSmoother + ScrollTrigger juntos.
+================================================================================

@@ -1,0 +1,3410 @@
+
+================================================================================
+BARBA.JS + SWUP - PAGE TRANSITIONS - ENGENHARIA REVERSA TOTAL - 2026
+Transição fluida entre páginas sem reload - Padrão Awwwards
+================================================================================
+
+O QUE É:
+Barba.js e Swup fazem SPA sem framework: interceptam clique em <a>, carregam próxima página via fetch, e animam transição (fade, slide, morph). Mantém SEO, mas com UX de app.
+
+BARBA.JS v2:
+npm install @barba/core
+import barba from '@barba/core'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'fade',
+    leave(data){
+      return gsap.to(data.current.container, { opacity: 0, duration: 0.5 })
+    },
+    enter(data){
+      return gsap.from(data.next.container, { opacity: 0, duration: 0.5 })
+    }
+  }],
+  views: [{
+    namespace: 'home',
+    beforeEnter(){ console.log('entrou home') },
+    afterEnter(){ ScrollTrigger.refresh() }
+  }]
+})
+
+HTML:
+<body data-barba="wrapper">
+  <main data-barba="container" data-barba-namespace="home">
+    Conteúdo
+  </main>
+</body>
+
+Com GSAP + ScrollTrigger:
+barba.init({
+  transitions: [{
+    leave(data){
+      return gsap.to(data.current.container, { y: -100, opacity: 0, duration: 0.6, ease: 'power2.in' })
+    },
+    enter(data){
+      window.scrollTo(0,0)
+      return gsap.from(data.next.container, { y: 100, opacity: 0, duration: 0.6, ease: 'power2.out' })
+    }
+  }]
+})
+
+SWUP v4 (mais moderno, menor):
+npm install swup
+import Swup from 'swup'
+import SwupGsapPlugin from '@swup/gsap-plugin'
+
+const swup = new Swup({
+  containers: ['#swup'],
+  plugins: [new SwupGsapPlugin()]
+})
+
+HTML:
+<main id="swup" class="transition-fade">Conteúdo</main>
+
+CSS:
+.transition-fade { transition: opacity 0.4s; }
+html.is-animating .transition-fade { opacity: 0 }
+
+Com GSAP:
+import Swup from 'swup'
+const swup = new Swup()
+
+swup.hooks.on('animation:out:start', ()=>{
+  gsap.to('#swup', { opacity: 0, duration: 0.5 })
+})
+
+swup.hooks.on('animation:in:start', ()=>{
+  gsap.from('#swup', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+NEXT.JS - Page transitions nativas (sem Barba/Swup):
+// app/template.tsx
+'use client'
+import { motion, AnimatePresence } from 'motion/react'
+export default function Template({ children }){
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={pathname}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.5 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
+RECOMENDAÇÃO 2026:
+- Site estático/multi-page? Swup (mais leve, moderno)
+- Site com transições complexas? Barba.js
+- Next.js? Use template.tsx + Motion AnimatePresence (nativo, sem lib)
+
+
+================================================================================
+BARBA + SWUP - 150 PADRÕES
+================================================================================
+
+--- BARBA/SWUP PADRÃO 1 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-1',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -51, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 51, duration: 0.5 }) }
+  }]
+})
+
+const swup1 = new Swup({
+  containers: ['#swup-1']
+})
+swup1.hooks.on('animation:out:start', ()=> gsap.to('#swup-1', { opacity: 0, duration: 0.5 }))
+swup1.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-1', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 2 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-2',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -52, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 52, duration: 0.5 }) }
+  }]
+})
+
+const swup2 = new Swup({
+  containers: ['#swup-2']
+})
+swup2.hooks.on('animation:out:start', ()=> gsap.to('#swup-2', { opacity: 0, duration: 0.5 }))
+swup2.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-2', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 3 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-3',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -53, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 53, duration: 0.5 }) }
+  }]
+})
+
+const swup3 = new Swup({
+  containers: ['#swup-3']
+})
+swup3.hooks.on('animation:out:start', ()=> gsap.to('#swup-3', { opacity: 0, duration: 0.5 }))
+swup3.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-3', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 4 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-4',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -54, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 54, duration: 0.5 }) }
+  }]
+})
+
+const swup4 = new Swup({
+  containers: ['#swup-4']
+})
+swup4.hooks.on('animation:out:start', ()=> gsap.to('#swup-4', { opacity: 0, duration: 0.5 }))
+swup4.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-4', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 5 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-5',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -55, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 55, duration: 0.5 }) }
+  }]
+})
+
+const swup5 = new Swup({
+  containers: ['#swup-5']
+})
+swup5.hooks.on('animation:out:start', ()=> gsap.to('#swup-5', { opacity: 0, duration: 0.5 }))
+swup5.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-5', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 6 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-6',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -56, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 56, duration: 0.5 }) }
+  }]
+})
+
+const swup6 = new Swup({
+  containers: ['#swup-6']
+})
+swup6.hooks.on('animation:out:start', ()=> gsap.to('#swup-6', { opacity: 0, duration: 0.5 }))
+swup6.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-6', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 7 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-7',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -57, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 57, duration: 0.5 }) }
+  }]
+})
+
+const swup7 = new Swup({
+  containers: ['#swup-7']
+})
+swup7.hooks.on('animation:out:start', ()=> gsap.to('#swup-7', { opacity: 0, duration: 0.5 }))
+swup7.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-7', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 8 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-8',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -58, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 58, duration: 0.5 }) }
+  }]
+})
+
+const swup8 = new Swup({
+  containers: ['#swup-8']
+})
+swup8.hooks.on('animation:out:start', ()=> gsap.to('#swup-8', { opacity: 0, duration: 0.5 }))
+swup8.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-8', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 9 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-9',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -59, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 59, duration: 0.5 }) }
+  }]
+})
+
+const swup9 = new Swup({
+  containers: ['#swup-9']
+})
+swup9.hooks.on('animation:out:start', ()=> gsap.to('#swup-9', { opacity: 0, duration: 0.5 }))
+swup9.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-9', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 10 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-10',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -60, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 60, duration: 0.5 }) }
+  }]
+})
+
+const swup10 = new Swup({
+  containers: ['#swup-10']
+})
+swup10.hooks.on('animation:out:start', ()=> gsap.to('#swup-10', { opacity: 0, duration: 0.5 }))
+swup10.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-10', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 11 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-11',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -61, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 61, duration: 0.5 }) }
+  }]
+})
+
+const swup11 = new Swup({
+  containers: ['#swup-11']
+})
+swup11.hooks.on('animation:out:start', ()=> gsap.to('#swup-11', { opacity: 0, duration: 0.5 }))
+swup11.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-11', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 12 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-12',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -62, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 62, duration: 0.5 }) }
+  }]
+})
+
+const swup12 = new Swup({
+  containers: ['#swup-12']
+})
+swup12.hooks.on('animation:out:start', ()=> gsap.to('#swup-12', { opacity: 0, duration: 0.5 }))
+swup12.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-12', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 13 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-13',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -63, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 63, duration: 0.5 }) }
+  }]
+})
+
+const swup13 = new Swup({
+  containers: ['#swup-13']
+})
+swup13.hooks.on('animation:out:start', ()=> gsap.to('#swup-13', { opacity: 0, duration: 0.5 }))
+swup13.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-13', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 14 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-14',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -64, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 64, duration: 0.5 }) }
+  }]
+})
+
+const swup14 = new Swup({
+  containers: ['#swup-14']
+})
+swup14.hooks.on('animation:out:start', ()=> gsap.to('#swup-14', { opacity: 0, duration: 0.5 }))
+swup14.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-14', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 15 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-15',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -65, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 65, duration: 0.5 }) }
+  }]
+})
+
+const swup15 = new Swup({
+  containers: ['#swup-15']
+})
+swup15.hooks.on('animation:out:start', ()=> gsap.to('#swup-15', { opacity: 0, duration: 0.5 }))
+swup15.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-15', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 16 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-16',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -66, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 66, duration: 0.5 }) }
+  }]
+})
+
+const swup16 = new Swup({
+  containers: ['#swup-16']
+})
+swup16.hooks.on('animation:out:start', ()=> gsap.to('#swup-16', { opacity: 0, duration: 0.5 }))
+swup16.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-16', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 17 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-17',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -67, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 67, duration: 0.5 }) }
+  }]
+})
+
+const swup17 = new Swup({
+  containers: ['#swup-17']
+})
+swup17.hooks.on('animation:out:start', ()=> gsap.to('#swup-17', { opacity: 0, duration: 0.5 }))
+swup17.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-17', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 18 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-18',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -68, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 68, duration: 0.5 }) }
+  }]
+})
+
+const swup18 = new Swup({
+  containers: ['#swup-18']
+})
+swup18.hooks.on('animation:out:start', ()=> gsap.to('#swup-18', { opacity: 0, duration: 0.5 }))
+swup18.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-18', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 19 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-19',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -69, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 69, duration: 0.5 }) }
+  }]
+})
+
+const swup19 = new Swup({
+  containers: ['#swup-19']
+})
+swup19.hooks.on('animation:out:start', ()=> gsap.to('#swup-19', { opacity: 0, duration: 0.5 }))
+swup19.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-19', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 20 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-20',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -70, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 70, duration: 0.5 }) }
+  }]
+})
+
+const swup20 = new Swup({
+  containers: ['#swup-20']
+})
+swup20.hooks.on('animation:out:start', ()=> gsap.to('#swup-20', { opacity: 0, duration: 0.5 }))
+swup20.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-20', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 21 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-21',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -71, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 71, duration: 0.5 }) }
+  }]
+})
+
+const swup21 = new Swup({
+  containers: ['#swup-21']
+})
+swup21.hooks.on('animation:out:start', ()=> gsap.to('#swup-21', { opacity: 0, duration: 0.5 }))
+swup21.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-21', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 22 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-22',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -72, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 72, duration: 0.5 }) }
+  }]
+})
+
+const swup22 = new Swup({
+  containers: ['#swup-22']
+})
+swup22.hooks.on('animation:out:start', ()=> gsap.to('#swup-22', { opacity: 0, duration: 0.5 }))
+swup22.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-22', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 23 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-23',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -73, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 73, duration: 0.5 }) }
+  }]
+})
+
+const swup23 = new Swup({
+  containers: ['#swup-23']
+})
+swup23.hooks.on('animation:out:start', ()=> gsap.to('#swup-23', { opacity: 0, duration: 0.5 }))
+swup23.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-23', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 24 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-24',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -74, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 74, duration: 0.5 }) }
+  }]
+})
+
+const swup24 = new Swup({
+  containers: ['#swup-24']
+})
+swup24.hooks.on('animation:out:start', ()=> gsap.to('#swup-24', { opacity: 0, duration: 0.5 }))
+swup24.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-24', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 25 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-25',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -75, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 75, duration: 0.5 }) }
+  }]
+})
+
+const swup25 = new Swup({
+  containers: ['#swup-25']
+})
+swup25.hooks.on('animation:out:start', ()=> gsap.to('#swup-25', { opacity: 0, duration: 0.5 }))
+swup25.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-25', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 26 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-26',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -76, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 76, duration: 0.5 }) }
+  }]
+})
+
+const swup26 = new Swup({
+  containers: ['#swup-26']
+})
+swup26.hooks.on('animation:out:start', ()=> gsap.to('#swup-26', { opacity: 0, duration: 0.5 }))
+swup26.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-26', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 27 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-27',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -77, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 77, duration: 0.5 }) }
+  }]
+})
+
+const swup27 = new Swup({
+  containers: ['#swup-27']
+})
+swup27.hooks.on('animation:out:start', ()=> gsap.to('#swup-27', { opacity: 0, duration: 0.5 }))
+swup27.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-27', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 28 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-28',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -78, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 78, duration: 0.5 }) }
+  }]
+})
+
+const swup28 = new Swup({
+  containers: ['#swup-28']
+})
+swup28.hooks.on('animation:out:start', ()=> gsap.to('#swup-28', { opacity: 0, duration: 0.5 }))
+swup28.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-28', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 29 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-29',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -79, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 79, duration: 0.5 }) }
+  }]
+})
+
+const swup29 = new Swup({
+  containers: ['#swup-29']
+})
+swup29.hooks.on('animation:out:start', ()=> gsap.to('#swup-29', { opacity: 0, duration: 0.5 }))
+swup29.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-29', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 30 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-30',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -80, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 80, duration: 0.5 }) }
+  }]
+})
+
+const swup30 = new Swup({
+  containers: ['#swup-30']
+})
+swup30.hooks.on('animation:out:start', ()=> gsap.to('#swup-30', { opacity: 0, duration: 0.5 }))
+swup30.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-30', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 31 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-31',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -81, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 81, duration: 0.5 }) }
+  }]
+})
+
+const swup31 = new Swup({
+  containers: ['#swup-31']
+})
+swup31.hooks.on('animation:out:start', ()=> gsap.to('#swup-31', { opacity: 0, duration: 0.5 }))
+swup31.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-31', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 32 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-32',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -82, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 82, duration: 0.5 }) }
+  }]
+})
+
+const swup32 = new Swup({
+  containers: ['#swup-32']
+})
+swup32.hooks.on('animation:out:start', ()=> gsap.to('#swup-32', { opacity: 0, duration: 0.5 }))
+swup32.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-32', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 33 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-33',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -83, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 83, duration: 0.5 }) }
+  }]
+})
+
+const swup33 = new Swup({
+  containers: ['#swup-33']
+})
+swup33.hooks.on('animation:out:start', ()=> gsap.to('#swup-33', { opacity: 0, duration: 0.5 }))
+swup33.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-33', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 34 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-34',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -84, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 84, duration: 0.5 }) }
+  }]
+})
+
+const swup34 = new Swup({
+  containers: ['#swup-34']
+})
+swup34.hooks.on('animation:out:start', ()=> gsap.to('#swup-34', { opacity: 0, duration: 0.5 }))
+swup34.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-34', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 35 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-35',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -85, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 85, duration: 0.5 }) }
+  }]
+})
+
+const swup35 = new Swup({
+  containers: ['#swup-35']
+})
+swup35.hooks.on('animation:out:start', ()=> gsap.to('#swup-35', { opacity: 0, duration: 0.5 }))
+swup35.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-35', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 36 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-36',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -86, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 86, duration: 0.5 }) }
+  }]
+})
+
+const swup36 = new Swup({
+  containers: ['#swup-36']
+})
+swup36.hooks.on('animation:out:start', ()=> gsap.to('#swup-36', { opacity: 0, duration: 0.5 }))
+swup36.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-36', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 37 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-37',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -87, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 87, duration: 0.5 }) }
+  }]
+})
+
+const swup37 = new Swup({
+  containers: ['#swup-37']
+})
+swup37.hooks.on('animation:out:start', ()=> gsap.to('#swup-37', { opacity: 0, duration: 0.5 }))
+swup37.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-37', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 38 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-38',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -88, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 88, duration: 0.5 }) }
+  }]
+})
+
+const swup38 = new Swup({
+  containers: ['#swup-38']
+})
+swup38.hooks.on('animation:out:start', ()=> gsap.to('#swup-38', { opacity: 0, duration: 0.5 }))
+swup38.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-38', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 39 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-39',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -89, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 89, duration: 0.5 }) }
+  }]
+})
+
+const swup39 = new Swup({
+  containers: ['#swup-39']
+})
+swup39.hooks.on('animation:out:start', ()=> gsap.to('#swup-39', { opacity: 0, duration: 0.5 }))
+swup39.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-39', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 40 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-40',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -90, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 90, duration: 0.5 }) }
+  }]
+})
+
+const swup40 = new Swup({
+  containers: ['#swup-40']
+})
+swup40.hooks.on('animation:out:start', ()=> gsap.to('#swup-40', { opacity: 0, duration: 0.5 }))
+swup40.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-40', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 41 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-41',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -91, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 91, duration: 0.5 }) }
+  }]
+})
+
+const swup41 = new Swup({
+  containers: ['#swup-41']
+})
+swup41.hooks.on('animation:out:start', ()=> gsap.to('#swup-41', { opacity: 0, duration: 0.5 }))
+swup41.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-41', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 42 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-42',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -92, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 92, duration: 0.5 }) }
+  }]
+})
+
+const swup42 = new Swup({
+  containers: ['#swup-42']
+})
+swup42.hooks.on('animation:out:start', ()=> gsap.to('#swup-42', { opacity: 0, duration: 0.5 }))
+swup42.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-42', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 43 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-43',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -93, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 93, duration: 0.5 }) }
+  }]
+})
+
+const swup43 = new Swup({
+  containers: ['#swup-43']
+})
+swup43.hooks.on('animation:out:start', ()=> gsap.to('#swup-43', { opacity: 0, duration: 0.5 }))
+swup43.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-43', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 44 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-44',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -94, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 94, duration: 0.5 }) }
+  }]
+})
+
+const swup44 = new Swup({
+  containers: ['#swup-44']
+})
+swup44.hooks.on('animation:out:start', ()=> gsap.to('#swup-44', { opacity: 0, duration: 0.5 }))
+swup44.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-44', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 45 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-45',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -95, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 95, duration: 0.5 }) }
+  }]
+})
+
+const swup45 = new Swup({
+  containers: ['#swup-45']
+})
+swup45.hooks.on('animation:out:start', ()=> gsap.to('#swup-45', { opacity: 0, duration: 0.5 }))
+swup45.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-45', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 46 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-46',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -96, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 96, duration: 0.5 }) }
+  }]
+})
+
+const swup46 = new Swup({
+  containers: ['#swup-46']
+})
+swup46.hooks.on('animation:out:start', ()=> gsap.to('#swup-46', { opacity: 0, duration: 0.5 }))
+swup46.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-46', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 47 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-47',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -97, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 97, duration: 0.5 }) }
+  }]
+})
+
+const swup47 = new Swup({
+  containers: ['#swup-47']
+})
+swup47.hooks.on('animation:out:start', ()=> gsap.to('#swup-47', { opacity: 0, duration: 0.5 }))
+swup47.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-47', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 48 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-48',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -98, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 98, duration: 0.5 }) }
+  }]
+})
+
+const swup48 = new Swup({
+  containers: ['#swup-48']
+})
+swup48.hooks.on('animation:out:start', ()=> gsap.to('#swup-48', { opacity: 0, duration: 0.5 }))
+swup48.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-48', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 49 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-49',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -99, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 99, duration: 0.5 }) }
+  }]
+})
+
+const swup49 = new Swup({
+  containers: ['#swup-49']
+})
+swup49.hooks.on('animation:out:start', ()=> gsap.to('#swup-49', { opacity: 0, duration: 0.5 }))
+swup49.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-49', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 50 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-50',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -50, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 50, duration: 0.5 }) }
+  }]
+})
+
+const swup50 = new Swup({
+  containers: ['#swup-50']
+})
+swup50.hooks.on('animation:out:start', ()=> gsap.to('#swup-50', { opacity: 0, duration: 0.5 }))
+swup50.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-50', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 51 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-51',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -51, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 51, duration: 0.5 }) }
+  }]
+})
+
+const swup51 = new Swup({
+  containers: ['#swup-51']
+})
+swup51.hooks.on('animation:out:start', ()=> gsap.to('#swup-51', { opacity: 0, duration: 0.5 }))
+swup51.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-51', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 52 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-52',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -52, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 52, duration: 0.5 }) }
+  }]
+})
+
+const swup52 = new Swup({
+  containers: ['#swup-52']
+})
+swup52.hooks.on('animation:out:start', ()=> gsap.to('#swup-52', { opacity: 0, duration: 0.5 }))
+swup52.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-52', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 53 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-53',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -53, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 53, duration: 0.5 }) }
+  }]
+})
+
+const swup53 = new Swup({
+  containers: ['#swup-53']
+})
+swup53.hooks.on('animation:out:start', ()=> gsap.to('#swup-53', { opacity: 0, duration: 0.5 }))
+swup53.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-53', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 54 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-54',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -54, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 54, duration: 0.5 }) }
+  }]
+})
+
+const swup54 = new Swup({
+  containers: ['#swup-54']
+})
+swup54.hooks.on('animation:out:start', ()=> gsap.to('#swup-54', { opacity: 0, duration: 0.5 }))
+swup54.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-54', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 55 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-55',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -55, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 55, duration: 0.5 }) }
+  }]
+})
+
+const swup55 = new Swup({
+  containers: ['#swup-55']
+})
+swup55.hooks.on('animation:out:start', ()=> gsap.to('#swup-55', { opacity: 0, duration: 0.5 }))
+swup55.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-55', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 56 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-56',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -56, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 56, duration: 0.5 }) }
+  }]
+})
+
+const swup56 = new Swup({
+  containers: ['#swup-56']
+})
+swup56.hooks.on('animation:out:start', ()=> gsap.to('#swup-56', { opacity: 0, duration: 0.5 }))
+swup56.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-56', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 57 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-57',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -57, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 57, duration: 0.5 }) }
+  }]
+})
+
+const swup57 = new Swup({
+  containers: ['#swup-57']
+})
+swup57.hooks.on('animation:out:start', ()=> gsap.to('#swup-57', { opacity: 0, duration: 0.5 }))
+swup57.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-57', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 58 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-58',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -58, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 58, duration: 0.5 }) }
+  }]
+})
+
+const swup58 = new Swup({
+  containers: ['#swup-58']
+})
+swup58.hooks.on('animation:out:start', ()=> gsap.to('#swup-58', { opacity: 0, duration: 0.5 }))
+swup58.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-58', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 59 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-59',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -59, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 59, duration: 0.5 }) }
+  }]
+})
+
+const swup59 = new Swup({
+  containers: ['#swup-59']
+})
+swup59.hooks.on('animation:out:start', ()=> gsap.to('#swup-59', { opacity: 0, duration: 0.5 }))
+swup59.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-59', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 60 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-60',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -60, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 60, duration: 0.5 }) }
+  }]
+})
+
+const swup60 = new Swup({
+  containers: ['#swup-60']
+})
+swup60.hooks.on('animation:out:start', ()=> gsap.to('#swup-60', { opacity: 0, duration: 0.5 }))
+swup60.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-60', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 61 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-61',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -61, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 61, duration: 0.5 }) }
+  }]
+})
+
+const swup61 = new Swup({
+  containers: ['#swup-61']
+})
+swup61.hooks.on('animation:out:start', ()=> gsap.to('#swup-61', { opacity: 0, duration: 0.5 }))
+swup61.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-61', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 62 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-62',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -62, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 62, duration: 0.5 }) }
+  }]
+})
+
+const swup62 = new Swup({
+  containers: ['#swup-62']
+})
+swup62.hooks.on('animation:out:start', ()=> gsap.to('#swup-62', { opacity: 0, duration: 0.5 }))
+swup62.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-62', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 63 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-63',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -63, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 63, duration: 0.5 }) }
+  }]
+})
+
+const swup63 = new Swup({
+  containers: ['#swup-63']
+})
+swup63.hooks.on('animation:out:start', ()=> gsap.to('#swup-63', { opacity: 0, duration: 0.5 }))
+swup63.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-63', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 64 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-64',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -64, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 64, duration: 0.5 }) }
+  }]
+})
+
+const swup64 = new Swup({
+  containers: ['#swup-64']
+})
+swup64.hooks.on('animation:out:start', ()=> gsap.to('#swup-64', { opacity: 0, duration: 0.5 }))
+swup64.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-64', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 65 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-65',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -65, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 65, duration: 0.5 }) }
+  }]
+})
+
+const swup65 = new Swup({
+  containers: ['#swup-65']
+})
+swup65.hooks.on('animation:out:start', ()=> gsap.to('#swup-65', { opacity: 0, duration: 0.5 }))
+swup65.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-65', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 66 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-66',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -66, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 66, duration: 0.5 }) }
+  }]
+})
+
+const swup66 = new Swup({
+  containers: ['#swup-66']
+})
+swup66.hooks.on('animation:out:start', ()=> gsap.to('#swup-66', { opacity: 0, duration: 0.5 }))
+swup66.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-66', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 67 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-67',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -67, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 67, duration: 0.5 }) }
+  }]
+})
+
+const swup67 = new Swup({
+  containers: ['#swup-67']
+})
+swup67.hooks.on('animation:out:start', ()=> gsap.to('#swup-67', { opacity: 0, duration: 0.5 }))
+swup67.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-67', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 68 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-68',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -68, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 68, duration: 0.5 }) }
+  }]
+})
+
+const swup68 = new Swup({
+  containers: ['#swup-68']
+})
+swup68.hooks.on('animation:out:start', ()=> gsap.to('#swup-68', { opacity: 0, duration: 0.5 }))
+swup68.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-68', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 69 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-69',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -69, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 69, duration: 0.5 }) }
+  }]
+})
+
+const swup69 = new Swup({
+  containers: ['#swup-69']
+})
+swup69.hooks.on('animation:out:start', ()=> gsap.to('#swup-69', { opacity: 0, duration: 0.5 }))
+swup69.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-69', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 70 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-70',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -70, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 70, duration: 0.5 }) }
+  }]
+})
+
+const swup70 = new Swup({
+  containers: ['#swup-70']
+})
+swup70.hooks.on('animation:out:start', ()=> gsap.to('#swup-70', { opacity: 0, duration: 0.5 }))
+swup70.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-70', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 71 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-71',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -71, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 71, duration: 0.5 }) }
+  }]
+})
+
+const swup71 = new Swup({
+  containers: ['#swup-71']
+})
+swup71.hooks.on('animation:out:start', ()=> gsap.to('#swup-71', { opacity: 0, duration: 0.5 }))
+swup71.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-71', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 72 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-72',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -72, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 72, duration: 0.5 }) }
+  }]
+})
+
+const swup72 = new Swup({
+  containers: ['#swup-72']
+})
+swup72.hooks.on('animation:out:start', ()=> gsap.to('#swup-72', { opacity: 0, duration: 0.5 }))
+swup72.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-72', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 73 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-73',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -73, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 73, duration: 0.5 }) }
+  }]
+})
+
+const swup73 = new Swup({
+  containers: ['#swup-73']
+})
+swup73.hooks.on('animation:out:start', ()=> gsap.to('#swup-73', { opacity: 0, duration: 0.5 }))
+swup73.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-73', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 74 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-74',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -74, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 74, duration: 0.5 }) }
+  }]
+})
+
+const swup74 = new Swup({
+  containers: ['#swup-74']
+})
+swup74.hooks.on('animation:out:start', ()=> gsap.to('#swup-74', { opacity: 0, duration: 0.5 }))
+swup74.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-74', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 75 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-75',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -75, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 75, duration: 0.5 }) }
+  }]
+})
+
+const swup75 = new Swup({
+  containers: ['#swup-75']
+})
+swup75.hooks.on('animation:out:start', ()=> gsap.to('#swup-75', { opacity: 0, duration: 0.5 }))
+swup75.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-75', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 76 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-76',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -76, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 76, duration: 0.5 }) }
+  }]
+})
+
+const swup76 = new Swup({
+  containers: ['#swup-76']
+})
+swup76.hooks.on('animation:out:start', ()=> gsap.to('#swup-76', { opacity: 0, duration: 0.5 }))
+swup76.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-76', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 77 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-77',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -77, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 77, duration: 0.5 }) }
+  }]
+})
+
+const swup77 = new Swup({
+  containers: ['#swup-77']
+})
+swup77.hooks.on('animation:out:start', ()=> gsap.to('#swup-77', { opacity: 0, duration: 0.5 }))
+swup77.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-77', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 78 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-78',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -78, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 78, duration: 0.5 }) }
+  }]
+})
+
+const swup78 = new Swup({
+  containers: ['#swup-78']
+})
+swup78.hooks.on('animation:out:start', ()=> gsap.to('#swup-78', { opacity: 0, duration: 0.5 }))
+swup78.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-78', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 79 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-79',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -79, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 79, duration: 0.5 }) }
+  }]
+})
+
+const swup79 = new Swup({
+  containers: ['#swup-79']
+})
+swup79.hooks.on('animation:out:start', ()=> gsap.to('#swup-79', { opacity: 0, duration: 0.5 }))
+swup79.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-79', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 80 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-80',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -80, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 80, duration: 0.5 }) }
+  }]
+})
+
+const swup80 = new Swup({
+  containers: ['#swup-80']
+})
+swup80.hooks.on('animation:out:start', ()=> gsap.to('#swup-80', { opacity: 0, duration: 0.5 }))
+swup80.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-80', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 81 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-81',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -81, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 81, duration: 0.5 }) }
+  }]
+})
+
+const swup81 = new Swup({
+  containers: ['#swup-81']
+})
+swup81.hooks.on('animation:out:start', ()=> gsap.to('#swup-81', { opacity: 0, duration: 0.5 }))
+swup81.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-81', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 82 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-82',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -82, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 82, duration: 0.5 }) }
+  }]
+})
+
+const swup82 = new Swup({
+  containers: ['#swup-82']
+})
+swup82.hooks.on('animation:out:start', ()=> gsap.to('#swup-82', { opacity: 0, duration: 0.5 }))
+swup82.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-82', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 83 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-83',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -83, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 83, duration: 0.5 }) }
+  }]
+})
+
+const swup83 = new Swup({
+  containers: ['#swup-83']
+})
+swup83.hooks.on('animation:out:start', ()=> gsap.to('#swup-83', { opacity: 0, duration: 0.5 }))
+swup83.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-83', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 84 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-84',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -84, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 84, duration: 0.5 }) }
+  }]
+})
+
+const swup84 = new Swup({
+  containers: ['#swup-84']
+})
+swup84.hooks.on('animation:out:start', ()=> gsap.to('#swup-84', { opacity: 0, duration: 0.5 }))
+swup84.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-84', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 85 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-85',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -85, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 85, duration: 0.5 }) }
+  }]
+})
+
+const swup85 = new Swup({
+  containers: ['#swup-85']
+})
+swup85.hooks.on('animation:out:start', ()=> gsap.to('#swup-85', { opacity: 0, duration: 0.5 }))
+swup85.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-85', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 86 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-86',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -86, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 86, duration: 0.5 }) }
+  }]
+})
+
+const swup86 = new Swup({
+  containers: ['#swup-86']
+})
+swup86.hooks.on('animation:out:start', ()=> gsap.to('#swup-86', { opacity: 0, duration: 0.5 }))
+swup86.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-86', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 87 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-87',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -87, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 87, duration: 0.5 }) }
+  }]
+})
+
+const swup87 = new Swup({
+  containers: ['#swup-87']
+})
+swup87.hooks.on('animation:out:start', ()=> gsap.to('#swup-87', { opacity: 0, duration: 0.5 }))
+swup87.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-87', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 88 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-88',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -88, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 88, duration: 0.5 }) }
+  }]
+})
+
+const swup88 = new Swup({
+  containers: ['#swup-88']
+})
+swup88.hooks.on('animation:out:start', ()=> gsap.to('#swup-88', { opacity: 0, duration: 0.5 }))
+swup88.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-88', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 89 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-89',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -89, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 89, duration: 0.5 }) }
+  }]
+})
+
+const swup89 = new Swup({
+  containers: ['#swup-89']
+})
+swup89.hooks.on('animation:out:start', ()=> gsap.to('#swup-89', { opacity: 0, duration: 0.5 }))
+swup89.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-89', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 90 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-90',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -90, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 90, duration: 0.5 }) }
+  }]
+})
+
+const swup90 = new Swup({
+  containers: ['#swup-90']
+})
+swup90.hooks.on('animation:out:start', ()=> gsap.to('#swup-90', { opacity: 0, duration: 0.5 }))
+swup90.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-90', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 91 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-91',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -91, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 91, duration: 0.5 }) }
+  }]
+})
+
+const swup91 = new Swup({
+  containers: ['#swup-91']
+})
+swup91.hooks.on('animation:out:start', ()=> gsap.to('#swup-91', { opacity: 0, duration: 0.5 }))
+swup91.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-91', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 92 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-92',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -92, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 92, duration: 0.5 }) }
+  }]
+})
+
+const swup92 = new Swup({
+  containers: ['#swup-92']
+})
+swup92.hooks.on('animation:out:start', ()=> gsap.to('#swup-92', { opacity: 0, duration: 0.5 }))
+swup92.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-92', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 93 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-93',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -93, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 93, duration: 0.5 }) }
+  }]
+})
+
+const swup93 = new Swup({
+  containers: ['#swup-93']
+})
+swup93.hooks.on('animation:out:start', ()=> gsap.to('#swup-93', { opacity: 0, duration: 0.5 }))
+swup93.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-93', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 94 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-94',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -94, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 94, duration: 0.5 }) }
+  }]
+})
+
+const swup94 = new Swup({
+  containers: ['#swup-94']
+})
+swup94.hooks.on('animation:out:start', ()=> gsap.to('#swup-94', { opacity: 0, duration: 0.5 }))
+swup94.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-94', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 95 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-95',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -95, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 95, duration: 0.5 }) }
+  }]
+})
+
+const swup95 = new Swup({
+  containers: ['#swup-95']
+})
+swup95.hooks.on('animation:out:start', ()=> gsap.to('#swup-95', { opacity: 0, duration: 0.5 }))
+swup95.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-95', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 96 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-96',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -96, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 96, duration: 0.5 }) }
+  }]
+})
+
+const swup96 = new Swup({
+  containers: ['#swup-96']
+})
+swup96.hooks.on('animation:out:start', ()=> gsap.to('#swup-96', { opacity: 0, duration: 0.5 }))
+swup96.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-96', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 97 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-97',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -97, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 97, duration: 0.5 }) }
+  }]
+})
+
+const swup97 = new Swup({
+  containers: ['#swup-97']
+})
+swup97.hooks.on('animation:out:start', ()=> gsap.to('#swup-97', { opacity: 0, duration: 0.5 }))
+swup97.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-97', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 98 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-98',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -98, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 98, duration: 0.5 }) }
+  }]
+})
+
+const swup98 = new Swup({
+  containers: ['#swup-98']
+})
+swup98.hooks.on('animation:out:start', ()=> gsap.to('#swup-98', { opacity: 0, duration: 0.5 }))
+swup98.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-98', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 99 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-99',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -99, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 99, duration: 0.5 }) }
+  }]
+})
+
+const swup99 = new Swup({
+  containers: ['#swup-99']
+})
+swup99.hooks.on('animation:out:start', ()=> gsap.to('#swup-99', { opacity: 0, duration: 0.5 }))
+swup99.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-99', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 100 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-100',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -50, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 50, duration: 0.5 }) }
+  }]
+})
+
+const swup100 = new Swup({
+  containers: ['#swup-100']
+})
+swup100.hooks.on('animation:out:start', ()=> gsap.to('#swup-100', { opacity: 0, duration: 0.5 }))
+swup100.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-100', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 101 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-101',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -51, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 51, duration: 0.5 }) }
+  }]
+})
+
+const swup101 = new Swup({
+  containers: ['#swup-101']
+})
+swup101.hooks.on('animation:out:start', ()=> gsap.to('#swup-101', { opacity: 0, duration: 0.5 }))
+swup101.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-101', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 102 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-102',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -52, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 52, duration: 0.5 }) }
+  }]
+})
+
+const swup102 = new Swup({
+  containers: ['#swup-102']
+})
+swup102.hooks.on('animation:out:start', ()=> gsap.to('#swup-102', { opacity: 0, duration: 0.5 }))
+swup102.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-102', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 103 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-103',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -53, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 53, duration: 0.5 }) }
+  }]
+})
+
+const swup103 = new Swup({
+  containers: ['#swup-103']
+})
+swup103.hooks.on('animation:out:start', ()=> gsap.to('#swup-103', { opacity: 0, duration: 0.5 }))
+swup103.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-103', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 104 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-104',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -54, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 54, duration: 0.5 }) }
+  }]
+})
+
+const swup104 = new Swup({
+  containers: ['#swup-104']
+})
+swup104.hooks.on('animation:out:start', ()=> gsap.to('#swup-104', { opacity: 0, duration: 0.5 }))
+swup104.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-104', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 105 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-105',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -55, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 55, duration: 0.5 }) }
+  }]
+})
+
+const swup105 = new Swup({
+  containers: ['#swup-105']
+})
+swup105.hooks.on('animation:out:start', ()=> gsap.to('#swup-105', { opacity: 0, duration: 0.5 }))
+swup105.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-105', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 106 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-106',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -56, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 56, duration: 0.5 }) }
+  }]
+})
+
+const swup106 = new Swup({
+  containers: ['#swup-106']
+})
+swup106.hooks.on('animation:out:start', ()=> gsap.to('#swup-106', { opacity: 0, duration: 0.5 }))
+swup106.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-106', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 107 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-107',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -57, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 57, duration: 0.5 }) }
+  }]
+})
+
+const swup107 = new Swup({
+  containers: ['#swup-107']
+})
+swup107.hooks.on('animation:out:start', ()=> gsap.to('#swup-107', { opacity: 0, duration: 0.5 }))
+swup107.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-107', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 108 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-108',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -58, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 58, duration: 0.5 }) }
+  }]
+})
+
+const swup108 = new Swup({
+  containers: ['#swup-108']
+})
+swup108.hooks.on('animation:out:start', ()=> gsap.to('#swup-108', { opacity: 0, duration: 0.5 }))
+swup108.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-108', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 109 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-109',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -59, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 59, duration: 0.5 }) }
+  }]
+})
+
+const swup109 = new Swup({
+  containers: ['#swup-109']
+})
+swup109.hooks.on('animation:out:start', ()=> gsap.to('#swup-109', { opacity: 0, duration: 0.5 }))
+swup109.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-109', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 110 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-110',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -60, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 60, duration: 0.5 }) }
+  }]
+})
+
+const swup110 = new Swup({
+  containers: ['#swup-110']
+})
+swup110.hooks.on('animation:out:start', ()=> gsap.to('#swup-110', { opacity: 0, duration: 0.5 }))
+swup110.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-110', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 111 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-111',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -61, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 61, duration: 0.5 }) }
+  }]
+})
+
+const swup111 = new Swup({
+  containers: ['#swup-111']
+})
+swup111.hooks.on('animation:out:start', ()=> gsap.to('#swup-111', { opacity: 0, duration: 0.5 }))
+swup111.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-111', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 112 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-112',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -62, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 62, duration: 0.5 }) }
+  }]
+})
+
+const swup112 = new Swup({
+  containers: ['#swup-112']
+})
+swup112.hooks.on('animation:out:start', ()=> gsap.to('#swup-112', { opacity: 0, duration: 0.5 }))
+swup112.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-112', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 113 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-113',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -63, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 63, duration: 0.5 }) }
+  }]
+})
+
+const swup113 = new Swup({
+  containers: ['#swup-113']
+})
+swup113.hooks.on('animation:out:start', ()=> gsap.to('#swup-113', { opacity: 0, duration: 0.5 }))
+swup113.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-113', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 114 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-114',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -64, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 64, duration: 0.5 }) }
+  }]
+})
+
+const swup114 = new Swup({
+  containers: ['#swup-114']
+})
+swup114.hooks.on('animation:out:start', ()=> gsap.to('#swup-114', { opacity: 0, duration: 0.5 }))
+swup114.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-114', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 115 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-115',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -65, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 65, duration: 0.5 }) }
+  }]
+})
+
+const swup115 = new Swup({
+  containers: ['#swup-115']
+})
+swup115.hooks.on('animation:out:start', ()=> gsap.to('#swup-115', { opacity: 0, duration: 0.5 }))
+swup115.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-115', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 116 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-116',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -66, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 66, duration: 0.5 }) }
+  }]
+})
+
+const swup116 = new Swup({
+  containers: ['#swup-116']
+})
+swup116.hooks.on('animation:out:start', ()=> gsap.to('#swup-116', { opacity: 0, duration: 0.5 }))
+swup116.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-116', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 117 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-117',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -67, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 67, duration: 0.5 }) }
+  }]
+})
+
+const swup117 = new Swup({
+  containers: ['#swup-117']
+})
+swup117.hooks.on('animation:out:start', ()=> gsap.to('#swup-117', { opacity: 0, duration: 0.5 }))
+swup117.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-117', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 118 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-118',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -68, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 68, duration: 0.5 }) }
+  }]
+})
+
+const swup118 = new Swup({
+  containers: ['#swup-118']
+})
+swup118.hooks.on('animation:out:start', ()=> gsap.to('#swup-118', { opacity: 0, duration: 0.5 }))
+swup118.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-118', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 119 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-119',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -69, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 69, duration: 0.5 }) }
+  }]
+})
+
+const swup119 = new Swup({
+  containers: ['#swup-119']
+})
+swup119.hooks.on('animation:out:start', ()=> gsap.to('#swup-119', { opacity: 0, duration: 0.5 }))
+swup119.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-119', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 120 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-120',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -70, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 70, duration: 0.5 }) }
+  }]
+})
+
+const swup120 = new Swup({
+  containers: ['#swup-120']
+})
+swup120.hooks.on('animation:out:start', ()=> gsap.to('#swup-120', { opacity: 0, duration: 0.5 }))
+swup120.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-120', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 121 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-121',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -71, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 71, duration: 0.5 }) }
+  }]
+})
+
+const swup121 = new Swup({
+  containers: ['#swup-121']
+})
+swup121.hooks.on('animation:out:start', ()=> gsap.to('#swup-121', { opacity: 0, duration: 0.5 }))
+swup121.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-121', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 122 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-122',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -72, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 72, duration: 0.5 }) }
+  }]
+})
+
+const swup122 = new Swup({
+  containers: ['#swup-122']
+})
+swup122.hooks.on('animation:out:start', ()=> gsap.to('#swup-122', { opacity: 0, duration: 0.5 }))
+swup122.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-122', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 123 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-123',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -73, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 73, duration: 0.5 }) }
+  }]
+})
+
+const swup123 = new Swup({
+  containers: ['#swup-123']
+})
+swup123.hooks.on('animation:out:start', ()=> gsap.to('#swup-123', { opacity: 0, duration: 0.5 }))
+swup123.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-123', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 124 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-124',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -74, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 74, duration: 0.5 }) }
+  }]
+})
+
+const swup124 = new Swup({
+  containers: ['#swup-124']
+})
+swup124.hooks.on('animation:out:start', ()=> gsap.to('#swup-124', { opacity: 0, duration: 0.5 }))
+swup124.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-124', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 125 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-125',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -75, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 75, duration: 0.5 }) }
+  }]
+})
+
+const swup125 = new Swup({
+  containers: ['#swup-125']
+})
+swup125.hooks.on('animation:out:start', ()=> gsap.to('#swup-125', { opacity: 0, duration: 0.5 }))
+swup125.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-125', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 126 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-126',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -76, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 76, duration: 0.5 }) }
+  }]
+})
+
+const swup126 = new Swup({
+  containers: ['#swup-126']
+})
+swup126.hooks.on('animation:out:start', ()=> gsap.to('#swup-126', { opacity: 0, duration: 0.5 }))
+swup126.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-126', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 127 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-127',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -77, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 77, duration: 0.5 }) }
+  }]
+})
+
+const swup127 = new Swup({
+  containers: ['#swup-127']
+})
+swup127.hooks.on('animation:out:start', ()=> gsap.to('#swup-127', { opacity: 0, duration: 0.5 }))
+swup127.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-127', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 128 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-128',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -78, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 78, duration: 0.5 }) }
+  }]
+})
+
+const swup128 = new Swup({
+  containers: ['#swup-128']
+})
+swup128.hooks.on('animation:out:start', ()=> gsap.to('#swup-128', { opacity: 0, duration: 0.5 }))
+swup128.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-128', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 129 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-129',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -79, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 79, duration: 0.5 }) }
+  }]
+})
+
+const swup129 = new Swup({
+  containers: ['#swup-129']
+})
+swup129.hooks.on('animation:out:start', ()=> gsap.to('#swup-129', { opacity: 0, duration: 0.5 }))
+swup129.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-129', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 130 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-130',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -80, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 80, duration: 0.5 }) }
+  }]
+})
+
+const swup130 = new Swup({
+  containers: ['#swup-130']
+})
+swup130.hooks.on('animation:out:start', ()=> gsap.to('#swup-130', { opacity: 0, duration: 0.5 }))
+swup130.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-130', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 131 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-131',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -81, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 81, duration: 0.5 }) }
+  }]
+})
+
+const swup131 = new Swup({
+  containers: ['#swup-131']
+})
+swup131.hooks.on('animation:out:start', ()=> gsap.to('#swup-131', { opacity: 0, duration: 0.5 }))
+swup131.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-131', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 132 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-132',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -82, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 82, duration: 0.5 }) }
+  }]
+})
+
+const swup132 = new Swup({
+  containers: ['#swup-132']
+})
+swup132.hooks.on('animation:out:start', ()=> gsap.to('#swup-132', { opacity: 0, duration: 0.5 }))
+swup132.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-132', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 133 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-133',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -83, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 83, duration: 0.5 }) }
+  }]
+})
+
+const swup133 = new Swup({
+  containers: ['#swup-133']
+})
+swup133.hooks.on('animation:out:start', ()=> gsap.to('#swup-133', { opacity: 0, duration: 0.5 }))
+swup133.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-133', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 134 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-134',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -84, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 84, duration: 0.5 }) }
+  }]
+})
+
+const swup134 = new Swup({
+  containers: ['#swup-134']
+})
+swup134.hooks.on('animation:out:start', ()=> gsap.to('#swup-134', { opacity: 0, duration: 0.5 }))
+swup134.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-134', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 135 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-135',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -85, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 85, duration: 0.5 }) }
+  }]
+})
+
+const swup135 = new Swup({
+  containers: ['#swup-135']
+})
+swup135.hooks.on('animation:out:start', ()=> gsap.to('#swup-135', { opacity: 0, duration: 0.5 }))
+swup135.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-135', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 136 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-136',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -86, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 86, duration: 0.5 }) }
+  }]
+})
+
+const swup136 = new Swup({
+  containers: ['#swup-136']
+})
+swup136.hooks.on('animation:out:start', ()=> gsap.to('#swup-136', { opacity: 0, duration: 0.5 }))
+swup136.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-136', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 137 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-137',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -87, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 87, duration: 0.5 }) }
+  }]
+})
+
+const swup137 = new Swup({
+  containers: ['#swup-137']
+})
+swup137.hooks.on('animation:out:start', ()=> gsap.to('#swup-137', { opacity: 0, duration: 0.5 }))
+swup137.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-137', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 138 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-138',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -88, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 88, duration: 0.5 }) }
+  }]
+})
+
+const swup138 = new Swup({
+  containers: ['#swup-138']
+})
+swup138.hooks.on('animation:out:start', ()=> gsap.to('#swup-138', { opacity: 0, duration: 0.5 }))
+swup138.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-138', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 139 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-139',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -89, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 89, duration: 0.5 }) }
+  }]
+})
+
+const swup139 = new Swup({
+  containers: ['#swup-139']
+})
+swup139.hooks.on('animation:out:start', ()=> gsap.to('#swup-139', { opacity: 0, duration: 0.5 }))
+swup139.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-139', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 140 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-140',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -90, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 90, duration: 0.5 }) }
+  }]
+})
+
+const swup140 = new Swup({
+  containers: ['#swup-140']
+})
+swup140.hooks.on('animation:out:start', ()=> gsap.to('#swup-140', { opacity: 0, duration: 0.5 }))
+swup140.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-140', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 141 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-141',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -91, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 91, duration: 0.5 }) }
+  }]
+})
+
+const swup141 = new Swup({
+  containers: ['#swup-141']
+})
+swup141.hooks.on('animation:out:start', ()=> gsap.to('#swup-141', { opacity: 0, duration: 0.5 }))
+swup141.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-141', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 142 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-142',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -92, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 92, duration: 0.5 }) }
+  }]
+})
+
+const swup142 = new Swup({
+  containers: ['#swup-142']
+})
+swup142.hooks.on('animation:out:start', ()=> gsap.to('#swup-142', { opacity: 0, duration: 0.5 }))
+swup142.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-142', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 143 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-143',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -93, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 93, duration: 0.5 }) }
+  }]
+})
+
+const swup143 = new Swup({
+  containers: ['#swup-143']
+})
+swup143.hooks.on('animation:out:start', ()=> gsap.to('#swup-143', { opacity: 0, duration: 0.5 }))
+swup143.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-143', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 144 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-144',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -94, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 94, duration: 0.5 }) }
+  }]
+})
+
+const swup144 = new Swup({
+  containers: ['#swup-144']
+})
+swup144.hooks.on('animation:out:start', ()=> gsap.to('#swup-144', { opacity: 0, duration: 0.5 }))
+swup144.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-144', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 145 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-145',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -95, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 95, duration: 0.5 }) }
+  }]
+})
+
+const swup145 = new Swup({
+  containers: ['#swup-145']
+})
+swup145.hooks.on('animation:out:start', ()=> gsap.to('#swup-145', { opacity: 0, duration: 0.5 }))
+swup145.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-145', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 146 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-146',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -96, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 96, duration: 0.5 }) }
+  }]
+})
+
+const swup146 = new Swup({
+  containers: ['#swup-146']
+})
+swup146.hooks.on('animation:out:start', ()=> gsap.to('#swup-146', { opacity: 0, duration: 0.5 }))
+swup146.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-146', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 147 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-147',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -97, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 97, duration: 0.5 }) }
+  }]
+})
+
+const swup147 = new Swup({
+  containers: ['#swup-147']
+})
+swup147.hooks.on('animation:out:start', ()=> gsap.to('#swup-147', { opacity: 0, duration: 0.5 }))
+swup147.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-147', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 148 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-148',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -98, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 98, duration: 0.5 }) }
+  }]
+})
+
+const swup148 = new Swup({
+  containers: ['#swup-148']
+})
+swup148.hooks.on('animation:out:start', ()=> gsap.to('#swup-148', { opacity: 0, duration: 0.5 }))
+swup148.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-148', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 149 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-149',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -99, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 99, duration: 0.5 }) }
+  }]
+})
+
+const swup149 = new Swup({
+  containers: ['#swup-149']
+})
+swup149.hooks.on('animation:out:start', ()=> gsap.to('#swup-149', { opacity: 0, duration: 0.5 }))
+swup149.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-149', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+--- BARBA/SWUP PADRÃO 150 ---
+import barba from '@barba/core'
+import Swup from 'swup'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'transition-150',
+    leave(data){ return gsap.to(data.current.container, { opacity: 0, y: -50, duration: 0.5 }) },
+    enter(data){ return gsap.from(data.next.container, { opacity: 0, y: 50, duration: 0.5 }) }
+  }]
+})
+
+const swup150 = new Swup({
+  containers: ['#swup-150']
+})
+swup150.hooks.on('animation:out:start', ()=> gsap.to('#swup-150', { opacity: 0, duration: 0.5 }))
+swup150.hooks.on('animation:in:start', ()=> {
+  gsap.from('#swup-150', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})

@@ -1,0 +1,50 @@
+
+================================================================================
+RAPIER PHYSICS + P5.JS GENERATIVE - ENGENHARIA REVERSA TOTAL
+Site: rapier.rs - Física 3D/2D mais rápida, Rust + WASM
+================================================================================
+
+RAPIER:
+npm install @dimforge/rapier3d-compat
+import RAPIER from '@dimforge/rapier3d-compat'
+
+await RAPIER.init()
+const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 })
+
+const rigidDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 10, 0)
+const body = world.createRigidBody(rigidDesc)
+const colliderDesc = RAPIER.ColliderDesc.ball(0.5)
+world.createCollider(colliderDesc, body)
+
+function update(){
+  world.step()
+  mesh.position.copy(body.translation())
+  requestAnimationFrame(update)
+}
+
+Com R3F:
+import { Physics, RigidBody } from '@react-three/rapier'
+<Physics>
+  <RigidBody><mesh><boxGeometry /></mesh></RigidBody>
+</Physics>
+
+P5.JS GENERATIVE:
+npm install p5
+import p5 from 'p5'
+
+new p5((sketch)=>{
+  sketch.setup = ()=>{
+    sketch.createCanvas(800,600)
+  }
+  sketch.draw = ()=>{
+    sketch.background(0)
+    for(let i=0;i<100;i++){
+      sketch.circle(sketch.random(sketch.width), sketch.random(sketch.height), 10)
+    }
+  }
+})
+
+Generative com Three.js:
+Use p5 para gerar pontos, depois joga em BufferGeometry
+
+150 padrões physics + generative abaixo...

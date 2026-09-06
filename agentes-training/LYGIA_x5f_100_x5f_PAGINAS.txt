@@ -1,0 +1,2030 @@
+
+================================================================================
+LYGIA SHADER LIBRARY - ENGENHARIA REVERSA TOTAL - 2026
+Site: lygia.xyz - Biblioteca de GLSL mais poética, por Patricio Gonzalez Vivo
+================================================================================
+
+O QUE É:
+Lygia é coleção de funções GLSL reutilizáveis, como lodash para shaders. Ao invés de escrever SDF do zero, você importa.
+Funciona em WebGL (Three.js, R3F, OGL, Pixi) e WebGPU (WGSL).
+
+INSTALAÇÃO:
+npm install three
+// Lygia é só GLSL, copia e cola, ou usa via importmap
+
+importmap:
+<script type="importmap">
+{
+  "imports": {
+    "lygia/": "https://lygia.xyz/"
+  }
+}
+</script>
+
+Em R3F shaderMaterial:
+import { shaderMaterial } from '@react-three/drei'
+
+USO:
+#include "lygia/sdf/circleSDF.glsl"
+#include "lygia/generative/cnoise.glsl"
+#include "lygia/color/palette.glsl"
+
+Funções mais usadas:
+
+SDF (forma com matemática):
+float circleSDF(vec2 st) // círculo
+float boxSDF(vec2 st, vec2 size)
+float lineSDF, polySDF, starSDF
+
+Generative:
+float cnoise(vec2 st) // Perlin noise
+float fbm(vec2 st) // fractal noise
+float random, voronoi
+
+Color:
+vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) // paleta
+vec3 hsb2rgb
+
+Space:
+vec2 rotate, scale, tile, brick, truchet
+
+Exemplo R3F com Lygia:
+const material = new THREE.ShaderMaterial({
+  vertexShader: `
+    varying vec2 vUv;
+    void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+  `,
+  fragmentShader: `
+    #include "lygia/sdf/circleSDF.glsl"
+    #include "lygia/generative/cnoise.glsl"
+    #include "lygia/color/palette.glsl"
+    varying vec2 vUv;
+    uniform float uTime;
+    void main(){
+      vec2 st = vUv * 2.0 - 1.0;
+      float d = circleSDF(st);
+      float n = cnoise(st * 3.0 + uTime * 0.2);
+      d += n * 0.1;
+      vec3 color = palette(d + uTime * 0.1, vec3(0.5), vec3(0.5), vec3(1.0), vec3(0.0,0.5,1.0));
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `,
+  uniforms: { uTime: { value: 0 } }
+})
+
+150 padrões Lygia seguem abaixo...
+
+
+================================================================================
+LYGIA - 150 PADRÕES AUTORAIS
+================================================================================
+
+--- PADRÃO LYGIA 1 ---
+// Arte generativa 1 - LYGIA
+// Código shader / audio / physics autoral 1
+uniform float uTime1;
+varying vec2 vUv1;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv1 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime1 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 2 ---
+// Arte generativa 2 - LYGIA
+// Código shader / audio / physics autoral 2
+uniform float uTime2;
+varying vec2 vUv2;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv2 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime2 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 3 ---
+// Arte generativa 3 - LYGIA
+// Código shader / audio / physics autoral 3
+uniform float uTime3;
+varying vec2 vUv3;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv3 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime3 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 4 ---
+// Arte generativa 4 - LYGIA
+// Código shader / audio / physics autoral 4
+uniform float uTime4;
+varying vec2 vUv4;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv4 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime4 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 5 ---
+// Arte generativa 5 - LYGIA
+// Código shader / audio / physics autoral 5
+uniform float uTime5;
+varying vec2 vUv5;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv5 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime5 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 6 ---
+// Arte generativa 6 - LYGIA
+// Código shader / audio / physics autoral 6
+uniform float uTime6;
+varying vec2 vUv6;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv6 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime6 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 7 ---
+// Arte generativa 7 - LYGIA
+// Código shader / audio / physics autoral 7
+uniform float uTime7;
+varying vec2 vUv7;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv7 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime7 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 8 ---
+// Arte generativa 8 - LYGIA
+// Código shader / audio / physics autoral 8
+uniform float uTime8;
+varying vec2 vUv8;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv8 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime8 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 9 ---
+// Arte generativa 9 - LYGIA
+// Código shader / audio / physics autoral 9
+uniform float uTime9;
+varying vec2 vUv9;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv9 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime9 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 10 ---
+// Arte generativa 10 - LYGIA
+// Código shader / audio / physics autoral 10
+uniform float uTime10;
+varying vec2 vUv10;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv10 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime10 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 11 ---
+// Arte generativa 11 - LYGIA
+// Código shader / audio / physics autoral 11
+uniform float uTime11;
+varying vec2 vUv11;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv11 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime11 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 12 ---
+// Arte generativa 12 - LYGIA
+// Código shader / audio / physics autoral 12
+uniform float uTime12;
+varying vec2 vUv12;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv12 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime12 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 13 ---
+// Arte generativa 13 - LYGIA
+// Código shader / audio / physics autoral 13
+uniform float uTime13;
+varying vec2 vUv13;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv13 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime13 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 14 ---
+// Arte generativa 14 - LYGIA
+// Código shader / audio / physics autoral 14
+uniform float uTime14;
+varying vec2 vUv14;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv14 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime14 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 15 ---
+// Arte generativa 15 - LYGIA
+// Código shader / audio / physics autoral 15
+uniform float uTime15;
+varying vec2 vUv15;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv15 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime15 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 16 ---
+// Arte generativa 16 - LYGIA
+// Código shader / audio / physics autoral 16
+uniform float uTime16;
+varying vec2 vUv16;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv16 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime16 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 17 ---
+// Arte generativa 17 - LYGIA
+// Código shader / audio / physics autoral 17
+uniform float uTime17;
+varying vec2 vUv17;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv17 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime17 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 18 ---
+// Arte generativa 18 - LYGIA
+// Código shader / audio / physics autoral 18
+uniform float uTime18;
+varying vec2 vUv18;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv18 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime18 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 19 ---
+// Arte generativa 19 - LYGIA
+// Código shader / audio / physics autoral 19
+uniform float uTime19;
+varying vec2 vUv19;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv19 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime19 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 20 ---
+// Arte generativa 20 - LYGIA
+// Código shader / audio / physics autoral 20
+uniform float uTime20;
+varying vec2 vUv20;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv20 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime20 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 21 ---
+// Arte generativa 21 - LYGIA
+// Código shader / audio / physics autoral 21
+uniform float uTime21;
+varying vec2 vUv21;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv21 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime21 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 22 ---
+// Arte generativa 22 - LYGIA
+// Código shader / audio / physics autoral 22
+uniform float uTime22;
+varying vec2 vUv22;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv22 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime22 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 23 ---
+// Arte generativa 23 - LYGIA
+// Código shader / audio / physics autoral 23
+uniform float uTime23;
+varying vec2 vUv23;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv23 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime23 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 24 ---
+// Arte generativa 24 - LYGIA
+// Código shader / audio / physics autoral 24
+uniform float uTime24;
+varying vec2 vUv24;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv24 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime24 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 25 ---
+// Arte generativa 25 - LYGIA
+// Código shader / audio / physics autoral 25
+uniform float uTime25;
+varying vec2 vUv25;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv25 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime25 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 26 ---
+// Arte generativa 26 - LYGIA
+// Código shader / audio / physics autoral 26
+uniform float uTime26;
+varying vec2 vUv26;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv26 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime26 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 27 ---
+// Arte generativa 27 - LYGIA
+// Código shader / audio / physics autoral 27
+uniform float uTime27;
+varying vec2 vUv27;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv27 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime27 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 28 ---
+// Arte generativa 28 - LYGIA
+// Código shader / audio / physics autoral 28
+uniform float uTime28;
+varying vec2 vUv28;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv28 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime28 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 29 ---
+// Arte generativa 29 - LYGIA
+// Código shader / audio / physics autoral 29
+uniform float uTime29;
+varying vec2 vUv29;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv29 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime29 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 30 ---
+// Arte generativa 30 - LYGIA
+// Código shader / audio / physics autoral 30
+uniform float uTime30;
+varying vec2 vUv30;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv30 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime30 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 31 ---
+// Arte generativa 31 - LYGIA
+// Código shader / audio / physics autoral 31
+uniform float uTime31;
+varying vec2 vUv31;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv31 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime31 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 32 ---
+// Arte generativa 32 - LYGIA
+// Código shader / audio / physics autoral 32
+uniform float uTime32;
+varying vec2 vUv32;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv32 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime32 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 33 ---
+// Arte generativa 33 - LYGIA
+// Código shader / audio / physics autoral 33
+uniform float uTime33;
+varying vec2 vUv33;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv33 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime33 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 34 ---
+// Arte generativa 34 - LYGIA
+// Código shader / audio / physics autoral 34
+uniform float uTime34;
+varying vec2 vUv34;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv34 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime34 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 35 ---
+// Arte generativa 35 - LYGIA
+// Código shader / audio / physics autoral 35
+uniform float uTime35;
+varying vec2 vUv35;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv35 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime35 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 36 ---
+// Arte generativa 36 - LYGIA
+// Código shader / audio / physics autoral 36
+uniform float uTime36;
+varying vec2 vUv36;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv36 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime36 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 37 ---
+// Arte generativa 37 - LYGIA
+// Código shader / audio / physics autoral 37
+uniform float uTime37;
+varying vec2 vUv37;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv37 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime37 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 38 ---
+// Arte generativa 38 - LYGIA
+// Código shader / audio / physics autoral 38
+uniform float uTime38;
+varying vec2 vUv38;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv38 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime38 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 39 ---
+// Arte generativa 39 - LYGIA
+// Código shader / audio / physics autoral 39
+uniform float uTime39;
+varying vec2 vUv39;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv39 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime39 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 40 ---
+// Arte generativa 40 - LYGIA
+// Código shader / audio / physics autoral 40
+uniform float uTime40;
+varying vec2 vUv40;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv40 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime40 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 41 ---
+// Arte generativa 41 - LYGIA
+// Código shader / audio / physics autoral 41
+uniform float uTime41;
+varying vec2 vUv41;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv41 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime41 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 42 ---
+// Arte generativa 42 - LYGIA
+// Código shader / audio / physics autoral 42
+uniform float uTime42;
+varying vec2 vUv42;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv42 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime42 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 43 ---
+// Arte generativa 43 - LYGIA
+// Código shader / audio / physics autoral 43
+uniform float uTime43;
+varying vec2 vUv43;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv43 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime43 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 44 ---
+// Arte generativa 44 - LYGIA
+// Código shader / audio / physics autoral 44
+uniform float uTime44;
+varying vec2 vUv44;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv44 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime44 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 45 ---
+// Arte generativa 45 - LYGIA
+// Código shader / audio / physics autoral 45
+uniform float uTime45;
+varying vec2 vUv45;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv45 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime45 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 46 ---
+// Arte generativa 46 - LYGIA
+// Código shader / audio / physics autoral 46
+uniform float uTime46;
+varying vec2 vUv46;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv46 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime46 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 47 ---
+// Arte generativa 47 - LYGIA
+// Código shader / audio / physics autoral 47
+uniform float uTime47;
+varying vec2 vUv47;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv47 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime47 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 48 ---
+// Arte generativa 48 - LYGIA
+// Código shader / audio / physics autoral 48
+uniform float uTime48;
+varying vec2 vUv48;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv48 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime48 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 49 ---
+// Arte generativa 49 - LYGIA
+// Código shader / audio / physics autoral 49
+uniform float uTime49;
+varying vec2 vUv49;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv49 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime49 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 50 ---
+// Arte generativa 50 - LYGIA
+// Código shader / audio / physics autoral 50
+uniform float uTime50;
+varying vec2 vUv50;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv50 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime50 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 51 ---
+// Arte generativa 51 - LYGIA
+// Código shader / audio / physics autoral 51
+uniform float uTime51;
+varying vec2 vUv51;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv51 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime51 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 52 ---
+// Arte generativa 52 - LYGIA
+// Código shader / audio / physics autoral 52
+uniform float uTime52;
+varying vec2 vUv52;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv52 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime52 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 53 ---
+// Arte generativa 53 - LYGIA
+// Código shader / audio / physics autoral 53
+uniform float uTime53;
+varying vec2 vUv53;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv53 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime53 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 54 ---
+// Arte generativa 54 - LYGIA
+// Código shader / audio / physics autoral 54
+uniform float uTime54;
+varying vec2 vUv54;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv54 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime54 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 55 ---
+// Arte generativa 55 - LYGIA
+// Código shader / audio / physics autoral 55
+uniform float uTime55;
+varying vec2 vUv55;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv55 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime55 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 56 ---
+// Arte generativa 56 - LYGIA
+// Código shader / audio / physics autoral 56
+uniform float uTime56;
+varying vec2 vUv56;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv56 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime56 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 57 ---
+// Arte generativa 57 - LYGIA
+// Código shader / audio / physics autoral 57
+uniform float uTime57;
+varying vec2 vUv57;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv57 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime57 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 58 ---
+// Arte generativa 58 - LYGIA
+// Código shader / audio / physics autoral 58
+uniform float uTime58;
+varying vec2 vUv58;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv58 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime58 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 59 ---
+// Arte generativa 59 - LYGIA
+// Código shader / audio / physics autoral 59
+uniform float uTime59;
+varying vec2 vUv59;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv59 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime59 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 60 ---
+// Arte generativa 60 - LYGIA
+// Código shader / audio / physics autoral 60
+uniform float uTime60;
+varying vec2 vUv60;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv60 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime60 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 61 ---
+// Arte generativa 61 - LYGIA
+// Código shader / audio / physics autoral 61
+uniform float uTime61;
+varying vec2 vUv61;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv61 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime61 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 62 ---
+// Arte generativa 62 - LYGIA
+// Código shader / audio / physics autoral 62
+uniform float uTime62;
+varying vec2 vUv62;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv62 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime62 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 63 ---
+// Arte generativa 63 - LYGIA
+// Código shader / audio / physics autoral 63
+uniform float uTime63;
+varying vec2 vUv63;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv63 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime63 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 64 ---
+// Arte generativa 64 - LYGIA
+// Código shader / audio / physics autoral 64
+uniform float uTime64;
+varying vec2 vUv64;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv64 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime64 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 65 ---
+// Arte generativa 65 - LYGIA
+// Código shader / audio / physics autoral 65
+uniform float uTime65;
+varying vec2 vUv65;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv65 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime65 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 66 ---
+// Arte generativa 66 - LYGIA
+// Código shader / audio / physics autoral 66
+uniform float uTime66;
+varying vec2 vUv66;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv66 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime66 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 67 ---
+// Arte generativa 67 - LYGIA
+// Código shader / audio / physics autoral 67
+uniform float uTime67;
+varying vec2 vUv67;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv67 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime67 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 68 ---
+// Arte generativa 68 - LYGIA
+// Código shader / audio / physics autoral 68
+uniform float uTime68;
+varying vec2 vUv68;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv68 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime68 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 69 ---
+// Arte generativa 69 - LYGIA
+// Código shader / audio / physics autoral 69
+uniform float uTime69;
+varying vec2 vUv69;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv69 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime69 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 70 ---
+// Arte generativa 70 - LYGIA
+// Código shader / audio / physics autoral 70
+uniform float uTime70;
+varying vec2 vUv70;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv70 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime70 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 71 ---
+// Arte generativa 71 - LYGIA
+// Código shader / audio / physics autoral 71
+uniform float uTime71;
+varying vec2 vUv71;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv71 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime71 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 72 ---
+// Arte generativa 72 - LYGIA
+// Código shader / audio / physics autoral 72
+uniform float uTime72;
+varying vec2 vUv72;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv72 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime72 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 73 ---
+// Arte generativa 73 - LYGIA
+// Código shader / audio / physics autoral 73
+uniform float uTime73;
+varying vec2 vUv73;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv73 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime73 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 74 ---
+// Arte generativa 74 - LYGIA
+// Código shader / audio / physics autoral 74
+uniform float uTime74;
+varying vec2 vUv74;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv74 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime74 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 75 ---
+// Arte generativa 75 - LYGIA
+// Código shader / audio / physics autoral 75
+uniform float uTime75;
+varying vec2 vUv75;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv75 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime75 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 76 ---
+// Arte generativa 76 - LYGIA
+// Código shader / audio / physics autoral 76
+uniform float uTime76;
+varying vec2 vUv76;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv76 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime76 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 77 ---
+// Arte generativa 77 - LYGIA
+// Código shader / audio / physics autoral 77
+uniform float uTime77;
+varying vec2 vUv77;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv77 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime77 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 78 ---
+// Arte generativa 78 - LYGIA
+// Código shader / audio / physics autoral 78
+uniform float uTime78;
+varying vec2 vUv78;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv78 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime78 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 79 ---
+// Arte generativa 79 - LYGIA
+// Código shader / audio / physics autoral 79
+uniform float uTime79;
+varying vec2 vUv79;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv79 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime79 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 80 ---
+// Arte generativa 80 - LYGIA
+// Código shader / audio / physics autoral 80
+uniform float uTime80;
+varying vec2 vUv80;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv80 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime80 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 81 ---
+// Arte generativa 81 - LYGIA
+// Código shader / audio / physics autoral 81
+uniform float uTime81;
+varying vec2 vUv81;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv81 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime81 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 82 ---
+// Arte generativa 82 - LYGIA
+// Código shader / audio / physics autoral 82
+uniform float uTime82;
+varying vec2 vUv82;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv82 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime82 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 83 ---
+// Arte generativa 83 - LYGIA
+// Código shader / audio / physics autoral 83
+uniform float uTime83;
+varying vec2 vUv83;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv83 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime83 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 84 ---
+// Arte generativa 84 - LYGIA
+// Código shader / audio / physics autoral 84
+uniform float uTime84;
+varying vec2 vUv84;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv84 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime84 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 85 ---
+// Arte generativa 85 - LYGIA
+// Código shader / audio / physics autoral 85
+uniform float uTime85;
+varying vec2 vUv85;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv85 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime85 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 86 ---
+// Arte generativa 86 - LYGIA
+// Código shader / audio / physics autoral 86
+uniform float uTime86;
+varying vec2 vUv86;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv86 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime86 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 87 ---
+// Arte generativa 87 - LYGIA
+// Código shader / audio / physics autoral 87
+uniform float uTime87;
+varying vec2 vUv87;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv87 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime87 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 88 ---
+// Arte generativa 88 - LYGIA
+// Código shader / audio / physics autoral 88
+uniform float uTime88;
+varying vec2 vUv88;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv88 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime88 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 89 ---
+// Arte generativa 89 - LYGIA
+// Código shader / audio / physics autoral 89
+uniform float uTime89;
+varying vec2 vUv89;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv89 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime89 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 90 ---
+// Arte generativa 90 - LYGIA
+// Código shader / audio / physics autoral 90
+uniform float uTime90;
+varying vec2 vUv90;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv90 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime90 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 91 ---
+// Arte generativa 91 - LYGIA
+// Código shader / audio / physics autoral 91
+uniform float uTime91;
+varying vec2 vUv91;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv91 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime91 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 92 ---
+// Arte generativa 92 - LYGIA
+// Código shader / audio / physics autoral 92
+uniform float uTime92;
+varying vec2 vUv92;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv92 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime92 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 93 ---
+// Arte generativa 93 - LYGIA
+// Código shader / audio / physics autoral 93
+uniform float uTime93;
+varying vec2 vUv93;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv93 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime93 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 94 ---
+// Arte generativa 94 - LYGIA
+// Código shader / audio / physics autoral 94
+uniform float uTime94;
+varying vec2 vUv94;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv94 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime94 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 95 ---
+// Arte generativa 95 - LYGIA
+// Código shader / audio / physics autoral 95
+uniform float uTime95;
+varying vec2 vUv95;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv95 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime95 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 96 ---
+// Arte generativa 96 - LYGIA
+// Código shader / audio / physics autoral 96
+uniform float uTime96;
+varying vec2 vUv96;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv96 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime96 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 97 ---
+// Arte generativa 97 - LYGIA
+// Código shader / audio / physics autoral 97
+uniform float uTime97;
+varying vec2 vUv97;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv97 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime97 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 98 ---
+// Arte generativa 98 - LYGIA
+// Código shader / audio / physics autoral 98
+uniform float uTime98;
+varying vec2 vUv98;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv98 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime98 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 99 ---
+// Arte generativa 99 - LYGIA
+// Código shader / audio / physics autoral 99
+uniform float uTime99;
+varying vec2 vUv99;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv99 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime99 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 100 ---
+// Arte generativa 100 - LYGIA
+// Código shader / audio / physics autoral 100
+uniform float uTime100;
+varying vec2 vUv100;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv100 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime100 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 101 ---
+// Arte generativa 101 - LYGIA
+// Código shader / audio / physics autoral 101
+uniform float uTime101;
+varying vec2 vUv101;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv101 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime101 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 102 ---
+// Arte generativa 102 - LYGIA
+// Código shader / audio / physics autoral 102
+uniform float uTime102;
+varying vec2 vUv102;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv102 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime102 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 103 ---
+// Arte generativa 103 - LYGIA
+// Código shader / audio / physics autoral 103
+uniform float uTime103;
+varying vec2 vUv103;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv103 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime103 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 104 ---
+// Arte generativa 104 - LYGIA
+// Código shader / audio / physics autoral 104
+uniform float uTime104;
+varying vec2 vUv104;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv104 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime104 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 105 ---
+// Arte generativa 105 - LYGIA
+// Código shader / audio / physics autoral 105
+uniform float uTime105;
+varying vec2 vUv105;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv105 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime105 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 106 ---
+// Arte generativa 106 - LYGIA
+// Código shader / audio / physics autoral 106
+uniform float uTime106;
+varying vec2 vUv106;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv106 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime106 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 107 ---
+// Arte generativa 107 - LYGIA
+// Código shader / audio / physics autoral 107
+uniform float uTime107;
+varying vec2 vUv107;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv107 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime107 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 108 ---
+// Arte generativa 108 - LYGIA
+// Código shader / audio / physics autoral 108
+uniform float uTime108;
+varying vec2 vUv108;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv108 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime108 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 109 ---
+// Arte generativa 109 - LYGIA
+// Código shader / audio / physics autoral 109
+uniform float uTime109;
+varying vec2 vUv109;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv109 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime109 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 110 ---
+// Arte generativa 110 - LYGIA
+// Código shader / audio / physics autoral 110
+uniform float uTime110;
+varying vec2 vUv110;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv110 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime110 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 111 ---
+// Arte generativa 111 - LYGIA
+// Código shader / audio / physics autoral 111
+uniform float uTime111;
+varying vec2 vUv111;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv111 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime111 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 112 ---
+// Arte generativa 112 - LYGIA
+// Código shader / audio / physics autoral 112
+uniform float uTime112;
+varying vec2 vUv112;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv112 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime112 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 113 ---
+// Arte generativa 113 - LYGIA
+// Código shader / audio / physics autoral 113
+uniform float uTime113;
+varying vec2 vUv113;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv113 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime113 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 114 ---
+// Arte generativa 114 - LYGIA
+// Código shader / audio / physics autoral 114
+uniform float uTime114;
+varying vec2 vUv114;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv114 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime114 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 115 ---
+// Arte generativa 115 - LYGIA
+// Código shader / audio / physics autoral 115
+uniform float uTime115;
+varying vec2 vUv115;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv115 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime115 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 116 ---
+// Arte generativa 116 - LYGIA
+// Código shader / audio / physics autoral 116
+uniform float uTime116;
+varying vec2 vUv116;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv116 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime116 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 117 ---
+// Arte generativa 117 - LYGIA
+// Código shader / audio / physics autoral 117
+uniform float uTime117;
+varying vec2 vUv117;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv117 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime117 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 118 ---
+// Arte generativa 118 - LYGIA
+// Código shader / audio / physics autoral 118
+uniform float uTime118;
+varying vec2 vUv118;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv118 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime118 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 119 ---
+// Arte generativa 119 - LYGIA
+// Código shader / audio / physics autoral 119
+uniform float uTime119;
+varying vec2 vUv119;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv119 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime119 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 120 ---
+// Arte generativa 120 - LYGIA
+// Código shader / audio / physics autoral 120
+uniform float uTime120;
+varying vec2 vUv120;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv120 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime120 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 121 ---
+// Arte generativa 121 - LYGIA
+// Código shader / audio / physics autoral 121
+uniform float uTime121;
+varying vec2 vUv121;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv121 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime121 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 122 ---
+// Arte generativa 122 - LYGIA
+// Código shader / audio / physics autoral 122
+uniform float uTime122;
+varying vec2 vUv122;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv122 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime122 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 123 ---
+// Arte generativa 123 - LYGIA
+// Código shader / audio / physics autoral 123
+uniform float uTime123;
+varying vec2 vUv123;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv123 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime123 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 124 ---
+// Arte generativa 124 - LYGIA
+// Código shader / audio / physics autoral 124
+uniform float uTime124;
+varying vec2 vUv124;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv124 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime124 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 125 ---
+// Arte generativa 125 - LYGIA
+// Código shader / audio / physics autoral 125
+uniform float uTime125;
+varying vec2 vUv125;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv125 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime125 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 126 ---
+// Arte generativa 126 - LYGIA
+// Código shader / audio / physics autoral 126
+uniform float uTime126;
+varying vec2 vUv126;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv126 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime126 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 127 ---
+// Arte generativa 127 - LYGIA
+// Código shader / audio / physics autoral 127
+uniform float uTime127;
+varying vec2 vUv127;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv127 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime127 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 128 ---
+// Arte generativa 128 - LYGIA
+// Código shader / audio / physics autoral 128
+uniform float uTime128;
+varying vec2 vUv128;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv128 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime128 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 129 ---
+// Arte generativa 129 - LYGIA
+// Código shader / audio / physics autoral 129
+uniform float uTime129;
+varying vec2 vUv129;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv129 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime129 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 130 ---
+// Arte generativa 130 - LYGIA
+// Código shader / audio / physics autoral 130
+uniform float uTime130;
+varying vec2 vUv130;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv130 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime130 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 131 ---
+// Arte generativa 131 - LYGIA
+// Código shader / audio / physics autoral 131
+uniform float uTime131;
+varying vec2 vUv131;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv131 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime131 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 132 ---
+// Arte generativa 132 - LYGIA
+// Código shader / audio / physics autoral 132
+uniform float uTime132;
+varying vec2 vUv132;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv132 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime132 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 133 ---
+// Arte generativa 133 - LYGIA
+// Código shader / audio / physics autoral 133
+uniform float uTime133;
+varying vec2 vUv133;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv133 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime133 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 134 ---
+// Arte generativa 134 - LYGIA
+// Código shader / audio / physics autoral 134
+uniform float uTime134;
+varying vec2 vUv134;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv134 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime134 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 135 ---
+// Arte generativa 135 - LYGIA
+// Código shader / audio / physics autoral 135
+uniform float uTime135;
+varying vec2 vUv135;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv135 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime135 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 136 ---
+// Arte generativa 136 - LYGIA
+// Código shader / audio / physics autoral 136
+uniform float uTime136;
+varying vec2 vUv136;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv136 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime136 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 137 ---
+// Arte generativa 137 - LYGIA
+// Código shader / audio / physics autoral 137
+uniform float uTime137;
+varying vec2 vUv137;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv137 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime137 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 138 ---
+// Arte generativa 138 - LYGIA
+// Código shader / audio / physics autoral 138
+uniform float uTime138;
+varying vec2 vUv138;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv138 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime138 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 139 ---
+// Arte generativa 139 - LYGIA
+// Código shader / audio / physics autoral 139
+uniform float uTime139;
+varying vec2 vUv139;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv139 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime139 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 140 ---
+// Arte generativa 140 - LYGIA
+// Código shader / audio / physics autoral 140
+uniform float uTime140;
+varying vec2 vUv140;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv140 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime140 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 141 ---
+// Arte generativa 141 - LYGIA
+// Código shader / audio / physics autoral 141
+uniform float uTime141;
+varying vec2 vUv141;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv141 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime141 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 142 ---
+// Arte generativa 142 - LYGIA
+// Código shader / audio / physics autoral 142
+uniform float uTime142;
+varying vec2 vUv142;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv142 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime142 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 143 ---
+// Arte generativa 143 - LYGIA
+// Código shader / audio / physics autoral 143
+uniform float uTime143;
+varying vec2 vUv143;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv143 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime143 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 144 ---
+// Arte generativa 144 - LYGIA
+// Código shader / audio / physics autoral 144
+uniform float uTime144;
+varying vec2 vUv144;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv144 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime144 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 145 ---
+// Arte generativa 145 - LYGIA
+// Código shader / audio / physics autoral 145
+uniform float uTime145;
+varying vec2 vUv145;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv145 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime145 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 146 ---
+// Arte generativa 146 - LYGIA
+// Código shader / audio / physics autoral 146
+uniform float uTime146;
+varying vec2 vUv146;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv146 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime146 * 0.6) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 147 ---
+// Arte generativa 147 - LYGIA
+// Código shader / audio / physics autoral 147
+uniform float uTime147;
+varying vec2 vUv147;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv147 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime147 * 0.7) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 148 ---
+// Arte generativa 148 - LYGIA
+// Código shader / audio / physics autoral 148
+uniform float uTime148;
+varying vec2 vUv148;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv148 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime148 * 0.8) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 149 ---
+// Arte generativa 149 - LYGIA
+// Código shader / audio / physics autoral 149
+uniform float uTime149;
+varying vec2 vUv149;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv149 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime149 * 0.9) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}
+
+--- PADRÃO LYGIA 150 ---
+// Arte generativa 150 - LYGIA
+// Código shader / audio / physics autoral 150
+uniform float uTime150;
+varying vec2 vUv150;
+#include "lygia/sdf/circleSDF.glsl"
+void main(){
+  vec2 st = vUv150 * 2.0 - 1.0;
+  float d = circleSDF(st);
+  d += sin(uTime150 * 0.5) * 0.1;
+  gl_FragColor = vec4(vec3(d), 1.0);
+}

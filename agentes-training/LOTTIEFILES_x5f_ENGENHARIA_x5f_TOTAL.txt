@@ -1,0 +1,263 @@
+
+================================================================================
+LOTTIEFILES / LOTTIE / DOTLOTTIE - ENGENHARIA REVERSA TOTAL - 2026
+Site: lottiefiles.com - Maior biblioteca de animações vetoriais JSON
+================================================================================
+
+O QUE É:
+Lottie é formato JSON exportado do After Effects via Bodymovin. Roda vetorial em qualquer plataforma (web, iOS, Android). LottieFiles é o site com 1M+ animações gratuitas.
+dotLottie (.lottie) é novo formato 2024+ que encapsula JSON + imagens + estados em um arquivo zip otimizado, muito menor e com temas.
+
+Formatos:
+- .json - Lottie clássico, 100-500KB
+- .lottie - dotLottie, 50-200KB, suporta múltiplas animações, temas, interatividade básica
+- .riv - Rive (concorrente interativo)
+
+Players 2026:
+- lottie-web (antigo, Bodymovin) - ainda usado, mas legacy
+- @lottiefiles/dotlottie-web - novo player oficial, carrega .json e .lottie, 30KB, recomendado
+- @lottiefiles/lottie-player (web component)
+- @lottiefiles/dotlottie-react, vue, svelte
+
+INSTALAÇÃO:
+
+Vanilla novo (recomendado):
+npm install @lottiefiles/dotlottie-web
+import { DotLottie } from '@lottiefiles/dotlottie-web'
+const dotLottie = new DotLottie({
+  canvas: document.getElementById('canvas'),
+  src: 'https://lottie.host/xxx/anim.lottie', // ou .json
+  autoplay: true,
+  loop: true
+})
+
+React novo:
+npm install @lottiefiles/dotlottie-react
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+<DotLottieReact src="https://lottie.host/xxx/anim.lottie" autoplay loop />
+
+Web Component (antigo mas fácil):
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<lottie-player src="https://lottie.host/xxx.json" background="transparent" speed="1" loop autoplay></lottie-player>
+
+Lottie-web legacy:
+npm install lottie-web
+import lottie from 'lottie-web'
+lottie.loadAnimation({ container: document.getElementById('lottie'), renderer: 'svg', loop: true, autoplay: true, path: '/anim.json' })
+
+================================================================================
+1. DOTLOTTIE-WEB - API COMPLETA (RECOMENDADO 2026)
+================================================================================
+
+import { DotLottie } from '@lottiefiles/dotlottie-web'
+
+const dotLottie = new DotLottie({
+  canvas: document.getElementById('canvas'),
+  src: '/anim.lottie', // ou .json, ou URL lottie.host
+  autoplay: false,
+  loop: false,
+  speed: 1,
+  data: {}, // dados custom
+  renderConfig: {
+    devicePixelRatio: window.devicePixelRatio,
+    autoResize: true
+  }
+})
+
+// Métodos:
+dotLottie.play()
+dotLottie.pause()
+dotLottie.stop()
+dotLottie.setSpeed(2)
+dotLottie.setLoop(true)
+dotLottie.setFrame(50) // vai para frame 50
+dotLottie.setSegment(0, 100) // toca só do frame 0 ao 100
+
+// Eventos:
+dotLottie.addEventListener('load', () => console.log('carregou'))
+dotLottie.addEventListener('play', () => {})
+dotLottie.addEventListener('pause', () => {})
+dotLottie.addEventListener('complete', () => {})
+dotLottie.addEventListener('frame', (e) => console.log(e.currentFrame))
+
+// Propriedades:
+dotLottie.currentFrame
+dotLottie.totalFrames
+dotLottie.isPlaying
+dotLottie.isPaused
+
+// Interatividade (dotLottie com estados):
+dotLottie.addEventListener('click', () => {})
+// Se .lottie tem estados/themes:
+dotLottie.setTheme('dark')
+dotLottie.setState('hover')
+
+React:
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { useRef } from 'react'
+
+function App(){
+  const dotLottieRef = useRef(null)
+
+  return (
+    <DotLottieReact
+      src="/anim.lottie"
+      autoplay
+      loop
+      dotLottieRefCallback={(dotLottie) => {
+        dotLottieRef.current = dotLottie
+        dotLottie.addEventListener('complete', () => console.log('fim'))
+      }}
+    />
+  )
+}
+
+================================================================================
+2. LOTTIE-PLAYER - WEB COMPONENT
+================================================================================
+
+<lottie-player
+  src="https://lottie.host/xxx.json"
+  background="transparent"
+  speed="1"
+  style="width: 300px; height: 300px"
+  loop
+  autoplay
+  controls // mostra controles
+  mode="normal" // normal, bounce
+></lottie-player>
+
+// JS:
+const player = document.querySelector('lottie-player')
+player.play()
+player.pause()
+player.stop()
+player.setSpeed(2)
+player.seek('50%') // ou 50 (frame)
+player.setDirection(-1) // reverso
+
+Eventos:
+player.addEventListener('ready', ()=>{})
+player.addEventListener('play', ()=>{})
+player.addEventListener('complete', ()=>{})
+
+================================================================================
+3. LOTTIE-WEB - LEGACY API
+================================================================================
+
+import lottie from 'lottie-web'
+
+const anim = lottie.loadAnimation({
+  container: document.getElementById('lottie'),
+  renderer: 'svg', // 'svg' | 'canvas' | 'html' - svg é mais nítido
+  loop: true,
+  autoplay: true,
+  path: '/anim.json', // ou animationData: JSON direto
+  rendererSettings: {
+    preserveAspectRatio: 'xMidYMid slice',
+    progressiveLoad: true
+  }
+})
+
+anim.play()
+anim.pause()
+anim.stop()
+anim.setSpeed(2)
+anim.setDirection(-1)
+anim.goToAndPlay(50, true) // frame 50
+anim.goToAndStop(50, true)
+anim.setSegment(0, 50)
+anim.destroy()
+
+Eventos:
+anim.addEventListener('DOMLoaded', ()=>{})
+anim.addEventListener('complete', ()=>{})
+anim.addEventListener('loopComplete', ()=>{})
+anim.addEventListener('enterFrame', (e)=> console.log(e.currentTime))
+
+================================================================================
+4. PADRÕES DE CÓDIGO - COPIA E COLA
+================================================================================
+
+Padrão 1 - Hero Lottie + ScrollTrigger:
+useEffect(()=>{
+  const anim = lottie.loadAnimation({ container: document.getElementById('hero'), renderer: 'svg', loop: false, autoplay: false, path: '/hero.json' })
+  ScrollTrigger.create({
+    trigger: '.hero',
+    start: 'top top',
+    end: '+=1000',
+    scrub: true,
+    onUpdate: self => {
+      anim.goToAndStop(self.progress * anim.totalFrames, true)
+    }
+  })
+},[])
+
+Padrão 2 - Botão com Lottie que toca no hover:
+function Button(){
+  const ref = useRef(null)
+  useEffect(()=>{
+    const anim = lottie.loadAnimation({ container: ref.current, renderer: 'svg', loop: false, autoplay: false, path: '/button.json' })
+    ref.current.addEventListener('mouseenter', ()=> anim.goToAndPlay(0))
+  },[])
+  return <div ref={ref} style={{width:100, height:40}}></div>
+}
+
+Padrão 3 - Loading:
+<DotLottieReact src="/loading.lottie" autoplay loop style={{width:100, height:100}} />
+
+Padrão 4 - Click para tocar:
+function ClickLottie(){
+  const dotRef = useRef(null)
+  return <DotLottieReact src="/click.lottie" dotLottieRefCallback={d=> dotRef.current = d} onClick={()=> dotRef.current.play()} />
+}
+
+Padrão 5 - Controle de velocidade com scroll:
+dotLottie.addEventListener('load', ()=>{
+  ScrollTrigger.create({
+    trigger: '.section',
+    scrub: true,
+    onUpdate: self => dotLottie.setSpeed(self.progress * 3)
+  })
+})
+
+Padrão 6 - Segmento (só parte da animação):
+dotLottie.setSegment(0, 50) // só frames 0-50
+dotLottie.play()
+
+Padrão 7 - Trocar tema dotLottie:
+dotLottie.setTheme('dark') // se .lottie tem temas light/dark
+
+================================================================================
+5. OTIMIZAÇÃO E COMPARATIVO
+================================================================================
+
+Otimização:
+- Use .lottie ao invés de .json (50% menor)
+- Use dotLottie-web ao invés de lottie-web (30KB vs 70KB)
+- Renderer 'svg' para ícones, 'canvas' para animações grandes com muitas partículas
+- progressiveLoad: true
+- Reduza FPS no After Effects (30 ao invés de 60)
+- Evite efeitos AE não suportados (consulte lottiefiles.com/what-is-lottie)
+
+Lottie vs Rive vs GSAP:
+- Lottie: animação vetorial linear, sem interação, arquivo 100-500KB, fácil achar no lottiefiles.com, bom para ilustração, hero, loading, empty state
+- Rive: interativo, state machine, 10-100KB, precisa criar no editor Rive, bom para botão, mascote, ícone interativo
+- GSAP/Motion: anima DOM, não vetor, controle total, bom para scroll storytelling
+
+Quando usar Lottie:
+- Precisa de ilustração animada rápida (baixa do lottiefiles.com)
+- Loading, success, empty state, onboarding
+- Não precisa interação complexa
+- Quer algo pronto sem criar
+
+Quando usar Rive:
+- Precisa interação (hover, click, drag)
+- Quer arquivo ultra leve e nítido
+
+Quando usar GSAP:
+- Precisa scroll storytelling, parallax, pin
+
+LottieFiles tem 1M+ animações gratuitas, é o Google das animações. Use dotLottie player novo, não lottie-web legacy.
+
+FIM LOTTIEFILES

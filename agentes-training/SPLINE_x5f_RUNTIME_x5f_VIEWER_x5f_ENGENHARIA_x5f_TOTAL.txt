@@ -1,0 +1,296 @@
+
+================================================================================
+SPLINE (RUNTIME / VIEWER) - ENGENHARIA REVERSA TOTAL - 2026
+Site: spline.design - Editor 3D no-code + Runtime para web
+================================================================================
+
+O QUE É:
+Spline é Figma do 3D. Designer cria cena 3D com objetos, materiais, luzes, animações, estados, física, eventos no editor browser (spline.design). Depois exporta como .splinecode (URL hospedada) e você carrega na web via runtime.
+
+Dois modos de usar:
+1. <spline-viewer> web component - mais fácil, 1 linha
+2. @splinetool/runtime Application - controle total via JS
+
+INSTALAÇÃO:
+
+Vanilla (web component):
+<script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.82/build/spline-viewer.js"></script>
+<spline-viewer url="https://prod.spline.design/xxx/scene.splinecode"></spline-viewer>
+
+Vanilla (runtime):
+npm install @splinetool/runtime
+import { Application } from '@splinetool/runtime'
+const app = new Application(canvas)
+await app.load('https://prod.spline.design/xxx/scene.splinecode')
+
+React:
+npm install @splinetool/react-spline
+import Spline from '@splinetool/react-spline'
+<Spline scene="https://prod.spline.design/xxx/scene.splinecode" />
+
+Next.js:
+npm install @splinetool/react-spline
+import Spline from '@splinetool/react-spline/next'
+<Spline scene="..." />
+
+Vue:
+npm install @splinetool/vue-spline
+
+================================================================================
+1. SPLINE-VIEWER - WEB COMPONENT - MAIS FÁCIL
+================================================================================
+
+<spline-viewer
+  url="https://prod.spline.design/xxx/scene.splinecode"
+  events-target="global" // "global" | "local" - onde escuta eventos
+  loading-anim-type="spinner-small-dark" // loading
+  style="width:100%; height:100vh"
+></spline-viewer>
+
+Props:
+url - URL .splinecode obrigatória
+events-target - "global" escuta mouse global, "local" só no canvas
+loading-anim - custom loading
+
+Background transparente:
+<spline-viewer url="..." style="background: transparent"></spline-viewer>
+// ou no editor Spline: desmarcar background
+
+================================================================================
+2. @splinetool/runtime - APPLICATION - CONTROLE TOTAL
+================================================================================
+
+import { Application } from '@splinetool/runtime'
+
+const canvas = document.getElementById('canvas3d')
+const app = new Application(canvas)
+
+await app.load('https://prod.spline.design/xxx/scene.splinecode')
+
+// Após load, você tem acesso à cena:
+app._scene // cena Three.js interna (pode acessar objetos Three)
+app._renderer
+
+// Métodos:
+app.load(url) // carrega cena
+app.setSize(width, height) // resize
+app.setBackgroundColor(color)
+app.dispose() // mata
+
+// Encontrar objetos da cena:
+const obj = app.findObjectByName('Cube')
+const objById = app.findObjectById('id')
+
+// Objetos retornados são SplineObject com:
+obj.name
+obj.position // THREE.Vector3
+obj.rotation
+obj.scale
+obj.visible
+obj.layers
+
+// Animações e estados (criados no editor Spline):
+// No editor você cria States (ex: State1, State2) e Events (mouse down, hover)
+
+app.setState('StateName') // muda estado global
+app.setState('StateName', 'ObjectName') // muda estado de objeto específico
+
+// Variáveis (Spline tem sistema de variáveis):
+app.setVariable('myVar', value)
+app.getVariable('myVar')
+app.setVariables({ var1: 10, var2: 'hello' })
+
+// Eventos:
+app.addEventListener('mouseDown', (e) => {
+  console.log(e.target.name) // objeto clicado
+})
+
+app.addEventListener('mouseHover', (e) => {})
+app.addEventListener('mouseUp', (e) => {})
+app.addEventListener('keyDown', (e) => {})
+app.addEventListener('keyUp', (e) => {})
+app.addEventListener('start', () => {}) // cena começou
+app.addEventListener('load', () => {}) // cena carregou
+
+// Emitir eventos custom do Spline:
+app.emitEvent('mouseDown', 'Cube') // simula click no Cube
+
+// Controle de câmera:
+const camera = app.findObjectByName('Camera')
+camera.position
+// Mas câmera é controlada pelo editor, melhor criar câmera custom no Spline
+
+================================================================================
+3. REACT - @splinetool/react-spline
+================================================================================
+
+import Spline from '@splinetool/react-spline'
+
+function App(){
+  const [app, setApp] = useState(null)
+
+  function onLoad(splineApp){
+    setApp(splineApp)
+    // splineApp é mesma Application do runtime
+    console.log(splineApp.findObjectByName('Cube'))
+  }
+
+  function onMouseDown(e){
+    console.log(e.target.name)
+  }
+
+  return (
+    <Spline
+      scene="https://prod.spline.design/xxx/scene.splinecode"
+      onLoad={onLoad}
+      onMouseDown={onMouseDown}
+      onMouseHover={onMouseHover}
+      onMouseUp={onMouseUp}
+      onKeyDown={onKeyDown}
+      style={{ width: '100%', height: '100vh' }}
+    />
+  )
+}
+
+// Controlar após load:
+useEffect(()=>{
+  if(app){
+    app.setVariable('score', 100)
+    app.setState('Pressed', 'Button')
+  }
+}, [app])
+
+Next.js com dynamic (evita SSR):
+import dynamic from 'next/dynamic'
+const Spline = dynamic(() => import('@splinetool/react-spline/next'), { ssr: false })
+
+================================================================================
+4. PADRÕES DE CÓDIGO - COPIA E COLA
+================================================================================
+
+Padrão 1 - Background transparente + overlay HTML:
+<div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+  <Spline scene="..." style={{ background: 'transparent' }} />
+  <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
+    <h1>Meu Site</h1>
+  </div>
+</div>
+
+Padrão 2 - Click em objeto muda estado:
+function onLoad(app){
+  app.addEventListener('mouseDown', (e)=>{
+    if(e.target.name === 'Cube'){
+      app.setState('Clicked', 'Cube')
+      // ou dispara animação GSAP no DOM
+      gsap.to('.info', { opacity: 1, y: 0 })
+    }
+  })
+}
+
+Padrão 3 - Variável Spline controla DOM e vice-versa:
+function onLoad(app){
+  app.addEventListener('mouseDown', (e)=>{
+    if(e.target.name === 'Button'){
+      const score = app.getVariable('score') + 1
+      app.setVariable('score', score)
+      document.querySelector('.score').textContent = score
+    }
+  })
+}
+
+Padrão 4 - Spline + GSAP ScrollTrigger:
+useEffect(()=>{
+  ScrollTrigger.create({
+    trigger: '.section',
+    start: 'top top',
+    end: '+=1000',
+    scrub: true,
+    onUpdate: self => {
+      if(app){
+        app.setVariable('scrollProgress', self.progress) // Spline usa essa variável para animar
+      }
+    }
+  })
+}, [app])
+
+No Spline editor: crie variável scrollProgress e use em Actions para rotacionar objeto baseado nela.
+
+Padrão 5 - Spline + R3F? Não direto, mas pode usar runtime para pegar _scene e adicionar objetos Three:
+function onLoad(app){
+  const scene = app._scene
+  const geometry = new THREE.BoxGeometry()
+  const material = new THREE.MeshStandardMaterial()
+  const mesh = new THREE.Mesh(geometry, material)
+  scene.add(mesh)
+}
+
+Padrão 6 - Loading custom:
+<Spline scene="..." onLoad={()=> setLoading(false)} />
+{loading && <div className="loading">Carregando 3D...</div>}
+
+Padrão 7 - Múltiplas cenas:
+<Spline scene="scene1.splinecode" />
+<Spline scene="scene2.splinecode" />
+
+Padrão 8 - Controlar objeto via código (ex: seguir mouse):
+function onLoad(app){
+  const cube = app.findObjectByName('Cube')
+  window.addEventListener('mousemove', (e)=>{
+    const x = (e.clientX / window.innerWidth - 0.5) * 10
+    cube.position.x = x
+  })
+}
+
+================================================================================
+5. PERFORMANCE E LIMITAÇÕES
+================================================================================
+
+Performance:
+- Spline roda em WebGL, não WebGPU ainda (2026)
+- Cada cena .splinecode pesa 500KB-5MB dependendo de texturas
+- Use compressão de textura no editor
+- Limite para mobile: desative sombras, reduza poly count
+- Loading: .splinecode é baixado inteiro, use loading screen
+
+Limitações:
+- Não tem acesso total ao código Three.js, é abstraído
+- Física básica, não é Rapier
+- Não tem shader custom GLSL, só materiais do editor
+- Código gerado é ofuscado, difícil debugar
+- SEO: canvas não é indexado, use HTML overlay
+
+Alternativas:
+- Se precisa controle total: use Three.js + R3F + Drei
+- Se precisa no-code rápido: Spline perfeito
+- Se precisa colaboração designer+dev: Spline + runtime é ótimo
+
+================================================================================
+6. COMPARATIVO SPLINE vs R3F vs THREE
+================================================================================
+
+Spline:
+- No-code, editor visual
+- Rápido prototipar
+- Designer cria, dev integra em 1 linha
+- Controle limitado via runtime
+- Bom para hero 3D, ícones 3D, cenas interativas simples
+
+R3F:
+- Código, controle total
+- Precisa saber Three.js
+- Melhor performance e otimização
+- Shader custom, postprocessing
+- Bom para site premiado, experiência complexa
+
+Three.js vanilla:
+- Controle máximo
+- Mais verboso
+- Para quem quer engine pura
+
+REGRA:
+- Landing com 3D bonito rápido? Spline
+- Site Awwwards com scroll storytelling? R3F + GSAP
+- Protótipo para cliente? Spline
+- Produção final otimizada? R3F
+
+FIM SPLINE RUNTIME / VIEWER

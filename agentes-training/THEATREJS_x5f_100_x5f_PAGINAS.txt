@@ -1,0 +1,4144 @@
+
+================================================================================
+THEATRE.JS - ENGENHARIA REVERSA TOTAL - 2026 - STUDIO PARA THREE.JS
+Site: theatrejs.com - Timeline visual igual After Effects para web
+================================================================================
+
+O QUE É:
+Theatre.js é editor visual de animação para web. Você cria animação arrastando keyframes em timeline (igual AE), e exporta JSON que roda na web. Perfeito para Three.js, R3F.
+Usado por Linear, Apple, Stripe para hero 3D.
+
+INSTALAÇÃO:
+npm install @theatre/core @theatre/studio
+npm install @theatre/r3f # para R3F
+
+BÁSICO VANILLA:
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+
+studio.initialize() // só em dev, mostra UI
+
+const project = getProject('My Project')
+const sheet = project.sheet('Scene')
+const obj = sheet.object('Cube', {
+  x: 0,
+  y: 0,
+  rotation: 0
+})
+
+obj.onValuesChange((values)=>{
+  cube.position.x = values.x
+  cube.position.y = values.y
+  cube.rotation.y = values.rotation
+})
+
+// Em loop:
+function animate(){
+  requestAnimationFrame(animate)
+  // Theatre atualiza sozinho
+}
+
+// R3F:
+import { SheetProvider, PerspectiveCamera, useCurrentSheet } from '@theatre/r3f'
+import { getProject } from '@theatre/core'
+
+function App(){
+  const sheet = getProject('Project').sheet('Scene')
+  return (
+    <Canvas>
+      <SheetProvider sheet={sheet}>
+        <Scene />
+      </SheetProvider>
+    </Canvas>
+  )
+}
+
+function Scene(){
+  const sheet = useCurrentSheet()
+  const obj = sheet.object('Cube', { x: 0, y: 0 })
+
+  return (
+    <editable.mesh theatreKey="Cube">
+      <boxGeometry />
+      <meshStandardMaterial />
+    </editable.mesh>
+  )
+}
+
+// Scroll sync:
+import { onChange } from '@theatre/core'
+sheet.sequence.onChange((pos)=>{
+  // pos.position = tempo atual
+})
+
+ScrollTrigger.create({
+  trigger: '.section',
+  scrub: true,
+  onUpdate: self => {
+    sheet.sequence.position = self.progress * sheet.sequence.duration
+  }
+})
+
+// Exportar para produção:
+studio.initialize() só em dev
+Em prod, remova studio, deixe só core, JSON da animação é embutido
+
+THEATRE + R3F + GSAP:
+- Theatre controla 3D (posição, rotação, material)
+- GSAP controla scroll e DOM
+- Ambos sincronizados via ScrollTrigger
+
+
+================================================================================
+THEATRE.JS - 150 PADRÕES
+================================================================================
+
+--- THEATRE PADRÃO 1 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project1 = getProject('Project 1')
+const sheet1 = project1.sheet('Scene 1')
+const obj1 = sheet1.object('Cube 1', {
+  x: 0.1,
+  y: 1,
+  rotation: 2,
+  scale: 1.1
+})
+
+obj1.onValuesChange((values)=>{
+  cube1.position.x = values.x
+  cube1.position.y = values.y
+  cube1.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-1',
+  scrub: true,
+  onUpdate: self => sheet1.sequence.position = self.progress * sheet1.sequence.duration
+})
+
+--- THEATRE PADRÃO 2 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project2 = getProject('Project 2')
+const sheet2 = project2.sheet('Scene 2')
+const obj2 = sheet2.object('Cube 2', {
+  x: 0.2,
+  y: 2,
+  rotation: 4,
+  scale: 1.2
+})
+
+obj2.onValuesChange((values)=>{
+  cube2.position.x = values.x
+  cube2.position.y = values.y
+  cube2.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-2',
+  scrub: true,
+  onUpdate: self => sheet2.sequence.position = self.progress * sheet2.sequence.duration
+})
+
+--- THEATRE PADRÃO 3 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project3 = getProject('Project 3')
+const sheet3 = project3.sheet('Scene 3')
+const obj3 = sheet3.object('Cube 3', {
+  x: 0.30000000000000004,
+  y: 3,
+  rotation: 6,
+  scale: 1.0
+})
+
+obj3.onValuesChange((values)=>{
+  cube3.position.x = values.x
+  cube3.position.y = values.y
+  cube3.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-3',
+  scrub: true,
+  onUpdate: self => sheet3.sequence.position = self.progress * sheet3.sequence.duration
+})
+
+--- THEATRE PADRÃO 4 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project4 = getProject('Project 4')
+const sheet4 = project4.sheet('Scene 4')
+const obj4 = sheet4.object('Cube 4', {
+  x: 0.4,
+  y: 4,
+  rotation: 8,
+  scale: 1.1
+})
+
+obj4.onValuesChange((values)=>{
+  cube4.position.x = values.x
+  cube4.position.y = values.y
+  cube4.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-4',
+  scrub: true,
+  onUpdate: self => sheet4.sequence.position = self.progress * sheet4.sequence.duration
+})
+
+--- THEATRE PADRÃO 5 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project5 = getProject('Project 5')
+const sheet5 = project5.sheet('Scene 5')
+const obj5 = sheet5.object('Cube 5', {
+  x: 0.5,
+  y: 0,
+  rotation: 10,
+  scale: 1.2
+})
+
+obj5.onValuesChange((values)=>{
+  cube5.position.x = values.x
+  cube5.position.y = values.y
+  cube5.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-5',
+  scrub: true,
+  onUpdate: self => sheet5.sequence.position = self.progress * sheet5.sequence.duration
+})
+
+--- THEATRE PADRÃO 6 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project6 = getProject('Project 6')
+const sheet6 = project6.sheet('Scene 6')
+const obj6 = sheet6.object('Cube 6', {
+  x: 0.6000000000000001,
+  y: 1,
+  rotation: 12,
+  scale: 1.0
+})
+
+obj6.onValuesChange((values)=>{
+  cube6.position.x = values.x
+  cube6.position.y = values.y
+  cube6.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-6',
+  scrub: true,
+  onUpdate: self => sheet6.sequence.position = self.progress * sheet6.sequence.duration
+})
+
+--- THEATRE PADRÃO 7 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project7 = getProject('Project 7')
+const sheet7 = project7.sheet('Scene 7')
+const obj7 = sheet7.object('Cube 7', {
+  x: 0.7000000000000001,
+  y: 2,
+  rotation: 14,
+  scale: 1.1
+})
+
+obj7.onValuesChange((values)=>{
+  cube7.position.x = values.x
+  cube7.position.y = values.y
+  cube7.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-7',
+  scrub: true,
+  onUpdate: self => sheet7.sequence.position = self.progress * sheet7.sequence.duration
+})
+
+--- THEATRE PADRÃO 8 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project8 = getProject('Project 8')
+const sheet8 = project8.sheet('Scene 8')
+const obj8 = sheet8.object('Cube 8', {
+  x: 0.8,
+  y: 3,
+  rotation: 16,
+  scale: 1.2
+})
+
+obj8.onValuesChange((values)=>{
+  cube8.position.x = values.x
+  cube8.position.y = values.y
+  cube8.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-8',
+  scrub: true,
+  onUpdate: self => sheet8.sequence.position = self.progress * sheet8.sequence.duration
+})
+
+--- THEATRE PADRÃO 9 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project9 = getProject('Project 9')
+const sheet9 = project9.sheet('Scene 9')
+const obj9 = sheet9.object('Cube 9', {
+  x: 0.9,
+  y: 4,
+  rotation: 18,
+  scale: 1.0
+})
+
+obj9.onValuesChange((values)=>{
+  cube9.position.x = values.x
+  cube9.position.y = values.y
+  cube9.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-9',
+  scrub: true,
+  onUpdate: self => sheet9.sequence.position = self.progress * sheet9.sequence.duration
+})
+
+--- THEATRE PADRÃO 10 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project10 = getProject('Project 10')
+const sheet10 = project10.sheet('Scene 10')
+const obj10 = sheet10.object('Cube 10', {
+  x: 1.0,
+  y: 0,
+  rotation: 20,
+  scale: 1.1
+})
+
+obj10.onValuesChange((values)=>{
+  cube10.position.x = values.x
+  cube10.position.y = values.y
+  cube10.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-10',
+  scrub: true,
+  onUpdate: self => sheet10.sequence.position = self.progress * sheet10.sequence.duration
+})
+
+--- THEATRE PADRÃO 11 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project11 = getProject('Project 11')
+const sheet11 = project11.sheet('Scene 11')
+const obj11 = sheet11.object('Cube 11', {
+  x: 1.1,
+  y: 1,
+  rotation: 22,
+  scale: 1.2
+})
+
+obj11.onValuesChange((values)=>{
+  cube11.position.x = values.x
+  cube11.position.y = values.y
+  cube11.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-11',
+  scrub: true,
+  onUpdate: self => sheet11.sequence.position = self.progress * sheet11.sequence.duration
+})
+
+--- THEATRE PADRÃO 12 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project12 = getProject('Project 12')
+const sheet12 = project12.sheet('Scene 12')
+const obj12 = sheet12.object('Cube 12', {
+  x: 1.2000000000000002,
+  y: 2,
+  rotation: 24,
+  scale: 1.0
+})
+
+obj12.onValuesChange((values)=>{
+  cube12.position.x = values.x
+  cube12.position.y = values.y
+  cube12.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-12',
+  scrub: true,
+  onUpdate: self => sheet12.sequence.position = self.progress * sheet12.sequence.duration
+})
+
+--- THEATRE PADRÃO 13 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project13 = getProject('Project 13')
+const sheet13 = project13.sheet('Scene 13')
+const obj13 = sheet13.object('Cube 13', {
+  x: 1.3,
+  y: 3,
+  rotation: 26,
+  scale: 1.1
+})
+
+obj13.onValuesChange((values)=>{
+  cube13.position.x = values.x
+  cube13.position.y = values.y
+  cube13.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-13',
+  scrub: true,
+  onUpdate: self => sheet13.sequence.position = self.progress * sheet13.sequence.duration
+})
+
+--- THEATRE PADRÃO 14 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project14 = getProject('Project 14')
+const sheet14 = project14.sheet('Scene 14')
+const obj14 = sheet14.object('Cube 14', {
+  x: 1.4000000000000001,
+  y: 4,
+  rotation: 28,
+  scale: 1.2
+})
+
+obj14.onValuesChange((values)=>{
+  cube14.position.x = values.x
+  cube14.position.y = values.y
+  cube14.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-14',
+  scrub: true,
+  onUpdate: self => sheet14.sequence.position = self.progress * sheet14.sequence.duration
+})
+
+--- THEATRE PADRÃO 15 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project15 = getProject('Project 15')
+const sheet15 = project15.sheet('Scene 15')
+const obj15 = sheet15.object('Cube 15', {
+  x: 1.5,
+  y: 0,
+  rotation: 30,
+  scale: 1.0
+})
+
+obj15.onValuesChange((values)=>{
+  cube15.position.x = values.x
+  cube15.position.y = values.y
+  cube15.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-15',
+  scrub: true,
+  onUpdate: self => sheet15.sequence.position = self.progress * sheet15.sequence.duration
+})
+
+--- THEATRE PADRÃO 16 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project16 = getProject('Project 16')
+const sheet16 = project16.sheet('Scene 16')
+const obj16 = sheet16.object('Cube 16', {
+  x: 1.6,
+  y: 1,
+  rotation: 32,
+  scale: 1.1
+})
+
+obj16.onValuesChange((values)=>{
+  cube16.position.x = values.x
+  cube16.position.y = values.y
+  cube16.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-16',
+  scrub: true,
+  onUpdate: self => sheet16.sequence.position = self.progress * sheet16.sequence.duration
+})
+
+--- THEATRE PADRÃO 17 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project17 = getProject('Project 17')
+const sheet17 = project17.sheet('Scene 17')
+const obj17 = sheet17.object('Cube 17', {
+  x: 1.7000000000000002,
+  y: 2,
+  rotation: 34,
+  scale: 1.2
+})
+
+obj17.onValuesChange((values)=>{
+  cube17.position.x = values.x
+  cube17.position.y = values.y
+  cube17.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-17',
+  scrub: true,
+  onUpdate: self => sheet17.sequence.position = self.progress * sheet17.sequence.duration
+})
+
+--- THEATRE PADRÃO 18 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project18 = getProject('Project 18')
+const sheet18 = project18.sheet('Scene 18')
+const obj18 = sheet18.object('Cube 18', {
+  x: 1.8,
+  y: 3,
+  rotation: 36,
+  scale: 1.0
+})
+
+obj18.onValuesChange((values)=>{
+  cube18.position.x = values.x
+  cube18.position.y = values.y
+  cube18.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-18',
+  scrub: true,
+  onUpdate: self => sheet18.sequence.position = self.progress * sheet18.sequence.duration
+})
+
+--- THEATRE PADRÃO 19 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project19 = getProject('Project 19')
+const sheet19 = project19.sheet('Scene 19')
+const obj19 = sheet19.object('Cube 19', {
+  x: 1.9000000000000001,
+  y: 4,
+  rotation: 38,
+  scale: 1.1
+})
+
+obj19.onValuesChange((values)=>{
+  cube19.position.x = values.x
+  cube19.position.y = values.y
+  cube19.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-19',
+  scrub: true,
+  onUpdate: self => sheet19.sequence.position = self.progress * sheet19.sequence.duration
+})
+
+--- THEATRE PADRÃO 20 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project20 = getProject('Project 20')
+const sheet20 = project20.sheet('Scene 20')
+const obj20 = sheet20.object('Cube 20', {
+  x: 2.0,
+  y: 0,
+  rotation: 40,
+  scale: 1.2
+})
+
+obj20.onValuesChange((values)=>{
+  cube20.position.x = values.x
+  cube20.position.y = values.y
+  cube20.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-20',
+  scrub: true,
+  onUpdate: self => sheet20.sequence.position = self.progress * sheet20.sequence.duration
+})
+
+--- THEATRE PADRÃO 21 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project21 = getProject('Project 21')
+const sheet21 = project21.sheet('Scene 21')
+const obj21 = sheet21.object('Cube 21', {
+  x: 2.1,
+  y: 1,
+  rotation: 42,
+  scale: 1.0
+})
+
+obj21.onValuesChange((values)=>{
+  cube21.position.x = values.x
+  cube21.position.y = values.y
+  cube21.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-21',
+  scrub: true,
+  onUpdate: self => sheet21.sequence.position = self.progress * sheet21.sequence.duration
+})
+
+--- THEATRE PADRÃO 22 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project22 = getProject('Project 22')
+const sheet22 = project22.sheet('Scene 22')
+const obj22 = sheet22.object('Cube 22', {
+  x: 2.2,
+  y: 2,
+  rotation: 44,
+  scale: 1.1
+})
+
+obj22.onValuesChange((values)=>{
+  cube22.position.x = values.x
+  cube22.position.y = values.y
+  cube22.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-22',
+  scrub: true,
+  onUpdate: self => sheet22.sequence.position = self.progress * sheet22.sequence.duration
+})
+
+--- THEATRE PADRÃO 23 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project23 = getProject('Project 23')
+const sheet23 = project23.sheet('Scene 23')
+const obj23 = sheet23.object('Cube 23', {
+  x: 2.3000000000000003,
+  y: 3,
+  rotation: 46,
+  scale: 1.2
+})
+
+obj23.onValuesChange((values)=>{
+  cube23.position.x = values.x
+  cube23.position.y = values.y
+  cube23.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-23',
+  scrub: true,
+  onUpdate: self => sheet23.sequence.position = self.progress * sheet23.sequence.duration
+})
+
+--- THEATRE PADRÃO 24 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project24 = getProject('Project 24')
+const sheet24 = project24.sheet('Scene 24')
+const obj24 = sheet24.object('Cube 24', {
+  x: 2.4000000000000004,
+  y: 4,
+  rotation: 48,
+  scale: 1.0
+})
+
+obj24.onValuesChange((values)=>{
+  cube24.position.x = values.x
+  cube24.position.y = values.y
+  cube24.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-24',
+  scrub: true,
+  onUpdate: self => sheet24.sequence.position = self.progress * sheet24.sequence.duration
+})
+
+--- THEATRE PADRÃO 25 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project25 = getProject('Project 25')
+const sheet25 = project25.sheet('Scene 25')
+const obj25 = sheet25.object('Cube 25', {
+  x: 2.5,
+  y: 0,
+  rotation: 50,
+  scale: 1.1
+})
+
+obj25.onValuesChange((values)=>{
+  cube25.position.x = values.x
+  cube25.position.y = values.y
+  cube25.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-25',
+  scrub: true,
+  onUpdate: self => sheet25.sequence.position = self.progress * sheet25.sequence.duration
+})
+
+--- THEATRE PADRÃO 26 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project26 = getProject('Project 26')
+const sheet26 = project26.sheet('Scene 26')
+const obj26 = sheet26.object('Cube 26', {
+  x: 2.6,
+  y: 1,
+  rotation: 52,
+  scale: 1.2
+})
+
+obj26.onValuesChange((values)=>{
+  cube26.position.x = values.x
+  cube26.position.y = values.y
+  cube26.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-26',
+  scrub: true,
+  onUpdate: self => sheet26.sequence.position = self.progress * sheet26.sequence.duration
+})
+
+--- THEATRE PADRÃO 27 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project27 = getProject('Project 27')
+const sheet27 = project27.sheet('Scene 27')
+const obj27 = sheet27.object('Cube 27', {
+  x: 2.7,
+  y: 2,
+  rotation: 54,
+  scale: 1.0
+})
+
+obj27.onValuesChange((values)=>{
+  cube27.position.x = values.x
+  cube27.position.y = values.y
+  cube27.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-27',
+  scrub: true,
+  onUpdate: self => sheet27.sequence.position = self.progress * sheet27.sequence.duration
+})
+
+--- THEATRE PADRÃO 28 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project28 = getProject('Project 28')
+const sheet28 = project28.sheet('Scene 28')
+const obj28 = sheet28.object('Cube 28', {
+  x: 2.8000000000000003,
+  y: 3,
+  rotation: 56,
+  scale: 1.1
+})
+
+obj28.onValuesChange((values)=>{
+  cube28.position.x = values.x
+  cube28.position.y = values.y
+  cube28.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-28',
+  scrub: true,
+  onUpdate: self => sheet28.sequence.position = self.progress * sheet28.sequence.duration
+})
+
+--- THEATRE PADRÃO 29 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project29 = getProject('Project 29')
+const sheet29 = project29.sheet('Scene 29')
+const obj29 = sheet29.object('Cube 29', {
+  x: 2.9000000000000004,
+  y: 4,
+  rotation: 58,
+  scale: 1.2
+})
+
+obj29.onValuesChange((values)=>{
+  cube29.position.x = values.x
+  cube29.position.y = values.y
+  cube29.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-29',
+  scrub: true,
+  onUpdate: self => sheet29.sequence.position = self.progress * sheet29.sequence.duration
+})
+
+--- THEATRE PADRÃO 30 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project30 = getProject('Project 30')
+const sheet30 = project30.sheet('Scene 30')
+const obj30 = sheet30.object('Cube 30', {
+  x: 3.0,
+  y: 0,
+  rotation: 60,
+  scale: 1.0
+})
+
+obj30.onValuesChange((values)=>{
+  cube30.position.x = values.x
+  cube30.position.y = values.y
+  cube30.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-30',
+  scrub: true,
+  onUpdate: self => sheet30.sequence.position = self.progress * sheet30.sequence.duration
+})
+
+--- THEATRE PADRÃO 31 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project31 = getProject('Project 31')
+const sheet31 = project31.sheet('Scene 31')
+const obj31 = sheet31.object('Cube 31', {
+  x: 3.1,
+  y: 1,
+  rotation: 62,
+  scale: 1.1
+})
+
+obj31.onValuesChange((values)=>{
+  cube31.position.x = values.x
+  cube31.position.y = values.y
+  cube31.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-31',
+  scrub: true,
+  onUpdate: self => sheet31.sequence.position = self.progress * sheet31.sequence.duration
+})
+
+--- THEATRE PADRÃO 32 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project32 = getProject('Project 32')
+const sheet32 = project32.sheet('Scene 32')
+const obj32 = sheet32.object('Cube 32', {
+  x: 3.2,
+  y: 2,
+  rotation: 64,
+  scale: 1.2
+})
+
+obj32.onValuesChange((values)=>{
+  cube32.position.x = values.x
+  cube32.position.y = values.y
+  cube32.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-32',
+  scrub: true,
+  onUpdate: self => sheet32.sequence.position = self.progress * sheet32.sequence.duration
+})
+
+--- THEATRE PADRÃO 33 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project33 = getProject('Project 33')
+const sheet33 = project33.sheet('Scene 33')
+const obj33 = sheet33.object('Cube 33', {
+  x: 3.3000000000000003,
+  y: 3,
+  rotation: 66,
+  scale: 1.0
+})
+
+obj33.onValuesChange((values)=>{
+  cube33.position.x = values.x
+  cube33.position.y = values.y
+  cube33.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-33',
+  scrub: true,
+  onUpdate: self => sheet33.sequence.position = self.progress * sheet33.sequence.duration
+})
+
+--- THEATRE PADRÃO 34 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project34 = getProject('Project 34')
+const sheet34 = project34.sheet('Scene 34')
+const obj34 = sheet34.object('Cube 34', {
+  x: 3.4000000000000004,
+  y: 4,
+  rotation: 68,
+  scale: 1.1
+})
+
+obj34.onValuesChange((values)=>{
+  cube34.position.x = values.x
+  cube34.position.y = values.y
+  cube34.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-34',
+  scrub: true,
+  onUpdate: self => sheet34.sequence.position = self.progress * sheet34.sequence.duration
+})
+
+--- THEATRE PADRÃO 35 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project35 = getProject('Project 35')
+const sheet35 = project35.sheet('Scene 35')
+const obj35 = sheet35.object('Cube 35', {
+  x: 3.5,
+  y: 0,
+  rotation: 70,
+  scale: 1.2
+})
+
+obj35.onValuesChange((values)=>{
+  cube35.position.x = values.x
+  cube35.position.y = values.y
+  cube35.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-35',
+  scrub: true,
+  onUpdate: self => sheet35.sequence.position = self.progress * sheet35.sequence.duration
+})
+
+--- THEATRE PADRÃO 36 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project36 = getProject('Project 36')
+const sheet36 = project36.sheet('Scene 36')
+const obj36 = sheet36.object('Cube 36', {
+  x: 3.6,
+  y: 1,
+  rotation: 72,
+  scale: 1.0
+})
+
+obj36.onValuesChange((values)=>{
+  cube36.position.x = values.x
+  cube36.position.y = values.y
+  cube36.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-36',
+  scrub: true,
+  onUpdate: self => sheet36.sequence.position = self.progress * sheet36.sequence.duration
+})
+
+--- THEATRE PADRÃO 37 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project37 = getProject('Project 37')
+const sheet37 = project37.sheet('Scene 37')
+const obj37 = sheet37.object('Cube 37', {
+  x: 3.7,
+  y: 2,
+  rotation: 74,
+  scale: 1.1
+})
+
+obj37.onValuesChange((values)=>{
+  cube37.position.x = values.x
+  cube37.position.y = values.y
+  cube37.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-37',
+  scrub: true,
+  onUpdate: self => sheet37.sequence.position = self.progress * sheet37.sequence.duration
+})
+
+--- THEATRE PADRÃO 38 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project38 = getProject('Project 38')
+const sheet38 = project38.sheet('Scene 38')
+const obj38 = sheet38.object('Cube 38', {
+  x: 3.8000000000000003,
+  y: 3,
+  rotation: 76,
+  scale: 1.2
+})
+
+obj38.onValuesChange((values)=>{
+  cube38.position.x = values.x
+  cube38.position.y = values.y
+  cube38.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-38',
+  scrub: true,
+  onUpdate: self => sheet38.sequence.position = self.progress * sheet38.sequence.duration
+})
+
+--- THEATRE PADRÃO 39 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project39 = getProject('Project 39')
+const sheet39 = project39.sheet('Scene 39')
+const obj39 = sheet39.object('Cube 39', {
+  x: 3.9000000000000004,
+  y: 4,
+  rotation: 78,
+  scale: 1.0
+})
+
+obj39.onValuesChange((values)=>{
+  cube39.position.x = values.x
+  cube39.position.y = values.y
+  cube39.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-39',
+  scrub: true,
+  onUpdate: self => sheet39.sequence.position = self.progress * sheet39.sequence.duration
+})
+
+--- THEATRE PADRÃO 40 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project40 = getProject('Project 40')
+const sheet40 = project40.sheet('Scene 40')
+const obj40 = sheet40.object('Cube 40', {
+  x: 4.0,
+  y: 0,
+  rotation: 80,
+  scale: 1.1
+})
+
+obj40.onValuesChange((values)=>{
+  cube40.position.x = values.x
+  cube40.position.y = values.y
+  cube40.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-40',
+  scrub: true,
+  onUpdate: self => sheet40.sequence.position = self.progress * sheet40.sequence.duration
+})
+
+--- THEATRE PADRÃO 41 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project41 = getProject('Project 41')
+const sheet41 = project41.sheet('Scene 41')
+const obj41 = sheet41.object('Cube 41', {
+  x: 4.1000000000000005,
+  y: 1,
+  rotation: 82,
+  scale: 1.2
+})
+
+obj41.onValuesChange((values)=>{
+  cube41.position.x = values.x
+  cube41.position.y = values.y
+  cube41.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-41',
+  scrub: true,
+  onUpdate: self => sheet41.sequence.position = self.progress * sheet41.sequence.duration
+})
+
+--- THEATRE PADRÃO 42 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project42 = getProject('Project 42')
+const sheet42 = project42.sheet('Scene 42')
+const obj42 = sheet42.object('Cube 42', {
+  x: 4.2,
+  y: 2,
+  rotation: 84,
+  scale: 1.0
+})
+
+obj42.onValuesChange((values)=>{
+  cube42.position.x = values.x
+  cube42.position.y = values.y
+  cube42.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-42',
+  scrub: true,
+  onUpdate: self => sheet42.sequence.position = self.progress * sheet42.sequence.duration
+})
+
+--- THEATRE PADRÃO 43 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project43 = getProject('Project 43')
+const sheet43 = project43.sheet('Scene 43')
+const obj43 = sheet43.object('Cube 43', {
+  x: 4.3,
+  y: 3,
+  rotation: 86,
+  scale: 1.1
+})
+
+obj43.onValuesChange((values)=>{
+  cube43.position.x = values.x
+  cube43.position.y = values.y
+  cube43.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-43',
+  scrub: true,
+  onUpdate: self => sheet43.sequence.position = self.progress * sheet43.sequence.duration
+})
+
+--- THEATRE PADRÃO 44 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project44 = getProject('Project 44')
+const sheet44 = project44.sheet('Scene 44')
+const obj44 = sheet44.object('Cube 44', {
+  x: 4.4,
+  y: 4,
+  rotation: 88,
+  scale: 1.2
+})
+
+obj44.onValuesChange((values)=>{
+  cube44.position.x = values.x
+  cube44.position.y = values.y
+  cube44.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-44',
+  scrub: true,
+  onUpdate: self => sheet44.sequence.position = self.progress * sheet44.sequence.duration
+})
+
+--- THEATRE PADRÃO 45 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project45 = getProject('Project 45')
+const sheet45 = project45.sheet('Scene 45')
+const obj45 = sheet45.object('Cube 45', {
+  x: 4.5,
+  y: 0,
+  rotation: 90,
+  scale: 1.0
+})
+
+obj45.onValuesChange((values)=>{
+  cube45.position.x = values.x
+  cube45.position.y = values.y
+  cube45.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-45',
+  scrub: true,
+  onUpdate: self => sheet45.sequence.position = self.progress * sheet45.sequence.duration
+})
+
+--- THEATRE PADRÃO 46 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project46 = getProject('Project 46')
+const sheet46 = project46.sheet('Scene 46')
+const obj46 = sheet46.object('Cube 46', {
+  x: 4.6000000000000005,
+  y: 1,
+  rotation: 92,
+  scale: 1.1
+})
+
+obj46.onValuesChange((values)=>{
+  cube46.position.x = values.x
+  cube46.position.y = values.y
+  cube46.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-46',
+  scrub: true,
+  onUpdate: self => sheet46.sequence.position = self.progress * sheet46.sequence.duration
+})
+
+--- THEATRE PADRÃO 47 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project47 = getProject('Project 47')
+const sheet47 = project47.sheet('Scene 47')
+const obj47 = sheet47.object('Cube 47', {
+  x: 4.7,
+  y: 2,
+  rotation: 94,
+  scale: 1.2
+})
+
+obj47.onValuesChange((values)=>{
+  cube47.position.x = values.x
+  cube47.position.y = values.y
+  cube47.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-47',
+  scrub: true,
+  onUpdate: self => sheet47.sequence.position = self.progress * sheet47.sequence.duration
+})
+
+--- THEATRE PADRÃO 48 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project48 = getProject('Project 48')
+const sheet48 = project48.sheet('Scene 48')
+const obj48 = sheet48.object('Cube 48', {
+  x: 4.800000000000001,
+  y: 3,
+  rotation: 96,
+  scale: 1.0
+})
+
+obj48.onValuesChange((values)=>{
+  cube48.position.x = values.x
+  cube48.position.y = values.y
+  cube48.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-48',
+  scrub: true,
+  onUpdate: self => sheet48.sequence.position = self.progress * sheet48.sequence.duration
+})
+
+--- THEATRE PADRÃO 49 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project49 = getProject('Project 49')
+const sheet49 = project49.sheet('Scene 49')
+const obj49 = sheet49.object('Cube 49', {
+  x: 4.9,
+  y: 4,
+  rotation: 98,
+  scale: 1.1
+})
+
+obj49.onValuesChange((values)=>{
+  cube49.position.x = values.x
+  cube49.position.y = values.y
+  cube49.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-49',
+  scrub: true,
+  onUpdate: self => sheet49.sequence.position = self.progress * sheet49.sequence.duration
+})
+
+--- THEATRE PADRÃO 50 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project50 = getProject('Project 50')
+const sheet50 = project50.sheet('Scene 50')
+const obj50 = sheet50.object('Cube 50', {
+  x: 5.0,
+  y: 0,
+  rotation: 100,
+  scale: 1.2
+})
+
+obj50.onValuesChange((values)=>{
+  cube50.position.x = values.x
+  cube50.position.y = values.y
+  cube50.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-50',
+  scrub: true,
+  onUpdate: self => sheet50.sequence.position = self.progress * sheet50.sequence.duration
+})
+
+--- THEATRE PADRÃO 51 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project51 = getProject('Project 51')
+const sheet51 = project51.sheet('Scene 51')
+const obj51 = sheet51.object('Cube 51', {
+  x: 5.1000000000000005,
+  y: 1,
+  rotation: 102,
+  scale: 1.0
+})
+
+obj51.onValuesChange((values)=>{
+  cube51.position.x = values.x
+  cube51.position.y = values.y
+  cube51.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-51',
+  scrub: true,
+  onUpdate: self => sheet51.sequence.position = self.progress * sheet51.sequence.duration
+})
+
+--- THEATRE PADRÃO 52 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project52 = getProject('Project 52')
+const sheet52 = project52.sheet('Scene 52')
+const obj52 = sheet52.object('Cube 52', {
+  x: 5.2,
+  y: 2,
+  rotation: 104,
+  scale: 1.1
+})
+
+obj52.onValuesChange((values)=>{
+  cube52.position.x = values.x
+  cube52.position.y = values.y
+  cube52.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-52',
+  scrub: true,
+  onUpdate: self => sheet52.sequence.position = self.progress * sheet52.sequence.duration
+})
+
+--- THEATRE PADRÃO 53 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project53 = getProject('Project 53')
+const sheet53 = project53.sheet('Scene 53')
+const obj53 = sheet53.object('Cube 53', {
+  x: 5.300000000000001,
+  y: 3,
+  rotation: 106,
+  scale: 1.2
+})
+
+obj53.onValuesChange((values)=>{
+  cube53.position.x = values.x
+  cube53.position.y = values.y
+  cube53.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-53',
+  scrub: true,
+  onUpdate: self => sheet53.sequence.position = self.progress * sheet53.sequence.duration
+})
+
+--- THEATRE PADRÃO 54 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project54 = getProject('Project 54')
+const sheet54 = project54.sheet('Scene 54')
+const obj54 = sheet54.object('Cube 54', {
+  x: 5.4,
+  y: 4,
+  rotation: 108,
+  scale: 1.0
+})
+
+obj54.onValuesChange((values)=>{
+  cube54.position.x = values.x
+  cube54.position.y = values.y
+  cube54.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-54',
+  scrub: true,
+  onUpdate: self => sheet54.sequence.position = self.progress * sheet54.sequence.duration
+})
+
+--- THEATRE PADRÃO 55 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project55 = getProject('Project 55')
+const sheet55 = project55.sheet('Scene 55')
+const obj55 = sheet55.object('Cube 55', {
+  x: 5.5,
+  y: 0,
+  rotation: 110,
+  scale: 1.1
+})
+
+obj55.onValuesChange((values)=>{
+  cube55.position.x = values.x
+  cube55.position.y = values.y
+  cube55.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-55',
+  scrub: true,
+  onUpdate: self => sheet55.sequence.position = self.progress * sheet55.sequence.duration
+})
+
+--- THEATRE PADRÃO 56 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project56 = getProject('Project 56')
+const sheet56 = project56.sheet('Scene 56')
+const obj56 = sheet56.object('Cube 56', {
+  x: 5.6000000000000005,
+  y: 1,
+  rotation: 112,
+  scale: 1.2
+})
+
+obj56.onValuesChange((values)=>{
+  cube56.position.x = values.x
+  cube56.position.y = values.y
+  cube56.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-56',
+  scrub: true,
+  onUpdate: self => sheet56.sequence.position = self.progress * sheet56.sequence.duration
+})
+
+--- THEATRE PADRÃO 57 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project57 = getProject('Project 57')
+const sheet57 = project57.sheet('Scene 57')
+const obj57 = sheet57.object('Cube 57', {
+  x: 5.7,
+  y: 2,
+  rotation: 114,
+  scale: 1.0
+})
+
+obj57.onValuesChange((values)=>{
+  cube57.position.x = values.x
+  cube57.position.y = values.y
+  cube57.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-57',
+  scrub: true,
+  onUpdate: self => sheet57.sequence.position = self.progress * sheet57.sequence.duration
+})
+
+--- THEATRE PADRÃO 58 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project58 = getProject('Project 58')
+const sheet58 = project58.sheet('Scene 58')
+const obj58 = sheet58.object('Cube 58', {
+  x: 5.800000000000001,
+  y: 3,
+  rotation: 116,
+  scale: 1.1
+})
+
+obj58.onValuesChange((values)=>{
+  cube58.position.x = values.x
+  cube58.position.y = values.y
+  cube58.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-58',
+  scrub: true,
+  onUpdate: self => sheet58.sequence.position = self.progress * sheet58.sequence.duration
+})
+
+--- THEATRE PADRÃO 59 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project59 = getProject('Project 59')
+const sheet59 = project59.sheet('Scene 59')
+const obj59 = sheet59.object('Cube 59', {
+  x: 5.9,
+  y: 4,
+  rotation: 118,
+  scale: 1.2
+})
+
+obj59.onValuesChange((values)=>{
+  cube59.position.x = values.x
+  cube59.position.y = values.y
+  cube59.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-59',
+  scrub: true,
+  onUpdate: self => sheet59.sequence.position = self.progress * sheet59.sequence.duration
+})
+
+--- THEATRE PADRÃO 60 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project60 = getProject('Project 60')
+const sheet60 = project60.sheet('Scene 60')
+const obj60 = sheet60.object('Cube 60', {
+  x: 6.0,
+  y: 0,
+  rotation: 120,
+  scale: 1.0
+})
+
+obj60.onValuesChange((values)=>{
+  cube60.position.x = values.x
+  cube60.position.y = values.y
+  cube60.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-60',
+  scrub: true,
+  onUpdate: self => sheet60.sequence.position = self.progress * sheet60.sequence.duration
+})
+
+--- THEATRE PADRÃO 61 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project61 = getProject('Project 61')
+const sheet61 = project61.sheet('Scene 61')
+const obj61 = sheet61.object('Cube 61', {
+  x: 6.1000000000000005,
+  y: 1,
+  rotation: 122,
+  scale: 1.1
+})
+
+obj61.onValuesChange((values)=>{
+  cube61.position.x = values.x
+  cube61.position.y = values.y
+  cube61.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-61',
+  scrub: true,
+  onUpdate: self => sheet61.sequence.position = self.progress * sheet61.sequence.duration
+})
+
+--- THEATRE PADRÃO 62 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project62 = getProject('Project 62')
+const sheet62 = project62.sheet('Scene 62')
+const obj62 = sheet62.object('Cube 62', {
+  x: 6.2,
+  y: 2,
+  rotation: 124,
+  scale: 1.2
+})
+
+obj62.onValuesChange((values)=>{
+  cube62.position.x = values.x
+  cube62.position.y = values.y
+  cube62.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-62',
+  scrub: true,
+  onUpdate: self => sheet62.sequence.position = self.progress * sheet62.sequence.duration
+})
+
+--- THEATRE PADRÃO 63 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project63 = getProject('Project 63')
+const sheet63 = project63.sheet('Scene 63')
+const obj63 = sheet63.object('Cube 63', {
+  x: 6.300000000000001,
+  y: 3,
+  rotation: 126,
+  scale: 1.0
+})
+
+obj63.onValuesChange((values)=>{
+  cube63.position.x = values.x
+  cube63.position.y = values.y
+  cube63.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-63',
+  scrub: true,
+  onUpdate: self => sheet63.sequence.position = self.progress * sheet63.sequence.duration
+})
+
+--- THEATRE PADRÃO 64 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project64 = getProject('Project 64')
+const sheet64 = project64.sheet('Scene 64')
+const obj64 = sheet64.object('Cube 64', {
+  x: 6.4,
+  y: 4,
+  rotation: 128,
+  scale: 1.1
+})
+
+obj64.onValuesChange((values)=>{
+  cube64.position.x = values.x
+  cube64.position.y = values.y
+  cube64.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-64',
+  scrub: true,
+  onUpdate: self => sheet64.sequence.position = self.progress * sheet64.sequence.duration
+})
+
+--- THEATRE PADRÃO 65 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project65 = getProject('Project 65')
+const sheet65 = project65.sheet('Scene 65')
+const obj65 = sheet65.object('Cube 65', {
+  x: 6.5,
+  y: 0,
+  rotation: 130,
+  scale: 1.2
+})
+
+obj65.onValuesChange((values)=>{
+  cube65.position.x = values.x
+  cube65.position.y = values.y
+  cube65.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-65',
+  scrub: true,
+  onUpdate: self => sheet65.sequence.position = self.progress * sheet65.sequence.duration
+})
+
+--- THEATRE PADRÃO 66 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project66 = getProject('Project 66')
+const sheet66 = project66.sheet('Scene 66')
+const obj66 = sheet66.object('Cube 66', {
+  x: 6.6000000000000005,
+  y: 1,
+  rotation: 132,
+  scale: 1.0
+})
+
+obj66.onValuesChange((values)=>{
+  cube66.position.x = values.x
+  cube66.position.y = values.y
+  cube66.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-66',
+  scrub: true,
+  onUpdate: self => sheet66.sequence.position = self.progress * sheet66.sequence.duration
+})
+
+--- THEATRE PADRÃO 67 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project67 = getProject('Project 67')
+const sheet67 = project67.sheet('Scene 67')
+const obj67 = sheet67.object('Cube 67', {
+  x: 6.7,
+  y: 2,
+  rotation: 134,
+  scale: 1.1
+})
+
+obj67.onValuesChange((values)=>{
+  cube67.position.x = values.x
+  cube67.position.y = values.y
+  cube67.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-67',
+  scrub: true,
+  onUpdate: self => sheet67.sequence.position = self.progress * sheet67.sequence.duration
+})
+
+--- THEATRE PADRÃO 68 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project68 = getProject('Project 68')
+const sheet68 = project68.sheet('Scene 68')
+const obj68 = sheet68.object('Cube 68', {
+  x: 6.800000000000001,
+  y: 3,
+  rotation: 136,
+  scale: 1.2
+})
+
+obj68.onValuesChange((values)=>{
+  cube68.position.x = values.x
+  cube68.position.y = values.y
+  cube68.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-68',
+  scrub: true,
+  onUpdate: self => sheet68.sequence.position = self.progress * sheet68.sequence.duration
+})
+
+--- THEATRE PADRÃO 69 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project69 = getProject('Project 69')
+const sheet69 = project69.sheet('Scene 69')
+const obj69 = sheet69.object('Cube 69', {
+  x: 6.9,
+  y: 4,
+  rotation: 138,
+  scale: 1.0
+})
+
+obj69.onValuesChange((values)=>{
+  cube69.position.x = values.x
+  cube69.position.y = values.y
+  cube69.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-69',
+  scrub: true,
+  onUpdate: self => sheet69.sequence.position = self.progress * sheet69.sequence.duration
+})
+
+--- THEATRE PADRÃO 70 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project70 = getProject('Project 70')
+const sheet70 = project70.sheet('Scene 70')
+const obj70 = sheet70.object('Cube 70', {
+  x: 7.0,
+  y: 0,
+  rotation: 140,
+  scale: 1.1
+})
+
+obj70.onValuesChange((values)=>{
+  cube70.position.x = values.x
+  cube70.position.y = values.y
+  cube70.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-70',
+  scrub: true,
+  onUpdate: self => sheet70.sequence.position = self.progress * sheet70.sequence.duration
+})
+
+--- THEATRE PADRÃO 71 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project71 = getProject('Project 71')
+const sheet71 = project71.sheet('Scene 71')
+const obj71 = sheet71.object('Cube 71', {
+  x: 7.1000000000000005,
+  y: 1,
+  rotation: 142,
+  scale: 1.2
+})
+
+obj71.onValuesChange((values)=>{
+  cube71.position.x = values.x
+  cube71.position.y = values.y
+  cube71.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-71',
+  scrub: true,
+  onUpdate: self => sheet71.sequence.position = self.progress * sheet71.sequence.duration
+})
+
+--- THEATRE PADRÃO 72 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project72 = getProject('Project 72')
+const sheet72 = project72.sheet('Scene 72')
+const obj72 = sheet72.object('Cube 72', {
+  x: 7.2,
+  y: 2,
+  rotation: 144,
+  scale: 1.0
+})
+
+obj72.onValuesChange((values)=>{
+  cube72.position.x = values.x
+  cube72.position.y = values.y
+  cube72.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-72',
+  scrub: true,
+  onUpdate: self => sheet72.sequence.position = self.progress * sheet72.sequence.duration
+})
+
+--- THEATRE PADRÃO 73 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project73 = getProject('Project 73')
+const sheet73 = project73.sheet('Scene 73')
+const obj73 = sheet73.object('Cube 73', {
+  x: 7.300000000000001,
+  y: 3,
+  rotation: 146,
+  scale: 1.1
+})
+
+obj73.onValuesChange((values)=>{
+  cube73.position.x = values.x
+  cube73.position.y = values.y
+  cube73.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-73',
+  scrub: true,
+  onUpdate: self => sheet73.sequence.position = self.progress * sheet73.sequence.duration
+})
+
+--- THEATRE PADRÃO 74 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project74 = getProject('Project 74')
+const sheet74 = project74.sheet('Scene 74')
+const obj74 = sheet74.object('Cube 74', {
+  x: 7.4,
+  y: 4,
+  rotation: 148,
+  scale: 1.2
+})
+
+obj74.onValuesChange((values)=>{
+  cube74.position.x = values.x
+  cube74.position.y = values.y
+  cube74.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-74',
+  scrub: true,
+  onUpdate: self => sheet74.sequence.position = self.progress * sheet74.sequence.duration
+})
+
+--- THEATRE PADRÃO 75 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project75 = getProject('Project 75')
+const sheet75 = project75.sheet('Scene 75')
+const obj75 = sheet75.object('Cube 75', {
+  x: 7.5,
+  y: 0,
+  rotation: 150,
+  scale: 1.0
+})
+
+obj75.onValuesChange((values)=>{
+  cube75.position.x = values.x
+  cube75.position.y = values.y
+  cube75.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-75',
+  scrub: true,
+  onUpdate: self => sheet75.sequence.position = self.progress * sheet75.sequence.duration
+})
+
+--- THEATRE PADRÃO 76 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project76 = getProject('Project 76')
+const sheet76 = project76.sheet('Scene 76')
+const obj76 = sheet76.object('Cube 76', {
+  x: 7.6000000000000005,
+  y: 1,
+  rotation: 152,
+  scale: 1.1
+})
+
+obj76.onValuesChange((values)=>{
+  cube76.position.x = values.x
+  cube76.position.y = values.y
+  cube76.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-76',
+  scrub: true,
+  onUpdate: self => sheet76.sequence.position = self.progress * sheet76.sequence.duration
+})
+
+--- THEATRE PADRÃO 77 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project77 = getProject('Project 77')
+const sheet77 = project77.sheet('Scene 77')
+const obj77 = sheet77.object('Cube 77', {
+  x: 7.7,
+  y: 2,
+  rotation: 154,
+  scale: 1.2
+})
+
+obj77.onValuesChange((values)=>{
+  cube77.position.x = values.x
+  cube77.position.y = values.y
+  cube77.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-77',
+  scrub: true,
+  onUpdate: self => sheet77.sequence.position = self.progress * sheet77.sequence.duration
+})
+
+--- THEATRE PADRÃO 78 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project78 = getProject('Project 78')
+const sheet78 = project78.sheet('Scene 78')
+const obj78 = sheet78.object('Cube 78', {
+  x: 7.800000000000001,
+  y: 3,
+  rotation: 156,
+  scale: 1.0
+})
+
+obj78.onValuesChange((values)=>{
+  cube78.position.x = values.x
+  cube78.position.y = values.y
+  cube78.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-78',
+  scrub: true,
+  onUpdate: self => sheet78.sequence.position = self.progress * sheet78.sequence.duration
+})
+
+--- THEATRE PADRÃO 79 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project79 = getProject('Project 79')
+const sheet79 = project79.sheet('Scene 79')
+const obj79 = sheet79.object('Cube 79', {
+  x: 7.9,
+  y: 4,
+  rotation: 158,
+  scale: 1.1
+})
+
+obj79.onValuesChange((values)=>{
+  cube79.position.x = values.x
+  cube79.position.y = values.y
+  cube79.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-79',
+  scrub: true,
+  onUpdate: self => sheet79.sequence.position = self.progress * sheet79.sequence.duration
+})
+
+--- THEATRE PADRÃO 80 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project80 = getProject('Project 80')
+const sheet80 = project80.sheet('Scene 80')
+const obj80 = sheet80.object('Cube 80', {
+  x: 8.0,
+  y: 0,
+  rotation: 160,
+  scale: 1.2
+})
+
+obj80.onValuesChange((values)=>{
+  cube80.position.x = values.x
+  cube80.position.y = values.y
+  cube80.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-80',
+  scrub: true,
+  onUpdate: self => sheet80.sequence.position = self.progress * sheet80.sequence.duration
+})
+
+--- THEATRE PADRÃO 81 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project81 = getProject('Project 81')
+const sheet81 = project81.sheet('Scene 81')
+const obj81 = sheet81.object('Cube 81', {
+  x: 8.1,
+  y: 1,
+  rotation: 162,
+  scale: 1.0
+})
+
+obj81.onValuesChange((values)=>{
+  cube81.position.x = values.x
+  cube81.position.y = values.y
+  cube81.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-81',
+  scrub: true,
+  onUpdate: self => sheet81.sequence.position = self.progress * sheet81.sequence.duration
+})
+
+--- THEATRE PADRÃO 82 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project82 = getProject('Project 82')
+const sheet82 = project82.sheet('Scene 82')
+const obj82 = sheet82.object('Cube 82', {
+  x: 8.200000000000001,
+  y: 2,
+  rotation: 164,
+  scale: 1.1
+})
+
+obj82.onValuesChange((values)=>{
+  cube82.position.x = values.x
+  cube82.position.y = values.y
+  cube82.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-82',
+  scrub: true,
+  onUpdate: self => sheet82.sequence.position = self.progress * sheet82.sequence.duration
+})
+
+--- THEATRE PADRÃO 83 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project83 = getProject('Project 83')
+const sheet83 = project83.sheet('Scene 83')
+const obj83 = sheet83.object('Cube 83', {
+  x: 8.3,
+  y: 3,
+  rotation: 166,
+  scale: 1.2
+})
+
+obj83.onValuesChange((values)=>{
+  cube83.position.x = values.x
+  cube83.position.y = values.y
+  cube83.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-83',
+  scrub: true,
+  onUpdate: self => sheet83.sequence.position = self.progress * sheet83.sequence.duration
+})
+
+--- THEATRE PADRÃO 84 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project84 = getProject('Project 84')
+const sheet84 = project84.sheet('Scene 84')
+const obj84 = sheet84.object('Cube 84', {
+  x: 8.4,
+  y: 4,
+  rotation: 168,
+  scale: 1.0
+})
+
+obj84.onValuesChange((values)=>{
+  cube84.position.x = values.x
+  cube84.position.y = values.y
+  cube84.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-84',
+  scrub: true,
+  onUpdate: self => sheet84.sequence.position = self.progress * sheet84.sequence.duration
+})
+
+--- THEATRE PADRÃO 85 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project85 = getProject('Project 85')
+const sheet85 = project85.sheet('Scene 85')
+const obj85 = sheet85.object('Cube 85', {
+  x: 8.5,
+  y: 0,
+  rotation: 170,
+  scale: 1.1
+})
+
+obj85.onValuesChange((values)=>{
+  cube85.position.x = values.x
+  cube85.position.y = values.y
+  cube85.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-85',
+  scrub: true,
+  onUpdate: self => sheet85.sequence.position = self.progress * sheet85.sequence.duration
+})
+
+--- THEATRE PADRÃO 86 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project86 = getProject('Project 86')
+const sheet86 = project86.sheet('Scene 86')
+const obj86 = sheet86.object('Cube 86', {
+  x: 8.6,
+  y: 1,
+  rotation: 172,
+  scale: 1.2
+})
+
+obj86.onValuesChange((values)=>{
+  cube86.position.x = values.x
+  cube86.position.y = values.y
+  cube86.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-86',
+  scrub: true,
+  onUpdate: self => sheet86.sequence.position = self.progress * sheet86.sequence.duration
+})
+
+--- THEATRE PADRÃO 87 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project87 = getProject('Project 87')
+const sheet87 = project87.sheet('Scene 87')
+const obj87 = sheet87.object('Cube 87', {
+  x: 8.700000000000001,
+  y: 2,
+  rotation: 174,
+  scale: 1.0
+})
+
+obj87.onValuesChange((values)=>{
+  cube87.position.x = values.x
+  cube87.position.y = values.y
+  cube87.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-87',
+  scrub: true,
+  onUpdate: self => sheet87.sequence.position = self.progress * sheet87.sequence.duration
+})
+
+--- THEATRE PADRÃO 88 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project88 = getProject('Project 88')
+const sheet88 = project88.sheet('Scene 88')
+const obj88 = sheet88.object('Cube 88', {
+  x: 8.8,
+  y: 3,
+  rotation: 176,
+  scale: 1.1
+})
+
+obj88.onValuesChange((values)=>{
+  cube88.position.x = values.x
+  cube88.position.y = values.y
+  cube88.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-88',
+  scrub: true,
+  onUpdate: self => sheet88.sequence.position = self.progress * sheet88.sequence.duration
+})
+
+--- THEATRE PADRÃO 89 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project89 = getProject('Project 89')
+const sheet89 = project89.sheet('Scene 89')
+const obj89 = sheet89.object('Cube 89', {
+  x: 8.9,
+  y: 4,
+  rotation: 178,
+  scale: 1.2
+})
+
+obj89.onValuesChange((values)=>{
+  cube89.position.x = values.x
+  cube89.position.y = values.y
+  cube89.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-89',
+  scrub: true,
+  onUpdate: self => sheet89.sequence.position = self.progress * sheet89.sequence.duration
+})
+
+--- THEATRE PADRÃO 90 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project90 = getProject('Project 90')
+const sheet90 = project90.sheet('Scene 90')
+const obj90 = sheet90.object('Cube 90', {
+  x: 9.0,
+  y: 0,
+  rotation: 180,
+  scale: 1.0
+})
+
+obj90.onValuesChange((values)=>{
+  cube90.position.x = values.x
+  cube90.position.y = values.y
+  cube90.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-90',
+  scrub: true,
+  onUpdate: self => sheet90.sequence.position = self.progress * sheet90.sequence.duration
+})
+
+--- THEATRE PADRÃO 91 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project91 = getProject('Project 91')
+const sheet91 = project91.sheet('Scene 91')
+const obj91 = sheet91.object('Cube 91', {
+  x: 9.1,
+  y: 1,
+  rotation: 182,
+  scale: 1.1
+})
+
+obj91.onValuesChange((values)=>{
+  cube91.position.x = values.x
+  cube91.position.y = values.y
+  cube91.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-91',
+  scrub: true,
+  onUpdate: self => sheet91.sequence.position = self.progress * sheet91.sequence.duration
+})
+
+--- THEATRE PADRÃO 92 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project92 = getProject('Project 92')
+const sheet92 = project92.sheet('Scene 92')
+const obj92 = sheet92.object('Cube 92', {
+  x: 9.200000000000001,
+  y: 2,
+  rotation: 184,
+  scale: 1.2
+})
+
+obj92.onValuesChange((values)=>{
+  cube92.position.x = values.x
+  cube92.position.y = values.y
+  cube92.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-92',
+  scrub: true,
+  onUpdate: self => sheet92.sequence.position = self.progress * sheet92.sequence.duration
+})
+
+--- THEATRE PADRÃO 93 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project93 = getProject('Project 93')
+const sheet93 = project93.sheet('Scene 93')
+const obj93 = sheet93.object('Cube 93', {
+  x: 9.3,
+  y: 3,
+  rotation: 186,
+  scale: 1.0
+})
+
+obj93.onValuesChange((values)=>{
+  cube93.position.x = values.x
+  cube93.position.y = values.y
+  cube93.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-93',
+  scrub: true,
+  onUpdate: self => sheet93.sequence.position = self.progress * sheet93.sequence.duration
+})
+
+--- THEATRE PADRÃO 94 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project94 = getProject('Project 94')
+const sheet94 = project94.sheet('Scene 94')
+const obj94 = sheet94.object('Cube 94', {
+  x: 9.4,
+  y: 4,
+  rotation: 188,
+  scale: 1.1
+})
+
+obj94.onValuesChange((values)=>{
+  cube94.position.x = values.x
+  cube94.position.y = values.y
+  cube94.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-94',
+  scrub: true,
+  onUpdate: self => sheet94.sequence.position = self.progress * sheet94.sequence.duration
+})
+
+--- THEATRE PADRÃO 95 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project95 = getProject('Project 95')
+const sheet95 = project95.sheet('Scene 95')
+const obj95 = sheet95.object('Cube 95', {
+  x: 9.5,
+  y: 0,
+  rotation: 190,
+  scale: 1.2
+})
+
+obj95.onValuesChange((values)=>{
+  cube95.position.x = values.x
+  cube95.position.y = values.y
+  cube95.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-95',
+  scrub: true,
+  onUpdate: self => sheet95.sequence.position = self.progress * sheet95.sequence.duration
+})
+
+--- THEATRE PADRÃO 96 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project96 = getProject('Project 96')
+const sheet96 = project96.sheet('Scene 96')
+const obj96 = sheet96.object('Cube 96', {
+  x: 9.600000000000001,
+  y: 1,
+  rotation: 192,
+  scale: 1.0
+})
+
+obj96.onValuesChange((values)=>{
+  cube96.position.x = values.x
+  cube96.position.y = values.y
+  cube96.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-96',
+  scrub: true,
+  onUpdate: self => sheet96.sequence.position = self.progress * sheet96.sequence.duration
+})
+
+--- THEATRE PADRÃO 97 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project97 = getProject('Project 97')
+const sheet97 = project97.sheet('Scene 97')
+const obj97 = sheet97.object('Cube 97', {
+  x: 9.700000000000001,
+  y: 2,
+  rotation: 194,
+  scale: 1.1
+})
+
+obj97.onValuesChange((values)=>{
+  cube97.position.x = values.x
+  cube97.position.y = values.y
+  cube97.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-97',
+  scrub: true,
+  onUpdate: self => sheet97.sequence.position = self.progress * sheet97.sequence.duration
+})
+
+--- THEATRE PADRÃO 98 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project98 = getProject('Project 98')
+const sheet98 = project98.sheet('Scene 98')
+const obj98 = sheet98.object('Cube 98', {
+  x: 9.8,
+  y: 3,
+  rotation: 196,
+  scale: 1.2
+})
+
+obj98.onValuesChange((values)=>{
+  cube98.position.x = values.x
+  cube98.position.y = values.y
+  cube98.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-98',
+  scrub: true,
+  onUpdate: self => sheet98.sequence.position = self.progress * sheet98.sequence.duration
+})
+
+--- THEATRE PADRÃO 99 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project99 = getProject('Project 99')
+const sheet99 = project99.sheet('Scene 99')
+const obj99 = sheet99.object('Cube 99', {
+  x: 9.9,
+  y: 4,
+  rotation: 198,
+  scale: 1.0
+})
+
+obj99.onValuesChange((values)=>{
+  cube99.position.x = values.x
+  cube99.position.y = values.y
+  cube99.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-99',
+  scrub: true,
+  onUpdate: self => sheet99.sequence.position = self.progress * sheet99.sequence.duration
+})
+
+--- THEATRE PADRÃO 100 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project100 = getProject('Project 100')
+const sheet100 = project100.sheet('Scene 100')
+const obj100 = sheet100.object('Cube 100', {
+  x: 10.0,
+  y: 0,
+  rotation: 200,
+  scale: 1.1
+})
+
+obj100.onValuesChange((values)=>{
+  cube100.position.x = values.x
+  cube100.position.y = values.y
+  cube100.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-100',
+  scrub: true,
+  onUpdate: self => sheet100.sequence.position = self.progress * sheet100.sequence.duration
+})
+
+--- THEATRE PADRÃO 101 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project101 = getProject('Project 101')
+const sheet101 = project101.sheet('Scene 101')
+const obj101 = sheet101.object('Cube 101', {
+  x: 10.100000000000001,
+  y: 1,
+  rotation: 202,
+  scale: 1.2
+})
+
+obj101.onValuesChange((values)=>{
+  cube101.position.x = values.x
+  cube101.position.y = values.y
+  cube101.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-101',
+  scrub: true,
+  onUpdate: self => sheet101.sequence.position = self.progress * sheet101.sequence.duration
+})
+
+--- THEATRE PADRÃO 102 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project102 = getProject('Project 102')
+const sheet102 = project102.sheet('Scene 102')
+const obj102 = sheet102.object('Cube 102', {
+  x: 10.200000000000001,
+  y: 2,
+  rotation: 204,
+  scale: 1.0
+})
+
+obj102.onValuesChange((values)=>{
+  cube102.position.x = values.x
+  cube102.position.y = values.y
+  cube102.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-102',
+  scrub: true,
+  onUpdate: self => sheet102.sequence.position = self.progress * sheet102.sequence.duration
+})
+
+--- THEATRE PADRÃO 103 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project103 = getProject('Project 103')
+const sheet103 = project103.sheet('Scene 103')
+const obj103 = sheet103.object('Cube 103', {
+  x: 10.3,
+  y: 3,
+  rotation: 206,
+  scale: 1.1
+})
+
+obj103.onValuesChange((values)=>{
+  cube103.position.x = values.x
+  cube103.position.y = values.y
+  cube103.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-103',
+  scrub: true,
+  onUpdate: self => sheet103.sequence.position = self.progress * sheet103.sequence.duration
+})
+
+--- THEATRE PADRÃO 104 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project104 = getProject('Project 104')
+const sheet104 = project104.sheet('Scene 104')
+const obj104 = sheet104.object('Cube 104', {
+  x: 10.4,
+  y: 4,
+  rotation: 208,
+  scale: 1.2
+})
+
+obj104.onValuesChange((values)=>{
+  cube104.position.x = values.x
+  cube104.position.y = values.y
+  cube104.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-104',
+  scrub: true,
+  onUpdate: self => sheet104.sequence.position = self.progress * sheet104.sequence.duration
+})
+
+--- THEATRE PADRÃO 105 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project105 = getProject('Project 105')
+const sheet105 = project105.sheet('Scene 105')
+const obj105 = sheet105.object('Cube 105', {
+  x: 10.5,
+  y: 0,
+  rotation: 210,
+  scale: 1.0
+})
+
+obj105.onValuesChange((values)=>{
+  cube105.position.x = values.x
+  cube105.position.y = values.y
+  cube105.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-105',
+  scrub: true,
+  onUpdate: self => sheet105.sequence.position = self.progress * sheet105.sequence.duration
+})
+
+--- THEATRE PADRÃO 106 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project106 = getProject('Project 106')
+const sheet106 = project106.sheet('Scene 106')
+const obj106 = sheet106.object('Cube 106', {
+  x: 10.600000000000001,
+  y: 1,
+  rotation: 212,
+  scale: 1.1
+})
+
+obj106.onValuesChange((values)=>{
+  cube106.position.x = values.x
+  cube106.position.y = values.y
+  cube106.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-106',
+  scrub: true,
+  onUpdate: self => sheet106.sequence.position = self.progress * sheet106.sequence.duration
+})
+
+--- THEATRE PADRÃO 107 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project107 = getProject('Project 107')
+const sheet107 = project107.sheet('Scene 107')
+const obj107 = sheet107.object('Cube 107', {
+  x: 10.700000000000001,
+  y: 2,
+  rotation: 214,
+  scale: 1.2
+})
+
+obj107.onValuesChange((values)=>{
+  cube107.position.x = values.x
+  cube107.position.y = values.y
+  cube107.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-107',
+  scrub: true,
+  onUpdate: self => sheet107.sequence.position = self.progress * sheet107.sequence.duration
+})
+
+--- THEATRE PADRÃO 108 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project108 = getProject('Project 108')
+const sheet108 = project108.sheet('Scene 108')
+const obj108 = sheet108.object('Cube 108', {
+  x: 10.8,
+  y: 3,
+  rotation: 216,
+  scale: 1.0
+})
+
+obj108.onValuesChange((values)=>{
+  cube108.position.x = values.x
+  cube108.position.y = values.y
+  cube108.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-108',
+  scrub: true,
+  onUpdate: self => sheet108.sequence.position = self.progress * sheet108.sequence.duration
+})
+
+--- THEATRE PADRÃO 109 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project109 = getProject('Project 109')
+const sheet109 = project109.sheet('Scene 109')
+const obj109 = sheet109.object('Cube 109', {
+  x: 10.9,
+  y: 4,
+  rotation: 218,
+  scale: 1.1
+})
+
+obj109.onValuesChange((values)=>{
+  cube109.position.x = values.x
+  cube109.position.y = values.y
+  cube109.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-109',
+  scrub: true,
+  onUpdate: self => sheet109.sequence.position = self.progress * sheet109.sequence.duration
+})
+
+--- THEATRE PADRÃO 110 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project110 = getProject('Project 110')
+const sheet110 = project110.sheet('Scene 110')
+const obj110 = sheet110.object('Cube 110', {
+  x: 11.0,
+  y: 0,
+  rotation: 220,
+  scale: 1.2
+})
+
+obj110.onValuesChange((values)=>{
+  cube110.position.x = values.x
+  cube110.position.y = values.y
+  cube110.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-110',
+  scrub: true,
+  onUpdate: self => sheet110.sequence.position = self.progress * sheet110.sequence.duration
+})
+
+--- THEATRE PADRÃO 111 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project111 = getProject('Project 111')
+const sheet111 = project111.sheet('Scene 111')
+const obj111 = sheet111.object('Cube 111', {
+  x: 11.100000000000001,
+  y: 1,
+  rotation: 222,
+  scale: 1.0
+})
+
+obj111.onValuesChange((values)=>{
+  cube111.position.x = values.x
+  cube111.position.y = values.y
+  cube111.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-111',
+  scrub: true,
+  onUpdate: self => sheet111.sequence.position = self.progress * sheet111.sequence.duration
+})
+
+--- THEATRE PADRÃO 112 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project112 = getProject('Project 112')
+const sheet112 = project112.sheet('Scene 112')
+const obj112 = sheet112.object('Cube 112', {
+  x: 11.200000000000001,
+  y: 2,
+  rotation: 224,
+  scale: 1.1
+})
+
+obj112.onValuesChange((values)=>{
+  cube112.position.x = values.x
+  cube112.position.y = values.y
+  cube112.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-112',
+  scrub: true,
+  onUpdate: self => sheet112.sequence.position = self.progress * sheet112.sequence.duration
+})
+
+--- THEATRE PADRÃO 113 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project113 = getProject('Project 113')
+const sheet113 = project113.sheet('Scene 113')
+const obj113 = sheet113.object('Cube 113', {
+  x: 11.3,
+  y: 3,
+  rotation: 226,
+  scale: 1.2
+})
+
+obj113.onValuesChange((values)=>{
+  cube113.position.x = values.x
+  cube113.position.y = values.y
+  cube113.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-113',
+  scrub: true,
+  onUpdate: self => sheet113.sequence.position = self.progress * sheet113.sequence.duration
+})
+
+--- THEATRE PADRÃO 114 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project114 = getProject('Project 114')
+const sheet114 = project114.sheet('Scene 114')
+const obj114 = sheet114.object('Cube 114', {
+  x: 11.4,
+  y: 4,
+  rotation: 228,
+  scale: 1.0
+})
+
+obj114.onValuesChange((values)=>{
+  cube114.position.x = values.x
+  cube114.position.y = values.y
+  cube114.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-114',
+  scrub: true,
+  onUpdate: self => sheet114.sequence.position = self.progress * sheet114.sequence.duration
+})
+
+--- THEATRE PADRÃO 115 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project115 = getProject('Project 115')
+const sheet115 = project115.sheet('Scene 115')
+const obj115 = sheet115.object('Cube 115', {
+  x: 11.5,
+  y: 0,
+  rotation: 230,
+  scale: 1.1
+})
+
+obj115.onValuesChange((values)=>{
+  cube115.position.x = values.x
+  cube115.position.y = values.y
+  cube115.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-115',
+  scrub: true,
+  onUpdate: self => sheet115.sequence.position = self.progress * sheet115.sequence.duration
+})
+
+--- THEATRE PADRÃO 116 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project116 = getProject('Project 116')
+const sheet116 = project116.sheet('Scene 116')
+const obj116 = sheet116.object('Cube 116', {
+  x: 11.600000000000001,
+  y: 1,
+  rotation: 232,
+  scale: 1.2
+})
+
+obj116.onValuesChange((values)=>{
+  cube116.position.x = values.x
+  cube116.position.y = values.y
+  cube116.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-116',
+  scrub: true,
+  onUpdate: self => sheet116.sequence.position = self.progress * sheet116.sequence.duration
+})
+
+--- THEATRE PADRÃO 117 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project117 = getProject('Project 117')
+const sheet117 = project117.sheet('Scene 117')
+const obj117 = sheet117.object('Cube 117', {
+  x: 11.700000000000001,
+  y: 2,
+  rotation: 234,
+  scale: 1.0
+})
+
+obj117.onValuesChange((values)=>{
+  cube117.position.x = values.x
+  cube117.position.y = values.y
+  cube117.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-117',
+  scrub: true,
+  onUpdate: self => sheet117.sequence.position = self.progress * sheet117.sequence.duration
+})
+
+--- THEATRE PADRÃO 118 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project118 = getProject('Project 118')
+const sheet118 = project118.sheet('Scene 118')
+const obj118 = sheet118.object('Cube 118', {
+  x: 11.8,
+  y: 3,
+  rotation: 236,
+  scale: 1.1
+})
+
+obj118.onValuesChange((values)=>{
+  cube118.position.x = values.x
+  cube118.position.y = values.y
+  cube118.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-118',
+  scrub: true,
+  onUpdate: self => sheet118.sequence.position = self.progress * sheet118.sequence.duration
+})
+
+--- THEATRE PADRÃO 119 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project119 = getProject('Project 119')
+const sheet119 = project119.sheet('Scene 119')
+const obj119 = sheet119.object('Cube 119', {
+  x: 11.9,
+  y: 4,
+  rotation: 238,
+  scale: 1.2
+})
+
+obj119.onValuesChange((values)=>{
+  cube119.position.x = values.x
+  cube119.position.y = values.y
+  cube119.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-119',
+  scrub: true,
+  onUpdate: self => sheet119.sequence.position = self.progress * sheet119.sequence.duration
+})
+
+--- THEATRE PADRÃO 120 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project120 = getProject('Project 120')
+const sheet120 = project120.sheet('Scene 120')
+const obj120 = sheet120.object('Cube 120', {
+  x: 12.0,
+  y: 0,
+  rotation: 240,
+  scale: 1.0
+})
+
+obj120.onValuesChange((values)=>{
+  cube120.position.x = values.x
+  cube120.position.y = values.y
+  cube120.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-120',
+  scrub: true,
+  onUpdate: self => sheet120.sequence.position = self.progress * sheet120.sequence.duration
+})
+
+--- THEATRE PADRÃO 121 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project121 = getProject('Project 121')
+const sheet121 = project121.sheet('Scene 121')
+const obj121 = sheet121.object('Cube 121', {
+  x: 12.100000000000001,
+  y: 1,
+  rotation: 242,
+  scale: 1.1
+})
+
+obj121.onValuesChange((values)=>{
+  cube121.position.x = values.x
+  cube121.position.y = values.y
+  cube121.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-121',
+  scrub: true,
+  onUpdate: self => sheet121.sequence.position = self.progress * sheet121.sequence.duration
+})
+
+--- THEATRE PADRÃO 122 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project122 = getProject('Project 122')
+const sheet122 = project122.sheet('Scene 122')
+const obj122 = sheet122.object('Cube 122', {
+  x: 12.200000000000001,
+  y: 2,
+  rotation: 244,
+  scale: 1.2
+})
+
+obj122.onValuesChange((values)=>{
+  cube122.position.x = values.x
+  cube122.position.y = values.y
+  cube122.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-122',
+  scrub: true,
+  onUpdate: self => sheet122.sequence.position = self.progress * sheet122.sequence.duration
+})
+
+--- THEATRE PADRÃO 123 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project123 = getProject('Project 123')
+const sheet123 = project123.sheet('Scene 123')
+const obj123 = sheet123.object('Cube 123', {
+  x: 12.3,
+  y: 3,
+  rotation: 246,
+  scale: 1.0
+})
+
+obj123.onValuesChange((values)=>{
+  cube123.position.x = values.x
+  cube123.position.y = values.y
+  cube123.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-123',
+  scrub: true,
+  onUpdate: self => sheet123.sequence.position = self.progress * sheet123.sequence.duration
+})
+
+--- THEATRE PADRÃO 124 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project124 = getProject('Project 124')
+const sheet124 = project124.sheet('Scene 124')
+const obj124 = sheet124.object('Cube 124', {
+  x: 12.4,
+  y: 4,
+  rotation: 248,
+  scale: 1.1
+})
+
+obj124.onValuesChange((values)=>{
+  cube124.position.x = values.x
+  cube124.position.y = values.y
+  cube124.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-124',
+  scrub: true,
+  onUpdate: self => sheet124.sequence.position = self.progress * sheet124.sequence.duration
+})
+
+--- THEATRE PADRÃO 125 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project125 = getProject('Project 125')
+const sheet125 = project125.sheet('Scene 125')
+const obj125 = sheet125.object('Cube 125', {
+  x: 12.5,
+  y: 0,
+  rotation: 250,
+  scale: 1.2
+})
+
+obj125.onValuesChange((values)=>{
+  cube125.position.x = values.x
+  cube125.position.y = values.y
+  cube125.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-125',
+  scrub: true,
+  onUpdate: self => sheet125.sequence.position = self.progress * sheet125.sequence.duration
+})
+
+--- THEATRE PADRÃO 126 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project126 = getProject('Project 126')
+const sheet126 = project126.sheet('Scene 126')
+const obj126 = sheet126.object('Cube 126', {
+  x: 12.600000000000001,
+  y: 1,
+  rotation: 252,
+  scale: 1.0
+})
+
+obj126.onValuesChange((values)=>{
+  cube126.position.x = values.x
+  cube126.position.y = values.y
+  cube126.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-126',
+  scrub: true,
+  onUpdate: self => sheet126.sequence.position = self.progress * sheet126.sequence.duration
+})
+
+--- THEATRE PADRÃO 127 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project127 = getProject('Project 127')
+const sheet127 = project127.sheet('Scene 127')
+const obj127 = sheet127.object('Cube 127', {
+  x: 12.700000000000001,
+  y: 2,
+  rotation: 254,
+  scale: 1.1
+})
+
+obj127.onValuesChange((values)=>{
+  cube127.position.x = values.x
+  cube127.position.y = values.y
+  cube127.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-127',
+  scrub: true,
+  onUpdate: self => sheet127.sequence.position = self.progress * sheet127.sequence.duration
+})
+
+--- THEATRE PADRÃO 128 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project128 = getProject('Project 128')
+const sheet128 = project128.sheet('Scene 128')
+const obj128 = sheet128.object('Cube 128', {
+  x: 12.8,
+  y: 3,
+  rotation: 256,
+  scale: 1.2
+})
+
+obj128.onValuesChange((values)=>{
+  cube128.position.x = values.x
+  cube128.position.y = values.y
+  cube128.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-128',
+  scrub: true,
+  onUpdate: self => sheet128.sequence.position = self.progress * sheet128.sequence.duration
+})
+
+--- THEATRE PADRÃO 129 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project129 = getProject('Project 129')
+const sheet129 = project129.sheet('Scene 129')
+const obj129 = sheet129.object('Cube 129', {
+  x: 12.9,
+  y: 4,
+  rotation: 258,
+  scale: 1.0
+})
+
+obj129.onValuesChange((values)=>{
+  cube129.position.x = values.x
+  cube129.position.y = values.y
+  cube129.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-129',
+  scrub: true,
+  onUpdate: self => sheet129.sequence.position = self.progress * sheet129.sequence.duration
+})
+
+--- THEATRE PADRÃO 130 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project130 = getProject('Project 130')
+const sheet130 = project130.sheet('Scene 130')
+const obj130 = sheet130.object('Cube 130', {
+  x: 13.0,
+  y: 0,
+  rotation: 260,
+  scale: 1.1
+})
+
+obj130.onValuesChange((values)=>{
+  cube130.position.x = values.x
+  cube130.position.y = values.y
+  cube130.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-130',
+  scrub: true,
+  onUpdate: self => sheet130.sequence.position = self.progress * sheet130.sequence.duration
+})
+
+--- THEATRE PADRÃO 131 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project131 = getProject('Project 131')
+const sheet131 = project131.sheet('Scene 131')
+const obj131 = sheet131.object('Cube 131', {
+  x: 13.100000000000001,
+  y: 1,
+  rotation: 262,
+  scale: 1.2
+})
+
+obj131.onValuesChange((values)=>{
+  cube131.position.x = values.x
+  cube131.position.y = values.y
+  cube131.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-131',
+  scrub: true,
+  onUpdate: self => sheet131.sequence.position = self.progress * sheet131.sequence.duration
+})
+
+--- THEATRE PADRÃO 132 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project132 = getProject('Project 132')
+const sheet132 = project132.sheet('Scene 132')
+const obj132 = sheet132.object('Cube 132', {
+  x: 13.200000000000001,
+  y: 2,
+  rotation: 264,
+  scale: 1.0
+})
+
+obj132.onValuesChange((values)=>{
+  cube132.position.x = values.x
+  cube132.position.y = values.y
+  cube132.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-132',
+  scrub: true,
+  onUpdate: self => sheet132.sequence.position = self.progress * sheet132.sequence.duration
+})
+
+--- THEATRE PADRÃO 133 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project133 = getProject('Project 133')
+const sheet133 = project133.sheet('Scene 133')
+const obj133 = sheet133.object('Cube 133', {
+  x: 13.3,
+  y: 3,
+  rotation: 266,
+  scale: 1.1
+})
+
+obj133.onValuesChange((values)=>{
+  cube133.position.x = values.x
+  cube133.position.y = values.y
+  cube133.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-133',
+  scrub: true,
+  onUpdate: self => sheet133.sequence.position = self.progress * sheet133.sequence.duration
+})
+
+--- THEATRE PADRÃO 134 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project134 = getProject('Project 134')
+const sheet134 = project134.sheet('Scene 134')
+const obj134 = sheet134.object('Cube 134', {
+  x: 13.4,
+  y: 4,
+  rotation: 268,
+  scale: 1.2
+})
+
+obj134.onValuesChange((values)=>{
+  cube134.position.x = values.x
+  cube134.position.y = values.y
+  cube134.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-134',
+  scrub: true,
+  onUpdate: self => sheet134.sequence.position = self.progress * sheet134.sequence.duration
+})
+
+--- THEATRE PADRÃO 135 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project135 = getProject('Project 135')
+const sheet135 = project135.sheet('Scene 135')
+const obj135 = sheet135.object('Cube 135', {
+  x: 13.5,
+  y: 0,
+  rotation: 270,
+  scale: 1.0
+})
+
+obj135.onValuesChange((values)=>{
+  cube135.position.x = values.x
+  cube135.position.y = values.y
+  cube135.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-135',
+  scrub: true,
+  onUpdate: self => sheet135.sequence.position = self.progress * sheet135.sequence.duration
+})
+
+--- THEATRE PADRÃO 136 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project136 = getProject('Project 136')
+const sheet136 = project136.sheet('Scene 136')
+const obj136 = sheet136.object('Cube 136', {
+  x: 13.600000000000001,
+  y: 1,
+  rotation: 272,
+  scale: 1.1
+})
+
+obj136.onValuesChange((values)=>{
+  cube136.position.x = values.x
+  cube136.position.y = values.y
+  cube136.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-136',
+  scrub: true,
+  onUpdate: self => sheet136.sequence.position = self.progress * sheet136.sequence.duration
+})
+
+--- THEATRE PADRÃO 137 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project137 = getProject('Project 137')
+const sheet137 = project137.sheet('Scene 137')
+const obj137 = sheet137.object('Cube 137', {
+  x: 13.700000000000001,
+  y: 2,
+  rotation: 274,
+  scale: 1.2
+})
+
+obj137.onValuesChange((values)=>{
+  cube137.position.x = values.x
+  cube137.position.y = values.y
+  cube137.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-137',
+  scrub: true,
+  onUpdate: self => sheet137.sequence.position = self.progress * sheet137.sequence.duration
+})
+
+--- THEATRE PADRÃO 138 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project138 = getProject('Project 138')
+const sheet138 = project138.sheet('Scene 138')
+const obj138 = sheet138.object('Cube 138', {
+  x: 13.8,
+  y: 3,
+  rotation: 276,
+  scale: 1.0
+})
+
+obj138.onValuesChange((values)=>{
+  cube138.position.x = values.x
+  cube138.position.y = values.y
+  cube138.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-138',
+  scrub: true,
+  onUpdate: self => sheet138.sequence.position = self.progress * sheet138.sequence.duration
+})
+
+--- THEATRE PADRÃO 139 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project139 = getProject('Project 139')
+const sheet139 = project139.sheet('Scene 139')
+const obj139 = sheet139.object('Cube 139', {
+  x: 13.9,
+  y: 4,
+  rotation: 278,
+  scale: 1.1
+})
+
+obj139.onValuesChange((values)=>{
+  cube139.position.x = values.x
+  cube139.position.y = values.y
+  cube139.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-139',
+  scrub: true,
+  onUpdate: self => sheet139.sequence.position = self.progress * sheet139.sequence.duration
+})
+
+--- THEATRE PADRÃO 140 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project140 = getProject('Project 140')
+const sheet140 = project140.sheet('Scene 140')
+const obj140 = sheet140.object('Cube 140', {
+  x: 14.0,
+  y: 0,
+  rotation: 280,
+  scale: 1.2
+})
+
+obj140.onValuesChange((values)=>{
+  cube140.position.x = values.x
+  cube140.position.y = values.y
+  cube140.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-140',
+  scrub: true,
+  onUpdate: self => sheet140.sequence.position = self.progress * sheet140.sequence.duration
+})
+
+--- THEATRE PADRÃO 141 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project141 = getProject('Project 141')
+const sheet141 = project141.sheet('Scene 141')
+const obj141 = sheet141.object('Cube 141', {
+  x: 14.100000000000001,
+  y: 1,
+  rotation: 282,
+  scale: 1.0
+})
+
+obj141.onValuesChange((values)=>{
+  cube141.position.x = values.x
+  cube141.position.y = values.y
+  cube141.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-141',
+  scrub: true,
+  onUpdate: self => sheet141.sequence.position = self.progress * sheet141.sequence.duration
+})
+
+--- THEATRE PADRÃO 142 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project142 = getProject('Project 142')
+const sheet142 = project142.sheet('Scene 142')
+const obj142 = sheet142.object('Cube 142', {
+  x: 14.200000000000001,
+  y: 2,
+  rotation: 284,
+  scale: 1.1
+})
+
+obj142.onValuesChange((values)=>{
+  cube142.position.x = values.x
+  cube142.position.y = values.y
+  cube142.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-142',
+  scrub: true,
+  onUpdate: self => sheet142.sequence.position = self.progress * sheet142.sequence.duration
+})
+
+--- THEATRE PADRÃO 143 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project143 = getProject('Project 143')
+const sheet143 = project143.sheet('Scene 143')
+const obj143 = sheet143.object('Cube 143', {
+  x: 14.3,
+  y: 3,
+  rotation: 286,
+  scale: 1.2
+})
+
+obj143.onValuesChange((values)=>{
+  cube143.position.x = values.x
+  cube143.position.y = values.y
+  cube143.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-143',
+  scrub: true,
+  onUpdate: self => sheet143.sequence.position = self.progress * sheet143.sequence.duration
+})
+
+--- THEATRE PADRÃO 144 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project144 = getProject('Project 144')
+const sheet144 = project144.sheet('Scene 144')
+const obj144 = sheet144.object('Cube 144', {
+  x: 14.4,
+  y: 4,
+  rotation: 288,
+  scale: 1.0
+})
+
+obj144.onValuesChange((values)=>{
+  cube144.position.x = values.x
+  cube144.position.y = values.y
+  cube144.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-144',
+  scrub: true,
+  onUpdate: self => sheet144.sequence.position = self.progress * sheet144.sequence.duration
+})
+
+--- THEATRE PADRÃO 145 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project145 = getProject('Project 145')
+const sheet145 = project145.sheet('Scene 145')
+const obj145 = sheet145.object('Cube 145', {
+  x: 14.5,
+  y: 0,
+  rotation: 290,
+  scale: 1.1
+})
+
+obj145.onValuesChange((values)=>{
+  cube145.position.x = values.x
+  cube145.position.y = values.y
+  cube145.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-145',
+  scrub: true,
+  onUpdate: self => sheet145.sequence.position = self.progress * sheet145.sequence.duration
+})
+
+--- THEATRE PADRÃO 146 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project146 = getProject('Project 146')
+const sheet146 = project146.sheet('Scene 146')
+const obj146 = sheet146.object('Cube 146', {
+  x: 14.600000000000001,
+  y: 1,
+  rotation: 292,
+  scale: 1.2
+})
+
+obj146.onValuesChange((values)=>{
+  cube146.position.x = values.x
+  cube146.position.y = values.y
+  cube146.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-146',
+  scrub: true,
+  onUpdate: self => sheet146.sequence.position = self.progress * sheet146.sequence.duration
+})
+
+--- THEATRE PADRÃO 147 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project147 = getProject('Project 147')
+const sheet147 = project147.sheet('Scene 147')
+const obj147 = sheet147.object('Cube 147', {
+  x: 14.700000000000001,
+  y: 2,
+  rotation: 294,
+  scale: 1.0
+})
+
+obj147.onValuesChange((values)=>{
+  cube147.position.x = values.x
+  cube147.position.y = values.y
+  cube147.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-147',
+  scrub: true,
+  onUpdate: self => sheet147.sequence.position = self.progress * sheet147.sequence.duration
+})
+
+--- THEATRE PADRÃO 148 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project148 = getProject('Project 148')
+const sheet148 = project148.sheet('Scene 148')
+const obj148 = sheet148.object('Cube 148', {
+  x: 14.8,
+  y: 3,
+  rotation: 296,
+  scale: 1.1
+})
+
+obj148.onValuesChange((values)=>{
+  cube148.position.x = values.x
+  cube148.position.y = values.y
+  cube148.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-148',
+  scrub: true,
+  onUpdate: self => sheet148.sequence.position = self.progress * sheet148.sequence.duration
+})
+
+--- THEATRE PADRÃO 149 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project149 = getProject('Project 149')
+const sheet149 = project149.sheet('Scene 149')
+const obj149 = sheet149.object('Cube 149', {
+  x: 14.9,
+  y: 4,
+  rotation: 298,
+  scale: 1.2
+})
+
+obj149.onValuesChange((values)=>{
+  cube149.position.x = values.x
+  cube149.position.y = values.y
+  cube149.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-149',
+  scrub: true,
+  onUpdate: self => sheet149.sequence.position = self.progress * sheet149.sequence.duration
+})
+
+--- THEATRE PADRÃO 150 ---
+import { getProject } from '@theatre/core'
+import studio from '@theatre/studio'
+import { SheetProvider, useCurrentSheet } from '@theatre/r3f'
+
+studio.initialize()
+const project150 = getProject('Project 150')
+const sheet150 = project150.sheet('Scene 150')
+const obj150 = sheet150.object('Cube 150', {
+  x: 15.0,
+  y: 0,
+  rotation: 300,
+  scale: 1.0
+})
+
+obj150.onValuesChange((values)=>{
+  cube150.position.x = values.x
+  cube150.position.y = values.y
+  cube150.rotation.y = values.rotation
+})
+
+ScrollTrigger.create({
+  trigger: '.section-150',
+  scrub: true,
+  onUpdate: self => sheet150.sequence.position = self.progress * sheet150.sequence.duration
+})

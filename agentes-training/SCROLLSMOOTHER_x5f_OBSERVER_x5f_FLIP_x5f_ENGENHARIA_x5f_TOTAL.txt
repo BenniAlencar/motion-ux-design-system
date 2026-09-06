@@ -1,0 +1,102 @@
+
+================================================================================
+GSAP SCROLLSMOOTHER + OBSERVER + FLIP - ENGENHARIA REVERSA TOTAL - 2026
+O trio que matou Locomotive em projetos GSAP - Padrão Awwwards 2024+
+================================================================================
+
+SCROLLSMOOTHER - Smooth scroll oficial do GSAP, integrado com ScrollTrigger
+
+INSTALAÇÃO:
+npm install gsap
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother)
+
+HTML OBRIGATÓRIO:
+<div id="smooth-wrapper">
+  <div id="smooth-content">
+    <!-- todo conteúdo aqui -->
+  </div>
+</div>
+
+BÁSICO:
+const smoother = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper',
+  content: '#smooth-content',
+  smooth: 1.2, // duração do smooth 0-3
+  effects: true, // ativa data-speed e data-lag para parallax
+  smoothTouch: 0.1, // 0 = desativa em touch, 0.1 = leve
+  normalizeScroll: true, // normaliza scroll entre browsers
+  ignoreMobileResize: true
+})
+
+// Parallax via atributos (sem JS):
+<div data-speed="0.5">Move 0.5x (lento)</div>
+<div data-speed="1.5">Move 1.5x (rápido)</div>
+<div data-lag="0.5">Lag de 0.5 (atraso)</div>
+<div data-speed="clamp(0.5)">Clamp para não sair da tela</div>
+
+// Métodos:
+smoother.scrollTo(target, smooth, position) // scrollTo igual ScrollTrigger
+smoother.paused(true) // pausa
+smoother.scrollTop() // pega scroll
+smoother.getVelocity() // velocidade
+
+// OBSERVER - Detecta wheel, touch, pointer, sem bugar scroll
+import Observer from 'gsap/Observer'
+gsap.registerPlugin(Observer)
+
+Observer.create({
+  target: window,
+  type: 'wheel,touch,pointer',
+  wheelSpeed: -1,
+  onDown: () => console.log('scroll down'),
+  onUp: () => console.log('scroll up'),
+  onChange: (self) => console.log(self.deltaY, self.velocity),
+  tolerance: 10,
+  preventDefault: true
+})
+
+// Use case: troca de slide com wheel
+let current = 0
+Observer.create({
+  type: 'wheel,touch',
+  onDown: () => { current++; gsap.to(window, { scrollTo: current * innerHeight }) },
+  onUp: () => { current--; }
+})
+
+// FLIP - First Last Invert Play - Anima layout automaticamente
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(Flip)
+
+const state = Flip.getState('.box') // captura estado atual
+// muda layout (ex: move box para outro container)
+document.querySelector('.new-container').appendChild(document.querySelector('.box'))
+Flip.from(state, {
+  duration: 0.8,
+  ease: 'power2.inOut',
+  absolute: true, // usa position absolute durante animação
+  scale: true,
+  simple: true
+})
+
+// Card expandindo para modal (padrão Awwwards):
+function expandCard(card){
+  const state = Flip.getState(card)
+  card.classList.add('expanded') // muda para fullscreen via CSS
+  Flip.from(state, { duration: 0.6, ease: 'power2.inOut', absolute: true })
+}
+
+// Shared layout com Flip (igual Motion layoutId):
+function onClick(e){
+  const state = Flip.getState('.active')
+  document.querySelector('.active').classList.remove('active')
+  e.target.classList.add('active')
+  Flip.from(state, { duration: 0.5, ease: 'power2.out' })
+}
+
+COMBO COMPLETO - ScrollSmoother + ScrollTrigger + Lenis? Escolha 1:
+- Projeto 100% GSAP? Use ScrollSmoother (integração perfeita)
+- Projeto sem GSAP ou quer mais leve? Use Lenis + ScrollTrigger
+Nunca use os dois juntos.

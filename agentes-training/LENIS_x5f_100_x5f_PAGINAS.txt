@@ -1,0 +1,4884 @@
+
+================================================================================
+LENIS - ENGENHARIA REVERSA TOTAL - 2026 - O PADRÃO OURO DE SMOOTH SCROLL
+Site: lenis.darkroom.engineering - 4.5kB gzipped, successor do Locomotive
+================================================================================
+
+O QUE É:
+Lenis é smooth scroll moderno, leve, performático, criado pela Darkroom Engineering. Substituiu Locomotive Scroll em 2024+. Usado em Apple, Linear, Stripe.
+4.5kB gzipped, zero dependência, funciona com GSAP ScrollTrigger nativo.
+
+INSTALAÇÃO:
+npm install lenis
+import Lenis from 'lenis'
+import 'lenis/dist/lenis.css' // CSS obrigatório para evitar scroll duplo
+
+API BÁSICA:
+const lenis = new Lenis({
+  duration: 1.2, // duração do lerp 0-10, quanto maior mais suave
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // easing custom
+  orientation: 'vertical', // vertical | horizontal
+  gestureOrientation: 'vertical', // direção do gesto
+  smoothWheel: true, // smooth no wheel
+  smoothTouch: false, // false em mobile para não bugar
+  wheelMultiplier: 1, // velocidade wheel
+  touchMultiplier: 2, // velocidade touch
+  infinite: false, // scroll infinito
+  autoResize: true
+})
+
+function raf(time){
+  lenis.raf(time)
+  requestAnimationFrame(raf)
+}
+requestAnimationFrame(raf)
+
+// Métodos:
+lenis.scrollTo(target, { offset: 0, duration: 1, easing, immediate: false, lock: false, onComplete: ()=>{} })
+lenis.start()
+lenis.stop()
+lenis.destroy()
+
+// Eventos:
+lenis.on('scroll', ({ scroll, progress, velocity, direction }) => {
+  console.log(scroll, progress) // progress 0-1
+})
+
+// Com GSAP ScrollTrigger (OBRIGATÓRIO):
+lenis.on('scroll', ScrollTrigger.update)
+gsap.ticker.add((time) => lenis.raf(time * 1000))
+gsap.ticker.lagSmoothing(0)
+
+// React:
+import { useEffect } from 'react'
+import Lenis from 'lenis'
+export function useLenis(){
+  useEffect(()=>{
+    const lenis = new Lenis({ duration: 1.2 })
+    lenis.on('scroll', ScrollTrigger.update)
+    gsap.ticker.add((time)=> lenis.raf(time * 1000))
+    return ()=> lenis.destroy()
+  },[])
+}
+
+// Next.js hook:
+import { ReactLenis } from 'lenis/react' // wrapper oficial
+<ReactLenis root><App /></ReactLenis>
+
+// Parallax com Lenis + GSAP:
+lenis.on('scroll', ({ scroll })=>{
+  gsap.to('.parallax', { y: scroll * 0.5, ease: 'none' })
+})
+
+// Parallax com data-lenis-speed (plugin):
+<div data-lenis-speed="0.5">lento</div>
+
+CSS OBRIGATÓRIO:
+html.lenis, html.lenis body { height: auto }
+.lenis:not(.lenis-autoToggle).lenis-stopped { overflow: hidden }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain }
+
+
+================================================================================
+LENIS - 150 PADRÕES REAIS
+================================================================================
+
+--- LENIS PADRÃO 1 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis1 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis1.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-1', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-1').style.transform = `scaleX(${progress})`
+  if(velocity > 1) console.log('fast scroll 1')
+})
+
+function raf1(time){ lenis1.raf(time); requestAnimationFrame(raf1) }
+requestAnimationFrame(raf1)
+
+// ScrollTo 1
+document.querySelector('.btn-1').addEventListener('click', ()=>{
+  lenis1.scrollTo('.section-1', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis1.raf(time * 1000))
+lenis1.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 2 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis2 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis2.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-2', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-2').style.transform = `scaleX(${progress})`
+  if(velocity > 2) console.log('fast scroll 2')
+})
+
+function raf2(time){ lenis2.raf(time); requestAnimationFrame(raf2) }
+requestAnimationFrame(raf2)
+
+// ScrollTo 2
+document.querySelector('.btn-2').addEventListener('click', ()=>{
+  lenis2.scrollTo('.section-2', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis2.raf(time * 1000))
+lenis2.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 3 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis3 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis3.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-3', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-3').style.transform = `scaleX(${progress})`
+  if(velocity > 3) console.log('fast scroll 3')
+})
+
+function raf3(time){ lenis3.raf(time); requestAnimationFrame(raf3) }
+requestAnimationFrame(raf3)
+
+// ScrollTo 3
+document.querySelector('.btn-3').addEventListener('click', ()=>{
+  lenis3.scrollTo('.section-3', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis3.raf(time * 1000))
+lenis3.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 4 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis4 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis4.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-4', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-4').style.transform = `scaleX(${progress})`
+  if(velocity > 4) console.log('fast scroll 4')
+})
+
+function raf4(time){ lenis4.raf(time); requestAnimationFrame(raf4) }
+requestAnimationFrame(raf4)
+
+// ScrollTo 4
+document.querySelector('.btn-4').addEventListener('click', ()=>{
+  lenis4.scrollTo('.section-4', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis4.raf(time * 1000))
+lenis4.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 5 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis5 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis5.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-5', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-5').style.transform = `scaleX(${progress})`
+  if(velocity > 5) console.log('fast scroll 5')
+})
+
+function raf5(time){ lenis5.raf(time); requestAnimationFrame(raf5) }
+requestAnimationFrame(raf5)
+
+// ScrollTo 5
+document.querySelector('.btn-5').addEventListener('click', ()=>{
+  lenis5.scrollTo('.section-5', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis5.raf(time * 1000))
+lenis5.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 6 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis6 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis6.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-6', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-6').style.transform = `scaleX(${progress})`
+  if(velocity > 6) console.log('fast scroll 6')
+})
+
+function raf6(time){ lenis6.raf(time); requestAnimationFrame(raf6) }
+requestAnimationFrame(raf6)
+
+// ScrollTo 6
+document.querySelector('.btn-6').addEventListener('click', ()=>{
+  lenis6.scrollTo('.section-6', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis6.raf(time * 1000))
+lenis6.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 7 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis7 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis7.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-7', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-7').style.transform = `scaleX(${progress})`
+  if(velocity > 7) console.log('fast scroll 7')
+})
+
+function raf7(time){ lenis7.raf(time); requestAnimationFrame(raf7) }
+requestAnimationFrame(raf7)
+
+// ScrollTo 7
+document.querySelector('.btn-7').addEventListener('click', ()=>{
+  lenis7.scrollTo('.section-7', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis7.raf(time * 1000))
+lenis7.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 8 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis8 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis8.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-8', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-8').style.transform = `scaleX(${progress})`
+  if(velocity > 8) console.log('fast scroll 8')
+})
+
+function raf8(time){ lenis8.raf(time); requestAnimationFrame(raf8) }
+requestAnimationFrame(raf8)
+
+// ScrollTo 8
+document.querySelector('.btn-8').addEventListener('click', ()=>{
+  lenis8.scrollTo('.section-8', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis8.raf(time * 1000))
+lenis8.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 9 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis9 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis9.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-9', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-9').style.transform = `scaleX(${progress})`
+  if(velocity > 9) console.log('fast scroll 9')
+})
+
+function raf9(time){ lenis9.raf(time); requestAnimationFrame(raf9) }
+requestAnimationFrame(raf9)
+
+// ScrollTo 9
+document.querySelector('.btn-9').addEventListener('click', ()=>{
+  lenis9.scrollTo('.section-9', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis9.raf(time * 1000))
+lenis9.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 10 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis10 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis10.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-10', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-10').style.transform = `scaleX(${progress})`
+  if(velocity > 10) console.log('fast scroll 10')
+})
+
+function raf10(time){ lenis10.raf(time); requestAnimationFrame(raf10) }
+requestAnimationFrame(raf10)
+
+// ScrollTo 10
+document.querySelector('.btn-10').addEventListener('click', ()=>{
+  lenis10.scrollTo('.section-10', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis10.raf(time * 1000))
+lenis10.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 11 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis11 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis11.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-11', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-11').style.transform = `scaleX(${progress})`
+  if(velocity > 11) console.log('fast scroll 11')
+})
+
+function raf11(time){ lenis11.raf(time); requestAnimationFrame(raf11) }
+requestAnimationFrame(raf11)
+
+// ScrollTo 11
+document.querySelector('.btn-11').addEventListener('click', ()=>{
+  lenis11.scrollTo('.section-11', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis11.raf(time * 1000))
+lenis11.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 12 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis12 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis12.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-12', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-12').style.transform = `scaleX(${progress})`
+  if(velocity > 12) console.log('fast scroll 12')
+})
+
+function raf12(time){ lenis12.raf(time); requestAnimationFrame(raf12) }
+requestAnimationFrame(raf12)
+
+// ScrollTo 12
+document.querySelector('.btn-12').addEventListener('click', ()=>{
+  lenis12.scrollTo('.section-12', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis12.raf(time * 1000))
+lenis12.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 13 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis13 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis13.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-13', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-13').style.transform = `scaleX(${progress})`
+  if(velocity > 13) console.log('fast scroll 13')
+})
+
+function raf13(time){ lenis13.raf(time); requestAnimationFrame(raf13) }
+requestAnimationFrame(raf13)
+
+// ScrollTo 13
+document.querySelector('.btn-13').addEventListener('click', ()=>{
+  lenis13.scrollTo('.section-13', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis13.raf(time * 1000))
+lenis13.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 14 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis14 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis14.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-14', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-14').style.transform = `scaleX(${progress})`
+  if(velocity > 14) console.log('fast scroll 14')
+})
+
+function raf14(time){ lenis14.raf(time); requestAnimationFrame(raf14) }
+requestAnimationFrame(raf14)
+
+// ScrollTo 14
+document.querySelector('.btn-14').addEventListener('click', ()=>{
+  lenis14.scrollTo('.section-14', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis14.raf(time * 1000))
+lenis14.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 15 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis15 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis15.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-15', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-15').style.transform = `scaleX(${progress})`
+  if(velocity > 15) console.log('fast scroll 15')
+})
+
+function raf15(time){ lenis15.raf(time); requestAnimationFrame(raf15) }
+requestAnimationFrame(raf15)
+
+// ScrollTo 15
+document.querySelector('.btn-15').addEventListener('click', ()=>{
+  lenis15.scrollTo('.section-15', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis15.raf(time * 1000))
+lenis15.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 16 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis16 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis16.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-16', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-16').style.transform = `scaleX(${progress})`
+  if(velocity > 16) console.log('fast scroll 16')
+})
+
+function raf16(time){ lenis16.raf(time); requestAnimationFrame(raf16) }
+requestAnimationFrame(raf16)
+
+// ScrollTo 16
+document.querySelector('.btn-16').addEventListener('click', ()=>{
+  lenis16.scrollTo('.section-16', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis16.raf(time * 1000))
+lenis16.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 17 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis17 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis17.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-17', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-17').style.transform = `scaleX(${progress})`
+  if(velocity > 17) console.log('fast scroll 17')
+})
+
+function raf17(time){ lenis17.raf(time); requestAnimationFrame(raf17) }
+requestAnimationFrame(raf17)
+
+// ScrollTo 17
+document.querySelector('.btn-17').addEventListener('click', ()=>{
+  lenis17.scrollTo('.section-17', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis17.raf(time * 1000))
+lenis17.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 18 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis18 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis18.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-18', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-18').style.transform = `scaleX(${progress})`
+  if(velocity > 18) console.log('fast scroll 18')
+})
+
+function raf18(time){ lenis18.raf(time); requestAnimationFrame(raf18) }
+requestAnimationFrame(raf18)
+
+// ScrollTo 18
+document.querySelector('.btn-18').addEventListener('click', ()=>{
+  lenis18.scrollTo('.section-18', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis18.raf(time * 1000))
+lenis18.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 19 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis19 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis19.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-19', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-19').style.transform = `scaleX(${progress})`
+  if(velocity > 19) console.log('fast scroll 19')
+})
+
+function raf19(time){ lenis19.raf(time); requestAnimationFrame(raf19) }
+requestAnimationFrame(raf19)
+
+// ScrollTo 19
+document.querySelector('.btn-19').addEventListener('click', ()=>{
+  lenis19.scrollTo('.section-19', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis19.raf(time * 1000))
+lenis19.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 20 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis20 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis20.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-20', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-20').style.transform = `scaleX(${progress})`
+  if(velocity > 20) console.log('fast scroll 20')
+})
+
+function raf20(time){ lenis20.raf(time); requestAnimationFrame(raf20) }
+requestAnimationFrame(raf20)
+
+// ScrollTo 20
+document.querySelector('.btn-20').addEventListener('click', ()=>{
+  lenis20.scrollTo('.section-20', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis20.raf(time * 1000))
+lenis20.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 21 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis21 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis21.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-21', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-21').style.transform = `scaleX(${progress})`
+  if(velocity > 21) console.log('fast scroll 21')
+})
+
+function raf21(time){ lenis21.raf(time); requestAnimationFrame(raf21) }
+requestAnimationFrame(raf21)
+
+// ScrollTo 21
+document.querySelector('.btn-21').addEventListener('click', ()=>{
+  lenis21.scrollTo('.section-21', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis21.raf(time * 1000))
+lenis21.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 22 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis22 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis22.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-22', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-22').style.transform = `scaleX(${progress})`
+  if(velocity > 22) console.log('fast scroll 22')
+})
+
+function raf22(time){ lenis22.raf(time); requestAnimationFrame(raf22) }
+requestAnimationFrame(raf22)
+
+// ScrollTo 22
+document.querySelector('.btn-22').addEventListener('click', ()=>{
+  lenis22.scrollTo('.section-22', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis22.raf(time * 1000))
+lenis22.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 23 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis23 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis23.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-23', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-23').style.transform = `scaleX(${progress})`
+  if(velocity > 23) console.log('fast scroll 23')
+})
+
+function raf23(time){ lenis23.raf(time); requestAnimationFrame(raf23) }
+requestAnimationFrame(raf23)
+
+// ScrollTo 23
+document.querySelector('.btn-23').addEventListener('click', ()=>{
+  lenis23.scrollTo('.section-23', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis23.raf(time * 1000))
+lenis23.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 24 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis24 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis24.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-24', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-24').style.transform = `scaleX(${progress})`
+  if(velocity > 24) console.log('fast scroll 24')
+})
+
+function raf24(time){ lenis24.raf(time); requestAnimationFrame(raf24) }
+requestAnimationFrame(raf24)
+
+// ScrollTo 24
+document.querySelector('.btn-24').addEventListener('click', ()=>{
+  lenis24.scrollTo('.section-24', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis24.raf(time * 1000))
+lenis24.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 25 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis25 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis25.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-25', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-25').style.transform = `scaleX(${progress})`
+  if(velocity > 25) console.log('fast scroll 25')
+})
+
+function raf25(time){ lenis25.raf(time); requestAnimationFrame(raf25) }
+requestAnimationFrame(raf25)
+
+// ScrollTo 25
+document.querySelector('.btn-25').addEventListener('click', ()=>{
+  lenis25.scrollTo('.section-25', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis25.raf(time * 1000))
+lenis25.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 26 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis26 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis26.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-26', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-26').style.transform = `scaleX(${progress})`
+  if(velocity > 26) console.log('fast scroll 26')
+})
+
+function raf26(time){ lenis26.raf(time); requestAnimationFrame(raf26) }
+requestAnimationFrame(raf26)
+
+// ScrollTo 26
+document.querySelector('.btn-26').addEventListener('click', ()=>{
+  lenis26.scrollTo('.section-26', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis26.raf(time * 1000))
+lenis26.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 27 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis27 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis27.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-27', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-27').style.transform = `scaleX(${progress})`
+  if(velocity > 27) console.log('fast scroll 27')
+})
+
+function raf27(time){ lenis27.raf(time); requestAnimationFrame(raf27) }
+requestAnimationFrame(raf27)
+
+// ScrollTo 27
+document.querySelector('.btn-27').addEventListener('click', ()=>{
+  lenis27.scrollTo('.section-27', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis27.raf(time * 1000))
+lenis27.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 28 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis28 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis28.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-28', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-28').style.transform = `scaleX(${progress})`
+  if(velocity > 28) console.log('fast scroll 28')
+})
+
+function raf28(time){ lenis28.raf(time); requestAnimationFrame(raf28) }
+requestAnimationFrame(raf28)
+
+// ScrollTo 28
+document.querySelector('.btn-28').addEventListener('click', ()=>{
+  lenis28.scrollTo('.section-28', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis28.raf(time * 1000))
+lenis28.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 29 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis29 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis29.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-29', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-29').style.transform = `scaleX(${progress})`
+  if(velocity > 29) console.log('fast scroll 29')
+})
+
+function raf29(time){ lenis29.raf(time); requestAnimationFrame(raf29) }
+requestAnimationFrame(raf29)
+
+// ScrollTo 29
+document.querySelector('.btn-29').addEventListener('click', ()=>{
+  lenis29.scrollTo('.section-29', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis29.raf(time * 1000))
+lenis29.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 30 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis30 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis30.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-30', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-30').style.transform = `scaleX(${progress})`
+  if(velocity > 30) console.log('fast scroll 30')
+})
+
+function raf30(time){ lenis30.raf(time); requestAnimationFrame(raf30) }
+requestAnimationFrame(raf30)
+
+// ScrollTo 30
+document.querySelector('.btn-30').addEventListener('click', ()=>{
+  lenis30.scrollTo('.section-30', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis30.raf(time * 1000))
+lenis30.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 31 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis31 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis31.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-31', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-31').style.transform = `scaleX(${progress})`
+  if(velocity > 31) console.log('fast scroll 31')
+})
+
+function raf31(time){ lenis31.raf(time); requestAnimationFrame(raf31) }
+requestAnimationFrame(raf31)
+
+// ScrollTo 31
+document.querySelector('.btn-31').addEventListener('click', ()=>{
+  lenis31.scrollTo('.section-31', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis31.raf(time * 1000))
+lenis31.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 32 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis32 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis32.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-32', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-32').style.transform = `scaleX(${progress})`
+  if(velocity > 32) console.log('fast scroll 32')
+})
+
+function raf32(time){ lenis32.raf(time); requestAnimationFrame(raf32) }
+requestAnimationFrame(raf32)
+
+// ScrollTo 32
+document.querySelector('.btn-32').addEventListener('click', ()=>{
+  lenis32.scrollTo('.section-32', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis32.raf(time * 1000))
+lenis32.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 33 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis33 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis33.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-33', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-33').style.transform = `scaleX(${progress})`
+  if(velocity > 33) console.log('fast scroll 33')
+})
+
+function raf33(time){ lenis33.raf(time); requestAnimationFrame(raf33) }
+requestAnimationFrame(raf33)
+
+// ScrollTo 33
+document.querySelector('.btn-33').addEventListener('click', ()=>{
+  lenis33.scrollTo('.section-33', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis33.raf(time * 1000))
+lenis33.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 34 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis34 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis34.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-34', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-34').style.transform = `scaleX(${progress})`
+  if(velocity > 34) console.log('fast scroll 34')
+})
+
+function raf34(time){ lenis34.raf(time); requestAnimationFrame(raf34) }
+requestAnimationFrame(raf34)
+
+// ScrollTo 34
+document.querySelector('.btn-34').addEventListener('click', ()=>{
+  lenis34.scrollTo('.section-34', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis34.raf(time * 1000))
+lenis34.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 35 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis35 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis35.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-35', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-35').style.transform = `scaleX(${progress})`
+  if(velocity > 35) console.log('fast scroll 35')
+})
+
+function raf35(time){ lenis35.raf(time); requestAnimationFrame(raf35) }
+requestAnimationFrame(raf35)
+
+// ScrollTo 35
+document.querySelector('.btn-35').addEventListener('click', ()=>{
+  lenis35.scrollTo('.section-35', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis35.raf(time * 1000))
+lenis35.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 36 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis36 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis36.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-36', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-36').style.transform = `scaleX(${progress})`
+  if(velocity > 36) console.log('fast scroll 36')
+})
+
+function raf36(time){ lenis36.raf(time); requestAnimationFrame(raf36) }
+requestAnimationFrame(raf36)
+
+// ScrollTo 36
+document.querySelector('.btn-36').addEventListener('click', ()=>{
+  lenis36.scrollTo('.section-36', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis36.raf(time * 1000))
+lenis36.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 37 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis37 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis37.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-37', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-37').style.transform = `scaleX(${progress})`
+  if(velocity > 37) console.log('fast scroll 37')
+})
+
+function raf37(time){ lenis37.raf(time); requestAnimationFrame(raf37) }
+requestAnimationFrame(raf37)
+
+// ScrollTo 37
+document.querySelector('.btn-37').addEventListener('click', ()=>{
+  lenis37.scrollTo('.section-37', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis37.raf(time * 1000))
+lenis37.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 38 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis38 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis38.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-38', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-38').style.transform = `scaleX(${progress})`
+  if(velocity > 38) console.log('fast scroll 38')
+})
+
+function raf38(time){ lenis38.raf(time); requestAnimationFrame(raf38) }
+requestAnimationFrame(raf38)
+
+// ScrollTo 38
+document.querySelector('.btn-38').addEventListener('click', ()=>{
+  lenis38.scrollTo('.section-38', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis38.raf(time * 1000))
+lenis38.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 39 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis39 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis39.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-39', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-39').style.transform = `scaleX(${progress})`
+  if(velocity > 39) console.log('fast scroll 39')
+})
+
+function raf39(time){ lenis39.raf(time); requestAnimationFrame(raf39) }
+requestAnimationFrame(raf39)
+
+// ScrollTo 39
+document.querySelector('.btn-39').addEventListener('click', ()=>{
+  lenis39.scrollTo('.section-39', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis39.raf(time * 1000))
+lenis39.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 40 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis40 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis40.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-40', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-40').style.transform = `scaleX(${progress})`
+  if(velocity > 40) console.log('fast scroll 40')
+})
+
+function raf40(time){ lenis40.raf(time); requestAnimationFrame(raf40) }
+requestAnimationFrame(raf40)
+
+// ScrollTo 40
+document.querySelector('.btn-40').addEventListener('click', ()=>{
+  lenis40.scrollTo('.section-40', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis40.raf(time * 1000))
+lenis40.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 41 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis41 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis41.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-41', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-41').style.transform = `scaleX(${progress})`
+  if(velocity > 41) console.log('fast scroll 41')
+})
+
+function raf41(time){ lenis41.raf(time); requestAnimationFrame(raf41) }
+requestAnimationFrame(raf41)
+
+// ScrollTo 41
+document.querySelector('.btn-41').addEventListener('click', ()=>{
+  lenis41.scrollTo('.section-41', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis41.raf(time * 1000))
+lenis41.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 42 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis42 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis42.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-42', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-42').style.transform = `scaleX(${progress})`
+  if(velocity > 42) console.log('fast scroll 42')
+})
+
+function raf42(time){ lenis42.raf(time); requestAnimationFrame(raf42) }
+requestAnimationFrame(raf42)
+
+// ScrollTo 42
+document.querySelector('.btn-42').addEventListener('click', ()=>{
+  lenis42.scrollTo('.section-42', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis42.raf(time * 1000))
+lenis42.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 43 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis43 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis43.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-43', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-43').style.transform = `scaleX(${progress})`
+  if(velocity > 43) console.log('fast scroll 43')
+})
+
+function raf43(time){ lenis43.raf(time); requestAnimationFrame(raf43) }
+requestAnimationFrame(raf43)
+
+// ScrollTo 43
+document.querySelector('.btn-43').addEventListener('click', ()=>{
+  lenis43.scrollTo('.section-43', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis43.raf(time * 1000))
+lenis43.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 44 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis44 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis44.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-44', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-44').style.transform = `scaleX(${progress})`
+  if(velocity > 44) console.log('fast scroll 44')
+})
+
+function raf44(time){ lenis44.raf(time); requestAnimationFrame(raf44) }
+requestAnimationFrame(raf44)
+
+// ScrollTo 44
+document.querySelector('.btn-44').addEventListener('click', ()=>{
+  lenis44.scrollTo('.section-44', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis44.raf(time * 1000))
+lenis44.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 45 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis45 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis45.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-45', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-45').style.transform = `scaleX(${progress})`
+  if(velocity > 45) console.log('fast scroll 45')
+})
+
+function raf45(time){ lenis45.raf(time); requestAnimationFrame(raf45) }
+requestAnimationFrame(raf45)
+
+// ScrollTo 45
+document.querySelector('.btn-45').addEventListener('click', ()=>{
+  lenis45.scrollTo('.section-45', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis45.raf(time * 1000))
+lenis45.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 46 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis46 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis46.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-46', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-46').style.transform = `scaleX(${progress})`
+  if(velocity > 46) console.log('fast scroll 46')
+})
+
+function raf46(time){ lenis46.raf(time); requestAnimationFrame(raf46) }
+requestAnimationFrame(raf46)
+
+// ScrollTo 46
+document.querySelector('.btn-46').addEventListener('click', ()=>{
+  lenis46.scrollTo('.section-46', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis46.raf(time * 1000))
+lenis46.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 47 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis47 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis47.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-47', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-47').style.transform = `scaleX(${progress})`
+  if(velocity > 47) console.log('fast scroll 47')
+})
+
+function raf47(time){ lenis47.raf(time); requestAnimationFrame(raf47) }
+requestAnimationFrame(raf47)
+
+// ScrollTo 47
+document.querySelector('.btn-47').addEventListener('click', ()=>{
+  lenis47.scrollTo('.section-47', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis47.raf(time * 1000))
+lenis47.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 48 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis48 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis48.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-48', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-48').style.transform = `scaleX(${progress})`
+  if(velocity > 48) console.log('fast scroll 48')
+})
+
+function raf48(time){ lenis48.raf(time); requestAnimationFrame(raf48) }
+requestAnimationFrame(raf48)
+
+// ScrollTo 48
+document.querySelector('.btn-48').addEventListener('click', ()=>{
+  lenis48.scrollTo('.section-48', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis48.raf(time * 1000))
+lenis48.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 49 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis49 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis49.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-49', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-49').style.transform = `scaleX(${progress})`
+  if(velocity > 49) console.log('fast scroll 49')
+})
+
+function raf49(time){ lenis49.raf(time); requestAnimationFrame(raf49) }
+requestAnimationFrame(raf49)
+
+// ScrollTo 49
+document.querySelector('.btn-49').addEventListener('click', ()=>{
+  lenis49.scrollTo('.section-49', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis49.raf(time * 1000))
+lenis49.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 50 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis50 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis50.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-50', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-50').style.transform = `scaleX(${progress})`
+  if(velocity > 50) console.log('fast scroll 50')
+})
+
+function raf50(time){ lenis50.raf(time); requestAnimationFrame(raf50) }
+requestAnimationFrame(raf50)
+
+// ScrollTo 50
+document.querySelector('.btn-50').addEventListener('click', ()=>{
+  lenis50.scrollTo('.section-50', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis50.raf(time * 1000))
+lenis50.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 51 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis51 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis51.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-51', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-51').style.transform = `scaleX(${progress})`
+  if(velocity > 51) console.log('fast scroll 51')
+})
+
+function raf51(time){ lenis51.raf(time); requestAnimationFrame(raf51) }
+requestAnimationFrame(raf51)
+
+// ScrollTo 51
+document.querySelector('.btn-51').addEventListener('click', ()=>{
+  lenis51.scrollTo('.section-51', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis51.raf(time * 1000))
+lenis51.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 52 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis52 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis52.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-52', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-52').style.transform = `scaleX(${progress})`
+  if(velocity > 52) console.log('fast scroll 52')
+})
+
+function raf52(time){ lenis52.raf(time); requestAnimationFrame(raf52) }
+requestAnimationFrame(raf52)
+
+// ScrollTo 52
+document.querySelector('.btn-52').addEventListener('click', ()=>{
+  lenis52.scrollTo('.section-52', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis52.raf(time * 1000))
+lenis52.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 53 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis53 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis53.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-53', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-53').style.transform = `scaleX(${progress})`
+  if(velocity > 53) console.log('fast scroll 53')
+})
+
+function raf53(time){ lenis53.raf(time); requestAnimationFrame(raf53) }
+requestAnimationFrame(raf53)
+
+// ScrollTo 53
+document.querySelector('.btn-53').addEventListener('click', ()=>{
+  lenis53.scrollTo('.section-53', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis53.raf(time * 1000))
+lenis53.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 54 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis54 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis54.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-54', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-54').style.transform = `scaleX(${progress})`
+  if(velocity > 54) console.log('fast scroll 54')
+})
+
+function raf54(time){ lenis54.raf(time); requestAnimationFrame(raf54) }
+requestAnimationFrame(raf54)
+
+// ScrollTo 54
+document.querySelector('.btn-54').addEventListener('click', ()=>{
+  lenis54.scrollTo('.section-54', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis54.raf(time * 1000))
+lenis54.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 55 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis55 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis55.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-55', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-55').style.transform = `scaleX(${progress})`
+  if(velocity > 55) console.log('fast scroll 55')
+})
+
+function raf55(time){ lenis55.raf(time); requestAnimationFrame(raf55) }
+requestAnimationFrame(raf55)
+
+// ScrollTo 55
+document.querySelector('.btn-55').addEventListener('click', ()=>{
+  lenis55.scrollTo('.section-55', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis55.raf(time * 1000))
+lenis55.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 56 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis56 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis56.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-56', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-56').style.transform = `scaleX(${progress})`
+  if(velocity > 56) console.log('fast scroll 56')
+})
+
+function raf56(time){ lenis56.raf(time); requestAnimationFrame(raf56) }
+requestAnimationFrame(raf56)
+
+// ScrollTo 56
+document.querySelector('.btn-56').addEventListener('click', ()=>{
+  lenis56.scrollTo('.section-56', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis56.raf(time * 1000))
+lenis56.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 57 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis57 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis57.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-57', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-57').style.transform = `scaleX(${progress})`
+  if(velocity > 57) console.log('fast scroll 57')
+})
+
+function raf57(time){ lenis57.raf(time); requestAnimationFrame(raf57) }
+requestAnimationFrame(raf57)
+
+// ScrollTo 57
+document.querySelector('.btn-57').addEventListener('click', ()=>{
+  lenis57.scrollTo('.section-57', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis57.raf(time * 1000))
+lenis57.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 58 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis58 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis58.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-58', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-58').style.transform = `scaleX(${progress})`
+  if(velocity > 58) console.log('fast scroll 58')
+})
+
+function raf58(time){ lenis58.raf(time); requestAnimationFrame(raf58) }
+requestAnimationFrame(raf58)
+
+// ScrollTo 58
+document.querySelector('.btn-58').addEventListener('click', ()=>{
+  lenis58.scrollTo('.section-58', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis58.raf(time * 1000))
+lenis58.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 59 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis59 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis59.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-59', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-59').style.transform = `scaleX(${progress})`
+  if(velocity > 59) console.log('fast scroll 59')
+})
+
+function raf59(time){ lenis59.raf(time); requestAnimationFrame(raf59) }
+requestAnimationFrame(raf59)
+
+// ScrollTo 59
+document.querySelector('.btn-59').addEventListener('click', ()=>{
+  lenis59.scrollTo('.section-59', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis59.raf(time * 1000))
+lenis59.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 60 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis60 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis60.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-60', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-60').style.transform = `scaleX(${progress})`
+  if(velocity > 60) console.log('fast scroll 60')
+})
+
+function raf60(time){ lenis60.raf(time); requestAnimationFrame(raf60) }
+requestAnimationFrame(raf60)
+
+// ScrollTo 60
+document.querySelector('.btn-60').addEventListener('click', ()=>{
+  lenis60.scrollTo('.section-60', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis60.raf(time * 1000))
+lenis60.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 61 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis61 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis61.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-61', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-61').style.transform = `scaleX(${progress})`
+  if(velocity > 61) console.log('fast scroll 61')
+})
+
+function raf61(time){ lenis61.raf(time); requestAnimationFrame(raf61) }
+requestAnimationFrame(raf61)
+
+// ScrollTo 61
+document.querySelector('.btn-61').addEventListener('click', ()=>{
+  lenis61.scrollTo('.section-61', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis61.raf(time * 1000))
+lenis61.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 62 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis62 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis62.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-62', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-62').style.transform = `scaleX(${progress})`
+  if(velocity > 62) console.log('fast scroll 62')
+})
+
+function raf62(time){ lenis62.raf(time); requestAnimationFrame(raf62) }
+requestAnimationFrame(raf62)
+
+// ScrollTo 62
+document.querySelector('.btn-62').addEventListener('click', ()=>{
+  lenis62.scrollTo('.section-62', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis62.raf(time * 1000))
+lenis62.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 63 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis63 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis63.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-63', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-63').style.transform = `scaleX(${progress})`
+  if(velocity > 63) console.log('fast scroll 63')
+})
+
+function raf63(time){ lenis63.raf(time); requestAnimationFrame(raf63) }
+requestAnimationFrame(raf63)
+
+// ScrollTo 63
+document.querySelector('.btn-63').addEventListener('click', ()=>{
+  lenis63.scrollTo('.section-63', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis63.raf(time * 1000))
+lenis63.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 64 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis64 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis64.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-64', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-64').style.transform = `scaleX(${progress})`
+  if(velocity > 64) console.log('fast scroll 64')
+})
+
+function raf64(time){ lenis64.raf(time); requestAnimationFrame(raf64) }
+requestAnimationFrame(raf64)
+
+// ScrollTo 64
+document.querySelector('.btn-64').addEventListener('click', ()=>{
+  lenis64.scrollTo('.section-64', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis64.raf(time * 1000))
+lenis64.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 65 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis65 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis65.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-65', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-65').style.transform = `scaleX(${progress})`
+  if(velocity > 65) console.log('fast scroll 65')
+})
+
+function raf65(time){ lenis65.raf(time); requestAnimationFrame(raf65) }
+requestAnimationFrame(raf65)
+
+// ScrollTo 65
+document.querySelector('.btn-65').addEventListener('click', ()=>{
+  lenis65.scrollTo('.section-65', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis65.raf(time * 1000))
+lenis65.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 66 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis66 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis66.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-66', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-66').style.transform = `scaleX(${progress})`
+  if(velocity > 66) console.log('fast scroll 66')
+})
+
+function raf66(time){ lenis66.raf(time); requestAnimationFrame(raf66) }
+requestAnimationFrame(raf66)
+
+// ScrollTo 66
+document.querySelector('.btn-66').addEventListener('click', ()=>{
+  lenis66.scrollTo('.section-66', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis66.raf(time * 1000))
+lenis66.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 67 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis67 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis67.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-67', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-67').style.transform = `scaleX(${progress})`
+  if(velocity > 67) console.log('fast scroll 67')
+})
+
+function raf67(time){ lenis67.raf(time); requestAnimationFrame(raf67) }
+requestAnimationFrame(raf67)
+
+// ScrollTo 67
+document.querySelector('.btn-67').addEventListener('click', ()=>{
+  lenis67.scrollTo('.section-67', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis67.raf(time * 1000))
+lenis67.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 68 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis68 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis68.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-68', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-68').style.transform = `scaleX(${progress})`
+  if(velocity > 68) console.log('fast scroll 68')
+})
+
+function raf68(time){ lenis68.raf(time); requestAnimationFrame(raf68) }
+requestAnimationFrame(raf68)
+
+// ScrollTo 68
+document.querySelector('.btn-68').addEventListener('click', ()=>{
+  lenis68.scrollTo('.section-68', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis68.raf(time * 1000))
+lenis68.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 69 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis69 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis69.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-69', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-69').style.transform = `scaleX(${progress})`
+  if(velocity > 69) console.log('fast scroll 69')
+})
+
+function raf69(time){ lenis69.raf(time); requestAnimationFrame(raf69) }
+requestAnimationFrame(raf69)
+
+// ScrollTo 69
+document.querySelector('.btn-69').addEventListener('click', ()=>{
+  lenis69.scrollTo('.section-69', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis69.raf(time * 1000))
+lenis69.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 70 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis70 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis70.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-70', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-70').style.transform = `scaleX(${progress})`
+  if(velocity > 70) console.log('fast scroll 70')
+})
+
+function raf70(time){ lenis70.raf(time); requestAnimationFrame(raf70) }
+requestAnimationFrame(raf70)
+
+// ScrollTo 70
+document.querySelector('.btn-70').addEventListener('click', ()=>{
+  lenis70.scrollTo('.section-70', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis70.raf(time * 1000))
+lenis70.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 71 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis71 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis71.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-71', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-71').style.transform = `scaleX(${progress})`
+  if(velocity > 71) console.log('fast scroll 71')
+})
+
+function raf71(time){ lenis71.raf(time); requestAnimationFrame(raf71) }
+requestAnimationFrame(raf71)
+
+// ScrollTo 71
+document.querySelector('.btn-71').addEventListener('click', ()=>{
+  lenis71.scrollTo('.section-71', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis71.raf(time * 1000))
+lenis71.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 72 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis72 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis72.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-72', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-72').style.transform = `scaleX(${progress})`
+  if(velocity > 72) console.log('fast scroll 72')
+})
+
+function raf72(time){ lenis72.raf(time); requestAnimationFrame(raf72) }
+requestAnimationFrame(raf72)
+
+// ScrollTo 72
+document.querySelector('.btn-72').addEventListener('click', ()=>{
+  lenis72.scrollTo('.section-72', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis72.raf(time * 1000))
+lenis72.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 73 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis73 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis73.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-73', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-73').style.transform = `scaleX(${progress})`
+  if(velocity > 73) console.log('fast scroll 73')
+})
+
+function raf73(time){ lenis73.raf(time); requestAnimationFrame(raf73) }
+requestAnimationFrame(raf73)
+
+// ScrollTo 73
+document.querySelector('.btn-73').addEventListener('click', ()=>{
+  lenis73.scrollTo('.section-73', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis73.raf(time * 1000))
+lenis73.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 74 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis74 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis74.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-74', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-74').style.transform = `scaleX(${progress})`
+  if(velocity > 74) console.log('fast scroll 74')
+})
+
+function raf74(time){ lenis74.raf(time); requestAnimationFrame(raf74) }
+requestAnimationFrame(raf74)
+
+// ScrollTo 74
+document.querySelector('.btn-74').addEventListener('click', ()=>{
+  lenis74.scrollTo('.section-74', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis74.raf(time * 1000))
+lenis74.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 75 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis75 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis75.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-75', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-75').style.transform = `scaleX(${progress})`
+  if(velocity > 75) console.log('fast scroll 75')
+})
+
+function raf75(time){ lenis75.raf(time); requestAnimationFrame(raf75) }
+requestAnimationFrame(raf75)
+
+// ScrollTo 75
+document.querySelector('.btn-75').addEventListener('click', ()=>{
+  lenis75.scrollTo('.section-75', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis75.raf(time * 1000))
+lenis75.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 76 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis76 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis76.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-76', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-76').style.transform = `scaleX(${progress})`
+  if(velocity > 76) console.log('fast scroll 76')
+})
+
+function raf76(time){ lenis76.raf(time); requestAnimationFrame(raf76) }
+requestAnimationFrame(raf76)
+
+// ScrollTo 76
+document.querySelector('.btn-76').addEventListener('click', ()=>{
+  lenis76.scrollTo('.section-76', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis76.raf(time * 1000))
+lenis76.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 77 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis77 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis77.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-77', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-77').style.transform = `scaleX(${progress})`
+  if(velocity > 77) console.log('fast scroll 77')
+})
+
+function raf77(time){ lenis77.raf(time); requestAnimationFrame(raf77) }
+requestAnimationFrame(raf77)
+
+// ScrollTo 77
+document.querySelector('.btn-77').addEventListener('click', ()=>{
+  lenis77.scrollTo('.section-77', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis77.raf(time * 1000))
+lenis77.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 78 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis78 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis78.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-78', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-78').style.transform = `scaleX(${progress})`
+  if(velocity > 78) console.log('fast scroll 78')
+})
+
+function raf78(time){ lenis78.raf(time); requestAnimationFrame(raf78) }
+requestAnimationFrame(raf78)
+
+// ScrollTo 78
+document.querySelector('.btn-78').addEventListener('click', ()=>{
+  lenis78.scrollTo('.section-78', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis78.raf(time * 1000))
+lenis78.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 79 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis79 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis79.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-79', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-79').style.transform = `scaleX(${progress})`
+  if(velocity > 79) console.log('fast scroll 79')
+})
+
+function raf79(time){ lenis79.raf(time); requestAnimationFrame(raf79) }
+requestAnimationFrame(raf79)
+
+// ScrollTo 79
+document.querySelector('.btn-79').addEventListener('click', ()=>{
+  lenis79.scrollTo('.section-79', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis79.raf(time * 1000))
+lenis79.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 80 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis80 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis80.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-80', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-80').style.transform = `scaleX(${progress})`
+  if(velocity > 80) console.log('fast scroll 80')
+})
+
+function raf80(time){ lenis80.raf(time); requestAnimationFrame(raf80) }
+requestAnimationFrame(raf80)
+
+// ScrollTo 80
+document.querySelector('.btn-80').addEventListener('click', ()=>{
+  lenis80.scrollTo('.section-80', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis80.raf(time * 1000))
+lenis80.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 81 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis81 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis81.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-81', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-81').style.transform = `scaleX(${progress})`
+  if(velocity > 81) console.log('fast scroll 81')
+})
+
+function raf81(time){ lenis81.raf(time); requestAnimationFrame(raf81) }
+requestAnimationFrame(raf81)
+
+// ScrollTo 81
+document.querySelector('.btn-81').addEventListener('click', ()=>{
+  lenis81.scrollTo('.section-81', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis81.raf(time * 1000))
+lenis81.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 82 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis82 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis82.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-82', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-82').style.transform = `scaleX(${progress})`
+  if(velocity > 82) console.log('fast scroll 82')
+})
+
+function raf82(time){ lenis82.raf(time); requestAnimationFrame(raf82) }
+requestAnimationFrame(raf82)
+
+// ScrollTo 82
+document.querySelector('.btn-82').addEventListener('click', ()=>{
+  lenis82.scrollTo('.section-82', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis82.raf(time * 1000))
+lenis82.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 83 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis83 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis83.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-83', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-83').style.transform = `scaleX(${progress})`
+  if(velocity > 83) console.log('fast scroll 83')
+})
+
+function raf83(time){ lenis83.raf(time); requestAnimationFrame(raf83) }
+requestAnimationFrame(raf83)
+
+// ScrollTo 83
+document.querySelector('.btn-83').addEventListener('click', ()=>{
+  lenis83.scrollTo('.section-83', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis83.raf(time * 1000))
+lenis83.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 84 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis84 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis84.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-84', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-84').style.transform = `scaleX(${progress})`
+  if(velocity > 84) console.log('fast scroll 84')
+})
+
+function raf84(time){ lenis84.raf(time); requestAnimationFrame(raf84) }
+requestAnimationFrame(raf84)
+
+// ScrollTo 84
+document.querySelector('.btn-84').addEventListener('click', ()=>{
+  lenis84.scrollTo('.section-84', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis84.raf(time * 1000))
+lenis84.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 85 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis85 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis85.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-85', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-85').style.transform = `scaleX(${progress})`
+  if(velocity > 85) console.log('fast scroll 85')
+})
+
+function raf85(time){ lenis85.raf(time); requestAnimationFrame(raf85) }
+requestAnimationFrame(raf85)
+
+// ScrollTo 85
+document.querySelector('.btn-85').addEventListener('click', ()=>{
+  lenis85.scrollTo('.section-85', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis85.raf(time * 1000))
+lenis85.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 86 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis86 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis86.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-86', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-86').style.transform = `scaleX(${progress})`
+  if(velocity > 86) console.log('fast scroll 86')
+})
+
+function raf86(time){ lenis86.raf(time); requestAnimationFrame(raf86) }
+requestAnimationFrame(raf86)
+
+// ScrollTo 86
+document.querySelector('.btn-86').addEventListener('click', ()=>{
+  lenis86.scrollTo('.section-86', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis86.raf(time * 1000))
+lenis86.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 87 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis87 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis87.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-87', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-87').style.transform = `scaleX(${progress})`
+  if(velocity > 87) console.log('fast scroll 87')
+})
+
+function raf87(time){ lenis87.raf(time); requestAnimationFrame(raf87) }
+requestAnimationFrame(raf87)
+
+// ScrollTo 87
+document.querySelector('.btn-87').addEventListener('click', ()=>{
+  lenis87.scrollTo('.section-87', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis87.raf(time * 1000))
+lenis87.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 88 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis88 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis88.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-88', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-88').style.transform = `scaleX(${progress})`
+  if(velocity > 88) console.log('fast scroll 88')
+})
+
+function raf88(time){ lenis88.raf(time); requestAnimationFrame(raf88) }
+requestAnimationFrame(raf88)
+
+// ScrollTo 88
+document.querySelector('.btn-88').addEventListener('click', ()=>{
+  lenis88.scrollTo('.section-88', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis88.raf(time * 1000))
+lenis88.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 89 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis89 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis89.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-89', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-89').style.transform = `scaleX(${progress})`
+  if(velocity > 89) console.log('fast scroll 89')
+})
+
+function raf89(time){ lenis89.raf(time); requestAnimationFrame(raf89) }
+requestAnimationFrame(raf89)
+
+// ScrollTo 89
+document.querySelector('.btn-89').addEventListener('click', ()=>{
+  lenis89.scrollTo('.section-89', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis89.raf(time * 1000))
+lenis89.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 90 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis90 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis90.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-90', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-90').style.transform = `scaleX(${progress})`
+  if(velocity > 90) console.log('fast scroll 90')
+})
+
+function raf90(time){ lenis90.raf(time); requestAnimationFrame(raf90) }
+requestAnimationFrame(raf90)
+
+// ScrollTo 90
+document.querySelector('.btn-90').addEventListener('click', ()=>{
+  lenis90.scrollTo('.section-90', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis90.raf(time * 1000))
+lenis90.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 91 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis91 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis91.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-91', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-91').style.transform = `scaleX(${progress})`
+  if(velocity > 91) console.log('fast scroll 91')
+})
+
+function raf91(time){ lenis91.raf(time); requestAnimationFrame(raf91) }
+requestAnimationFrame(raf91)
+
+// ScrollTo 91
+document.querySelector('.btn-91').addEventListener('click', ()=>{
+  lenis91.scrollTo('.section-91', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis91.raf(time * 1000))
+lenis91.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 92 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis92 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis92.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-92', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-92').style.transform = `scaleX(${progress})`
+  if(velocity > 92) console.log('fast scroll 92')
+})
+
+function raf92(time){ lenis92.raf(time); requestAnimationFrame(raf92) }
+requestAnimationFrame(raf92)
+
+// ScrollTo 92
+document.querySelector('.btn-92').addEventListener('click', ()=>{
+  lenis92.scrollTo('.section-92', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis92.raf(time * 1000))
+lenis92.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 93 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis93 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis93.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-93', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-93').style.transform = `scaleX(${progress})`
+  if(velocity > 93) console.log('fast scroll 93')
+})
+
+function raf93(time){ lenis93.raf(time); requestAnimationFrame(raf93) }
+requestAnimationFrame(raf93)
+
+// ScrollTo 93
+document.querySelector('.btn-93').addEventListener('click', ()=>{
+  lenis93.scrollTo('.section-93', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis93.raf(time * 1000))
+lenis93.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 94 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis94 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis94.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-94', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-94').style.transform = `scaleX(${progress})`
+  if(velocity > 94) console.log('fast scroll 94')
+})
+
+function raf94(time){ lenis94.raf(time); requestAnimationFrame(raf94) }
+requestAnimationFrame(raf94)
+
+// ScrollTo 94
+document.querySelector('.btn-94').addEventListener('click', ()=>{
+  lenis94.scrollTo('.section-94', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis94.raf(time * 1000))
+lenis94.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 95 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis95 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis95.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-95', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-95').style.transform = `scaleX(${progress})`
+  if(velocity > 95) console.log('fast scroll 95')
+})
+
+function raf95(time){ lenis95.raf(time); requestAnimationFrame(raf95) }
+requestAnimationFrame(raf95)
+
+// ScrollTo 95
+document.querySelector('.btn-95').addEventListener('click', ()=>{
+  lenis95.scrollTo('.section-95', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis95.raf(time * 1000))
+lenis95.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 96 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis96 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis96.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-96', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-96').style.transform = `scaleX(${progress})`
+  if(velocity > 96) console.log('fast scroll 96')
+})
+
+function raf96(time){ lenis96.raf(time); requestAnimationFrame(raf96) }
+requestAnimationFrame(raf96)
+
+// ScrollTo 96
+document.querySelector('.btn-96').addEventListener('click', ()=>{
+  lenis96.scrollTo('.section-96', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis96.raf(time * 1000))
+lenis96.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 97 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis97 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis97.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-97', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-97').style.transform = `scaleX(${progress})`
+  if(velocity > 97) console.log('fast scroll 97')
+})
+
+function raf97(time){ lenis97.raf(time); requestAnimationFrame(raf97) }
+requestAnimationFrame(raf97)
+
+// ScrollTo 97
+document.querySelector('.btn-97').addEventListener('click', ()=>{
+  lenis97.scrollTo('.section-97', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis97.raf(time * 1000))
+lenis97.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 98 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis98 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis98.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-98', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-98').style.transform = `scaleX(${progress})`
+  if(velocity > 98) console.log('fast scroll 98')
+})
+
+function raf98(time){ lenis98.raf(time); requestAnimationFrame(raf98) }
+requestAnimationFrame(raf98)
+
+// ScrollTo 98
+document.querySelector('.btn-98').addEventListener('click', ()=>{
+  lenis98.scrollTo('.section-98', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis98.raf(time * 1000))
+lenis98.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 99 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis99 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis99.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-99', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-99').style.transform = `scaleX(${progress})`
+  if(velocity > 99) console.log('fast scroll 99')
+})
+
+function raf99(time){ lenis99.raf(time); requestAnimationFrame(raf99) }
+requestAnimationFrame(raf99)
+
+// ScrollTo 99
+document.querySelector('.btn-99').addEventListener('click', ()=>{
+  lenis99.scrollTo('.section-99', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis99.raf(time * 1000))
+lenis99.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 100 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis100 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis100.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-100', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-100').style.transform = `scaleX(${progress})`
+  if(velocity > 100) console.log('fast scroll 100')
+})
+
+function raf100(time){ lenis100.raf(time); requestAnimationFrame(raf100) }
+requestAnimationFrame(raf100)
+
+// ScrollTo 100
+document.querySelector('.btn-100').addEventListener('click', ()=>{
+  lenis100.scrollTo('.section-100', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis100.raf(time * 1000))
+lenis100.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 101 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis101 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis101.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-101', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-101').style.transform = `scaleX(${progress})`
+  if(velocity > 101) console.log('fast scroll 101')
+})
+
+function raf101(time){ lenis101.raf(time); requestAnimationFrame(raf101) }
+requestAnimationFrame(raf101)
+
+// ScrollTo 101
+document.querySelector('.btn-101').addEventListener('click', ()=>{
+  lenis101.scrollTo('.section-101', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis101.raf(time * 1000))
+lenis101.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 102 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis102 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis102.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-102', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-102').style.transform = `scaleX(${progress})`
+  if(velocity > 102) console.log('fast scroll 102')
+})
+
+function raf102(time){ lenis102.raf(time); requestAnimationFrame(raf102) }
+requestAnimationFrame(raf102)
+
+// ScrollTo 102
+document.querySelector('.btn-102').addEventListener('click', ()=>{
+  lenis102.scrollTo('.section-102', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis102.raf(time * 1000))
+lenis102.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 103 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis103 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis103.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-103', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-103').style.transform = `scaleX(${progress})`
+  if(velocity > 103) console.log('fast scroll 103')
+})
+
+function raf103(time){ lenis103.raf(time); requestAnimationFrame(raf103) }
+requestAnimationFrame(raf103)
+
+// ScrollTo 103
+document.querySelector('.btn-103').addEventListener('click', ()=>{
+  lenis103.scrollTo('.section-103', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis103.raf(time * 1000))
+lenis103.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 104 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis104 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis104.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-104', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-104').style.transform = `scaleX(${progress})`
+  if(velocity > 104) console.log('fast scroll 104')
+})
+
+function raf104(time){ lenis104.raf(time); requestAnimationFrame(raf104) }
+requestAnimationFrame(raf104)
+
+// ScrollTo 104
+document.querySelector('.btn-104').addEventListener('click', ()=>{
+  lenis104.scrollTo('.section-104', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis104.raf(time * 1000))
+lenis104.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 105 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis105 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis105.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-105', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-105').style.transform = `scaleX(${progress})`
+  if(velocity > 105) console.log('fast scroll 105')
+})
+
+function raf105(time){ lenis105.raf(time); requestAnimationFrame(raf105) }
+requestAnimationFrame(raf105)
+
+// ScrollTo 105
+document.querySelector('.btn-105').addEventListener('click', ()=>{
+  lenis105.scrollTo('.section-105', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis105.raf(time * 1000))
+lenis105.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 106 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis106 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis106.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-106', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-106').style.transform = `scaleX(${progress})`
+  if(velocity > 106) console.log('fast scroll 106')
+})
+
+function raf106(time){ lenis106.raf(time); requestAnimationFrame(raf106) }
+requestAnimationFrame(raf106)
+
+// ScrollTo 106
+document.querySelector('.btn-106').addEventListener('click', ()=>{
+  lenis106.scrollTo('.section-106', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis106.raf(time * 1000))
+lenis106.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 107 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis107 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis107.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-107', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-107').style.transform = `scaleX(${progress})`
+  if(velocity > 107) console.log('fast scroll 107')
+})
+
+function raf107(time){ lenis107.raf(time); requestAnimationFrame(raf107) }
+requestAnimationFrame(raf107)
+
+// ScrollTo 107
+document.querySelector('.btn-107').addEventListener('click', ()=>{
+  lenis107.scrollTo('.section-107', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis107.raf(time * 1000))
+lenis107.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 108 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis108 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis108.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-108', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-108').style.transform = `scaleX(${progress})`
+  if(velocity > 108) console.log('fast scroll 108')
+})
+
+function raf108(time){ lenis108.raf(time); requestAnimationFrame(raf108) }
+requestAnimationFrame(raf108)
+
+// ScrollTo 108
+document.querySelector('.btn-108').addEventListener('click', ()=>{
+  lenis108.scrollTo('.section-108', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis108.raf(time * 1000))
+lenis108.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 109 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis109 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis109.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-109', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-109').style.transform = `scaleX(${progress})`
+  if(velocity > 109) console.log('fast scroll 109')
+})
+
+function raf109(time){ lenis109.raf(time); requestAnimationFrame(raf109) }
+requestAnimationFrame(raf109)
+
+// ScrollTo 109
+document.querySelector('.btn-109').addEventListener('click', ()=>{
+  lenis109.scrollTo('.section-109', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis109.raf(time * 1000))
+lenis109.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 110 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis110 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis110.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-110', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-110').style.transform = `scaleX(${progress})`
+  if(velocity > 110) console.log('fast scroll 110')
+})
+
+function raf110(time){ lenis110.raf(time); requestAnimationFrame(raf110) }
+requestAnimationFrame(raf110)
+
+// ScrollTo 110
+document.querySelector('.btn-110').addEventListener('click', ()=>{
+  lenis110.scrollTo('.section-110', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis110.raf(time * 1000))
+lenis110.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 111 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis111 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis111.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-111', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-111').style.transform = `scaleX(${progress})`
+  if(velocity > 111) console.log('fast scroll 111')
+})
+
+function raf111(time){ lenis111.raf(time); requestAnimationFrame(raf111) }
+requestAnimationFrame(raf111)
+
+// ScrollTo 111
+document.querySelector('.btn-111').addEventListener('click', ()=>{
+  lenis111.scrollTo('.section-111', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis111.raf(time * 1000))
+lenis111.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 112 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis112 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis112.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-112', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-112').style.transform = `scaleX(${progress})`
+  if(velocity > 112) console.log('fast scroll 112')
+})
+
+function raf112(time){ lenis112.raf(time); requestAnimationFrame(raf112) }
+requestAnimationFrame(raf112)
+
+// ScrollTo 112
+document.querySelector('.btn-112').addEventListener('click', ()=>{
+  lenis112.scrollTo('.section-112', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis112.raf(time * 1000))
+lenis112.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 113 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis113 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis113.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-113', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-113').style.transform = `scaleX(${progress})`
+  if(velocity > 113) console.log('fast scroll 113')
+})
+
+function raf113(time){ lenis113.raf(time); requestAnimationFrame(raf113) }
+requestAnimationFrame(raf113)
+
+// ScrollTo 113
+document.querySelector('.btn-113').addEventListener('click', ()=>{
+  lenis113.scrollTo('.section-113', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis113.raf(time * 1000))
+lenis113.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 114 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis114 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis114.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-114', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-114').style.transform = `scaleX(${progress})`
+  if(velocity > 114) console.log('fast scroll 114')
+})
+
+function raf114(time){ lenis114.raf(time); requestAnimationFrame(raf114) }
+requestAnimationFrame(raf114)
+
+// ScrollTo 114
+document.querySelector('.btn-114').addEventListener('click', ()=>{
+  lenis114.scrollTo('.section-114', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis114.raf(time * 1000))
+lenis114.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 115 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis115 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis115.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-115', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-115').style.transform = `scaleX(${progress})`
+  if(velocity > 115) console.log('fast scroll 115')
+})
+
+function raf115(time){ lenis115.raf(time); requestAnimationFrame(raf115) }
+requestAnimationFrame(raf115)
+
+// ScrollTo 115
+document.querySelector('.btn-115').addEventListener('click', ()=>{
+  lenis115.scrollTo('.section-115', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis115.raf(time * 1000))
+lenis115.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 116 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis116 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis116.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-116', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-116').style.transform = `scaleX(${progress})`
+  if(velocity > 116) console.log('fast scroll 116')
+})
+
+function raf116(time){ lenis116.raf(time); requestAnimationFrame(raf116) }
+requestAnimationFrame(raf116)
+
+// ScrollTo 116
+document.querySelector('.btn-116').addEventListener('click', ()=>{
+  lenis116.scrollTo('.section-116', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis116.raf(time * 1000))
+lenis116.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 117 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis117 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis117.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-117', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-117').style.transform = `scaleX(${progress})`
+  if(velocity > 117) console.log('fast scroll 117')
+})
+
+function raf117(time){ lenis117.raf(time); requestAnimationFrame(raf117) }
+requestAnimationFrame(raf117)
+
+// ScrollTo 117
+document.querySelector('.btn-117').addEventListener('click', ()=>{
+  lenis117.scrollTo('.section-117', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis117.raf(time * 1000))
+lenis117.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 118 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis118 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis118.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-118', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-118').style.transform = `scaleX(${progress})`
+  if(velocity > 118) console.log('fast scroll 118')
+})
+
+function raf118(time){ lenis118.raf(time); requestAnimationFrame(raf118) }
+requestAnimationFrame(raf118)
+
+// ScrollTo 118
+document.querySelector('.btn-118').addEventListener('click', ()=>{
+  lenis118.scrollTo('.section-118', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis118.raf(time * 1000))
+lenis118.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 119 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis119 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis119.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-119', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-119').style.transform = `scaleX(${progress})`
+  if(velocity > 119) console.log('fast scroll 119')
+})
+
+function raf119(time){ lenis119.raf(time); requestAnimationFrame(raf119) }
+requestAnimationFrame(raf119)
+
+// ScrollTo 119
+document.querySelector('.btn-119').addEventListener('click', ()=>{
+  lenis119.scrollTo('.section-119', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis119.raf(time * 1000))
+lenis119.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 120 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis120 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis120.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-120', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-120').style.transform = `scaleX(${progress})`
+  if(velocity > 120) console.log('fast scroll 120')
+})
+
+function raf120(time){ lenis120.raf(time); requestAnimationFrame(raf120) }
+requestAnimationFrame(raf120)
+
+// ScrollTo 120
+document.querySelector('.btn-120').addEventListener('click', ()=>{
+  lenis120.scrollTo('.section-120', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis120.raf(time * 1000))
+lenis120.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 121 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis121 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis121.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-121', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-121').style.transform = `scaleX(${progress})`
+  if(velocity > 121) console.log('fast scroll 121')
+})
+
+function raf121(time){ lenis121.raf(time); requestAnimationFrame(raf121) }
+requestAnimationFrame(raf121)
+
+// ScrollTo 121
+document.querySelector('.btn-121').addEventListener('click', ()=>{
+  lenis121.scrollTo('.section-121', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis121.raf(time * 1000))
+lenis121.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 122 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis122 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis122.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-122', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-122').style.transform = `scaleX(${progress})`
+  if(velocity > 122) console.log('fast scroll 122')
+})
+
+function raf122(time){ lenis122.raf(time); requestAnimationFrame(raf122) }
+requestAnimationFrame(raf122)
+
+// ScrollTo 122
+document.querySelector('.btn-122').addEventListener('click', ()=>{
+  lenis122.scrollTo('.section-122', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis122.raf(time * 1000))
+lenis122.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 123 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis123 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis123.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-123', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-123').style.transform = `scaleX(${progress})`
+  if(velocity > 123) console.log('fast scroll 123')
+})
+
+function raf123(time){ lenis123.raf(time); requestAnimationFrame(raf123) }
+requestAnimationFrame(raf123)
+
+// ScrollTo 123
+document.querySelector('.btn-123').addEventListener('click', ()=>{
+  lenis123.scrollTo('.section-123', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis123.raf(time * 1000))
+lenis123.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 124 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis124 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis124.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-124', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-124').style.transform = `scaleX(${progress})`
+  if(velocity > 124) console.log('fast scroll 124')
+})
+
+function raf124(time){ lenis124.raf(time); requestAnimationFrame(raf124) }
+requestAnimationFrame(raf124)
+
+// ScrollTo 124
+document.querySelector('.btn-124').addEventListener('click', ()=>{
+  lenis124.scrollTo('.section-124', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis124.raf(time * 1000))
+lenis124.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 125 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis125 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis125.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-125', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-125').style.transform = `scaleX(${progress})`
+  if(velocity > 125) console.log('fast scroll 125')
+})
+
+function raf125(time){ lenis125.raf(time); requestAnimationFrame(raf125) }
+requestAnimationFrame(raf125)
+
+// ScrollTo 125
+document.querySelector('.btn-125').addEventListener('click', ()=>{
+  lenis125.scrollTo('.section-125', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis125.raf(time * 1000))
+lenis125.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 126 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis126 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis126.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-126', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-126').style.transform = `scaleX(${progress})`
+  if(velocity > 126) console.log('fast scroll 126')
+})
+
+function raf126(time){ lenis126.raf(time); requestAnimationFrame(raf126) }
+requestAnimationFrame(raf126)
+
+// ScrollTo 126
+document.querySelector('.btn-126').addEventListener('click', ()=>{
+  lenis126.scrollTo('.section-126', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis126.raf(time * 1000))
+lenis126.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 127 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis127 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis127.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-127', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-127').style.transform = `scaleX(${progress})`
+  if(velocity > 127) console.log('fast scroll 127')
+})
+
+function raf127(time){ lenis127.raf(time); requestAnimationFrame(raf127) }
+requestAnimationFrame(raf127)
+
+// ScrollTo 127
+document.querySelector('.btn-127').addEventListener('click', ()=>{
+  lenis127.scrollTo('.section-127', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis127.raf(time * 1000))
+lenis127.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 128 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis128 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis128.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-128', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-128').style.transform = `scaleX(${progress})`
+  if(velocity > 128) console.log('fast scroll 128')
+})
+
+function raf128(time){ lenis128.raf(time); requestAnimationFrame(raf128) }
+requestAnimationFrame(raf128)
+
+// ScrollTo 128
+document.querySelector('.btn-128').addEventListener('click', ()=>{
+  lenis128.scrollTo('.section-128', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis128.raf(time * 1000))
+lenis128.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 129 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis129 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis129.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-129', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-129').style.transform = `scaleX(${progress})`
+  if(velocity > 129) console.log('fast scroll 129')
+})
+
+function raf129(time){ lenis129.raf(time); requestAnimationFrame(raf129) }
+requestAnimationFrame(raf129)
+
+// ScrollTo 129
+document.querySelector('.btn-129').addEventListener('click', ()=>{
+  lenis129.scrollTo('.section-129', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis129.raf(time * 1000))
+lenis129.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 130 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis130 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis130.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-130', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-130').style.transform = `scaleX(${progress})`
+  if(velocity > 130) console.log('fast scroll 130')
+})
+
+function raf130(time){ lenis130.raf(time); requestAnimationFrame(raf130) }
+requestAnimationFrame(raf130)
+
+// ScrollTo 130
+document.querySelector('.btn-130').addEventListener('click', ()=>{
+  lenis130.scrollTo('.section-130', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis130.raf(time * 1000))
+lenis130.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 131 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis131 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis131.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-131', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-131').style.transform = `scaleX(${progress})`
+  if(velocity > 131) console.log('fast scroll 131')
+})
+
+function raf131(time){ lenis131.raf(time); requestAnimationFrame(raf131) }
+requestAnimationFrame(raf131)
+
+// ScrollTo 131
+document.querySelector('.btn-131').addEventListener('click', ()=>{
+  lenis131.scrollTo('.section-131', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis131.raf(time * 1000))
+lenis131.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 132 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis132 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis132.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-132', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-132').style.transform = `scaleX(${progress})`
+  if(velocity > 132) console.log('fast scroll 132')
+})
+
+function raf132(time){ lenis132.raf(time); requestAnimationFrame(raf132) }
+requestAnimationFrame(raf132)
+
+// ScrollTo 132
+document.querySelector('.btn-132').addEventListener('click', ()=>{
+  lenis132.scrollTo('.section-132', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis132.raf(time * 1000))
+lenis132.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 133 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis133 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis133.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-133', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-133').style.transform = `scaleX(${progress})`
+  if(velocity > 133) console.log('fast scroll 133')
+})
+
+function raf133(time){ lenis133.raf(time); requestAnimationFrame(raf133) }
+requestAnimationFrame(raf133)
+
+// ScrollTo 133
+document.querySelector('.btn-133').addEventListener('click', ()=>{
+  lenis133.scrollTo('.section-133', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis133.raf(time * 1000))
+lenis133.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 134 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis134 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis134.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-134', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-134').style.transform = `scaleX(${progress})`
+  if(velocity > 134) console.log('fast scroll 134')
+})
+
+function raf134(time){ lenis134.raf(time); requestAnimationFrame(raf134) }
+requestAnimationFrame(raf134)
+
+// ScrollTo 134
+document.querySelector('.btn-134').addEventListener('click', ()=>{
+  lenis134.scrollTo('.section-134', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis134.raf(time * 1000))
+lenis134.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 135 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis135 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis135.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-135', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-135').style.transform = `scaleX(${progress})`
+  if(velocity > 135) console.log('fast scroll 135')
+})
+
+function raf135(time){ lenis135.raf(time); requestAnimationFrame(raf135) }
+requestAnimationFrame(raf135)
+
+// ScrollTo 135
+document.querySelector('.btn-135').addEventListener('click', ()=>{
+  lenis135.scrollTo('.section-135', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis135.raf(time * 1000))
+lenis135.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 136 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis136 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis136.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-136', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-136').style.transform = `scaleX(${progress})`
+  if(velocity > 136) console.log('fast scroll 136')
+})
+
+function raf136(time){ lenis136.raf(time); requestAnimationFrame(raf136) }
+requestAnimationFrame(raf136)
+
+// ScrollTo 136
+document.querySelector('.btn-136').addEventListener('click', ()=>{
+  lenis136.scrollTo('.section-136', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis136.raf(time * 1000))
+lenis136.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 137 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis137 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis137.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-137', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-137').style.transform = `scaleX(${progress})`
+  if(velocity > 137) console.log('fast scroll 137')
+})
+
+function raf137(time){ lenis137.raf(time); requestAnimationFrame(raf137) }
+requestAnimationFrame(raf137)
+
+// ScrollTo 137
+document.querySelector('.btn-137').addEventListener('click', ()=>{
+  lenis137.scrollTo('.section-137', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis137.raf(time * 1000))
+lenis137.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 138 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis138 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis138.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-138', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-138').style.transform = `scaleX(${progress})`
+  if(velocity > 138) console.log('fast scroll 138')
+})
+
+function raf138(time){ lenis138.raf(time); requestAnimationFrame(raf138) }
+requestAnimationFrame(raf138)
+
+// ScrollTo 138
+document.querySelector('.btn-138').addEventListener('click', ()=>{
+  lenis138.scrollTo('.section-138', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis138.raf(time * 1000))
+lenis138.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 139 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis139 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis139.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-139', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-139').style.transform = `scaleX(${progress})`
+  if(velocity > 139) console.log('fast scroll 139')
+})
+
+function raf139(time){ lenis139.raf(time); requestAnimationFrame(raf139) }
+requestAnimationFrame(raf139)
+
+// ScrollTo 139
+document.querySelector('.btn-139').addEventListener('click', ()=>{
+  lenis139.scrollTo('.section-139', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis139.raf(time * 1000))
+lenis139.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 140 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis140 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis140.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-140', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-140').style.transform = `scaleX(${progress})`
+  if(velocity > 140) console.log('fast scroll 140')
+})
+
+function raf140(time){ lenis140.raf(time); requestAnimationFrame(raf140) }
+requestAnimationFrame(raf140)
+
+// ScrollTo 140
+document.querySelector('.btn-140').addEventListener('click', ()=>{
+  lenis140.scrollTo('.section-140', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis140.raf(time * 1000))
+lenis140.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 141 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis141 = new Lenis({
+  duration: 1.1,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'horizontal'
+})
+
+lenis141.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-141', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-141').style.transform = `scaleX(${progress})`
+  if(velocity > 141) console.log('fast scroll 141')
+})
+
+function raf141(time){ lenis141.raf(time); requestAnimationFrame(raf141) }
+requestAnimationFrame(raf141)
+
+// ScrollTo 141
+document.querySelector('.btn-141').addEventListener('click', ()=>{
+  lenis141.scrollTo('.section-141', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis141.raf(time * 1000))
+lenis141.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 142 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis142 = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'vertical'
+})
+
+lenis142.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-142', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-142').style.transform = `scaleX(${progress})`
+  if(velocity > 142) console.log('fast scroll 142')
+})
+
+function raf142(time){ lenis142.raf(time); requestAnimationFrame(raf142) }
+requestAnimationFrame(raf142)
+
+// ScrollTo 142
+document.querySelector('.btn-142').addEventListener('click', ()=>{
+  lenis142.scrollTo('.section-142', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis142.raf(time * 1000))
+lenis142.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 143 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis143 = new Lenis({
+  duration: 1.3,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'horizontal'
+})
+
+lenis143.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-143', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-143').style.transform = `scaleX(${progress})`
+  if(velocity > 143) console.log('fast scroll 143')
+})
+
+function raf143(time){ lenis143.raf(time); requestAnimationFrame(raf143) }
+requestAnimationFrame(raf143)
+
+// ScrollTo 143
+document.querySelector('.btn-143').addEventListener('click', ()=>{
+  lenis143.scrollTo('.section-143', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis143.raf(time * 1000))
+lenis143.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 144 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis144 = new Lenis({
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'vertical'
+})
+
+lenis144.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-144', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-144').style.transform = `scaleX(${progress})`
+  if(velocity > 144) console.log('fast scroll 144')
+})
+
+function raf144(time){ lenis144.raf(time); requestAnimationFrame(raf144) }
+requestAnimationFrame(raf144)
+
+// ScrollTo 144
+document.querySelector('.btn-144').addEventListener('click', ()=>{
+  lenis144.scrollTo('.section-144', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis144.raf(time * 1000))
+lenis144.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 145 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis145 = new Lenis({
+  duration: 1.5,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'horizontal'
+})
+
+lenis145.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-145', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-145').style.transform = `scaleX(${progress})`
+  if(velocity > 145) console.log('fast scroll 145')
+})
+
+function raf145(time){ lenis145.raf(time); requestAnimationFrame(raf145) }
+requestAnimationFrame(raf145)
+
+// ScrollTo 145
+document.querySelector('.btn-145').addEventListener('click', ()=>{
+  lenis145.scrollTo('.section-145', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis145.raf(time * 1000))
+lenis145.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 146 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis146 = new Lenis({
+  duration: 1.6,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.1,
+  orientation: 'vertical'
+})
+
+lenis146.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-146', { y: scroll * 0.30000000000000004, ease: 'none' })
+  document.querySelector('.progress-146').style.transform = `scaleX(${progress})`
+  if(velocity > 146) console.log('fast scroll 146')
+})
+
+function raf146(time){ lenis146.raf(time); requestAnimationFrame(raf146) }
+requestAnimationFrame(raf146)
+
+// ScrollTo 146
+document.querySelector('.btn-146').addEventListener('click', ()=>{
+  lenis146.scrollTo('.section-146', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis146.raf(time * 1000))
+lenis146.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 147 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis147 = new Lenis({
+  duration: 1.7,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.2,
+  orientation: 'horizontal'
+})
+
+lenis147.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-147', { y: scroll * 0.4, ease: 'none' })
+  document.querySelector('.progress-147').style.transform = `scaleX(${progress})`
+  if(velocity > 147) console.log('fast scroll 147')
+})
+
+function raf147(time){ lenis147.raf(time); requestAnimationFrame(raf147) }
+requestAnimationFrame(raf147)
+
+// ScrollTo 147
+document.querySelector('.btn-147').addEventListener('click', ()=>{
+  lenis147.scrollTo('.section-147', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis147.raf(time * 1000))
+lenis147.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 148 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis148 = new Lenis({
+  duration: 1.8,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.3,
+  orientation: 'vertical'
+})
+
+lenis148.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-148', { y: scroll * 0.5, ease: 'none' })
+  document.querySelector('.progress-148').style.transform = `scaleX(${progress})`
+  if(velocity > 148) console.log('fast scroll 148')
+})
+
+function raf148(time){ lenis148.raf(time); requestAnimationFrame(raf148) }
+requestAnimationFrame(raf148)
+
+// ScrollTo 148
+document.querySelector('.btn-148').addEventListener('click', ()=>{
+  lenis148.scrollTo('.section-148', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis148.raf(time * 1000))
+lenis148.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 149 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis149 = new Lenis({
+  duration: 1.9,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.4,
+  orientation: 'horizontal'
+})
+
+lenis149.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-149', { y: scroll * 0.6000000000000001, ease: 'none' })
+  document.querySelector('.progress-149').style.transform = `scaleX(${progress})`
+  if(velocity > 149) console.log('fast scroll 149')
+})
+
+function raf149(time){ lenis149.raf(time); requestAnimationFrame(raf149) }
+requestAnimationFrame(raf149)
+
+// ScrollTo 149
+document.querySelector('.btn-149').addEventListener('click', ()=>{
+  lenis149.scrollTo('.section-149', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis149.raf(time * 1000))
+lenis149.on('scroll', ScrollTrigger.update)
+
+--- LENIS PADRÃO 150 ---
+import Lenis from 'lenis'
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const lenis150 = new Lenis({
+  duration: 1.0,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  smoothTouch: false,
+  wheelMultiplier: 1.0,
+  orientation: 'vertical'
+})
+
+lenis150.on('scroll', ({ scroll, progress, velocity })=>{
+  gsap.to('.parallax-150', { y: scroll * 0.2, ease: 'none' })
+  document.querySelector('.progress-150').style.transform = `scaleX(${progress})`
+  if(velocity > 150) console.log('fast scroll 150')
+})
+
+function raf150(time){ lenis150.raf(time); requestAnimationFrame(raf150) }
+requestAnimationFrame(raf150)
+
+// ScrollTo 150
+document.querySelector('.btn-150').addEventListener('click', ()=>{
+  lenis150.scrollTo('.section-150', { offset: -100, duration: 1.5, easing: (t)=> 1-Math.pow(1-t,3) })
+})
+
+gsap.ticker.add((time)=> lenis150.raf(time * 1000))
+lenis150.on('scroll', ScrollTrigger.update)

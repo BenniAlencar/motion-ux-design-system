@@ -1,0 +1,6020 @@
+
+================================================================================
+LOCOMOTIVE SCROLL - ENGENHARIA REVERSA TOTAL - v4 vs v5 (2026)
+Versão: v5.0.1 (Jan 2026) - Reescrita total em cima do Lenis - 9.4kB gzipped
+Site: scroll.locomotive.ca
+================================================================================
+
+O QUE É:
+Locomotive Scroll é smooth scroll + detecção de elementos na viewport + parallax.
+Foi o padrão ouro 2020-2024. Em 2025, v5 foi reescrita em cima do Lenis (engine moderna).
+
+v4 vs v5:
+v4: usava transform: translate3d no container, precisava data-scroll-container, data-scroll-section, bugava com fixed, pesado
+v5: usa Lenis por baixo, não usa transform hack, sem wrappers obrigatórios, 9.4kB, TypeScript, muito mais performático, sem CSS obrigatório
+
+ATUALMENTE (2026):
+- v5 é recomendada para projetos novos
+- v4 ainda usada em sites antigos, mas em desuso
+- Locomotive Scroll v5 + GSAP ScrollTrigger é combo, mas ScrollSmoother do GSAP está substituindo
+
+INSTALAÇÃO v5:
+npm install locomotive-scroll
+import LocomotiveScroll from 'locomotive-scroll'
+import 'locomotive-scroll/dist/locomotive-scroll.css' // opcional
+
+INSTALAÇÃO v4 (legado):
+npm install locomotive-scroll@4
+import LocomotiveScroll from 'locomotive-scroll'
+
+================================================================================
+1. LOCOMOTIVE SCROLL v5 - API COMPLETA (ATUAL)
+================================================================================
+
+Inicialização básica v5:
+import LocomotiveScroll from 'locomotive-scroll'
+
+const scroll = new LocomotiveScroll({
+  lenisOptions: {
+    duration: 1.2, // duração do lerp
+    smoothWheel: true, // smooth no wheel
+    smoothTouch: false, // smooth no touch (false para não bugar mobile)
+    gestureOrientation: "vertical", // "vertical" | "horizontal" | "both"
+  }
+})
+
+// Métodos:
+scroll.scrollTo(target, { offset: 0, duration: 1, easing: (t)=>t, immediate: false, lock: false, onComplete: ()=>{} })
+scroll.start()
+scroll.stop()
+scroll.destroy()
+scroll.update() // recalcula após mudar DOM
+scroll.on('scroll', (instance) => { console.log(instance.scroll, instance.progress) })
+
+Atributos HTML v5:
+data-scroll - marca elemento para detecção
+data-scroll-speed="0.5" - velocidade parallax (0.5 = mais lento, 2 = mais rápido, negativo = oposto)
+data-scroll-direction="horizontal" - direção
+
+Exemplo v5 parallax:
+<div data-scroll data-scroll-speed="0.5">Move mais devagar (parallax)</div>
+<div data-scroll data-scroll-speed="2">Move 2x mais rápido</div>
+<div data-scroll data-scroll-speed="-0.5">Move oposto</div>
+
+Scroll progress:
+scroll.on('scroll', ({scroll, progress}) => {
+  // scroll = px atual
+  // progress = 0-1
+})
+
+Com GSAP ScrollTrigger + Locomotive v5 (scrollerProxy):
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
+
+const locoScroll = new LocomotiveScroll()
+
+locoScroll.on('scroll', ScrollTrigger.update)
+
+ScrollTrigger.scrollerProxy(document.body, {
+  scrollTop(value){
+    if(arguments.length){
+      locoScroll.scrollTo(value, {immediate: false})
+    }
+    return locoScroll.scroll // ou instance.scroll
+  },
+  getBoundingClientRect(){
+    return {top:0, left:0, width: window.innerWidth, height: window.innerHeight}
+  }
+})
+
+ScrollTrigger.addEventListener('refresh', () => locoScroll.update())
+ScrollTrigger.refresh()
+
+React + Locomotive v5:
+import { useEffect, useRef } from 'react'
+import LocomotiveScroll from 'locomotive-scroll'
+
+export function useLocomotive(){
+  const scrollRef = useRef(null)
+  useEffect(()=>{
+    const scroll = new LocomotiveScroll({
+      lenisOptions: { duration: 1.2, smoothWheel: true }
+    })
+    return () => scroll.destroy()
+  },[])
+}
+
+================================================================================
+2. LOCOMOTIVE SCROLL v4 - API COMPLETA (LEGADO - AINDA MUITO USADO)
+================================================================================
+
+Inicialização v4:
+const scroll = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  smoothMobile: false,
+  smoothTablet: false,
+  direction: 'vertical', // 'vertical' | 'horizontal'
+  gestureDirection: 'vertical',
+  reloadOnContextChange: true,
+  lerp: 0.1, // suavização, 0-1, quanto menor mais suave (0.1 padrão)
+  multiplier: 1, // velocidade do scroll
+  firefoxMultiplier: 50,
+  touchMultiplier: 2,
+  tablet: { smooth: true, direction: 'vertical', gestureDirection: 'vertical', breakpoint: 1024 },
+  smartphone: { smooth: false }
+})
+
+HTML obrigatório v4:
+<div data-scroll-container>
+  <div data-scroll-section>
+    <div data-scroll data-scroll-speed="2">Parallax</div>
+  </div>
+</div>
+
+Atributos v4 - TODOS:
+data-scroll - detecta elemento
+data-scroll-container - container principal (só 1)
+data-scroll-section - seção (para performance e detecção)
+data-scroll-speed="2" - parallax speed, -10 a 10, negativo inverte
+  speed 0 = fixo, 1 = normal, 2 = 2x rápido, -1 = oposto
+data-scroll-direction="horizontal" - direção do parallax
+data-scroll-position="top" | "bottom" - onde parallax começa
+data-scroll-delay="0.5" - delay do parallax (0-1)
+data-scroll-repeat - repete evento quando entra/sai várias vezes
+data-scroll-call="functionName" - chama função quando entra na viewport
+data-scroll-offset="10%, 10%" - offset de detecção "top, bottom"
+data-scroll-sticky - sticky element
+data-scroll-target="#target" - target custom
+data-scroll-class="is-inview" - classe quando entra (padrão is-inview)
+
+Exemplos v4:
+
+1. Parallax básico:
+<h1 data-scroll data-scroll-speed="1">Título normal</h1>
+<h1 data-scroll data-scroll-speed="2">Título rápido</h1>
+<h1 data-scroll data-scroll-speed="-1">Título inverso</h1>
+
+2. Reveal quando entra:
+<div data-scroll data-scroll-class="is-inview" data-scroll-repeat>
+  .is-inview { opacity: 1; transform: translateY(0) }
+</div>
+
+3. Call function:
+<div data-scroll data-scroll-call="myFunction" data-scroll-repeat></div>
+scroll.on('call', (func, way, obj) => {
+  if(func === 'myFunction'){
+    if(way === 'enter') console.log('entrou', obj.el)
+    else console.log('saiu')
+  }
+})
+
+4. Sticky:
+<div data-scroll data-scroll-sticky data-scroll-target="#fixed-target">Fixa</div>
+
+5. Horizontal dentro de vertical:
+<div data-scroll-container>
+  <div data-scroll-section data-scroll-direction="horizontal">
+    <div data-scroll data-scroll-speed="2">Horizontal parallax</div>
+  </div>
+</div>
+
+Eventos v4:
+scroll.on('scroll', (obj) => {
+  console.log(obj.scroll.y) // scroll atual
+  console.log(obj.limit.y) // limite
+  console.log(obj.currentElements) // elementos visíveis
+})
+
+Métodos v4:
+scroll.update() // após mudar DOM
+scroll.scrollTo(target, { offset: 0, duration: 1000, easing: [0.25,0,0.35,1], disableLerp: false, callback: ()=>{} })
+scroll.start()
+scroll.stop()
+scroll.destroy()
+
+CSS necessário v4:
+html.has-scroll-smooth { overflow: hidden }
+html.has-scroll-dragging { user-select: none }
+.has-scroll-smooth body { overflow: hidden }
+.has-scroll-smooth [data-scroll-container] { min-height: 100vh }
+
+================================================================================
+3. COMPARATIVO v4 vs v5 vs LENIS vs GSAP SCROLLSMOOTHER
+================================================================================
+
+v4:
+- Bundle: ~12.1kB gzipped
+- Engine: Virtual Scroll + transform hack
+- Wrappers: precisa data-scroll-container + data-scroll-section
+- Fixed: buga com position:fixed, precisa data-scroll-sticky
+- Mobile: problemático, precisa desabilitar smooth
+- Performance: média, transform em container inteiro
+
+v5:
+- Bundle: 9.4kB gzipped
+- Engine: Lenis (moderna, usa lerp nativo)
+- Wrappers: não precisa, funciona em body
+- Fixed: funciona nativo, sem hack
+- Mobile: melhor, smoothTouch opcional
+- Performance: alta, 60fps
+- API: simplificada
+
+Lenis (puro, sem Locomotive):
+- Bundle: 4.5kB
+- Só smooth scroll, sem parallax/data-scroll
+- Mais performático e simples
+- Recomendado se só quer smooth, sem parallax
+
+GSAP ScrollSmoother:
+- Bundle: ~15kB (com ScrollTrigger)
+- Engine: próprio, integrado com ScrollTrigger
+- Features: smooth + parallax via data-speed/data-lag + pin + ScrollTrigger nativo
+- Melhor para quem já usa GSAP
+- Substitui Locomotive em projetos GSAP
+
+RECOMENDAÇÃO 2026:
+- Projeto novo sem GSAP? Use Lenis puro (mais leve) ou Locomotive v5 se precisa parallax fácil
+- Projeto com GSAP? Use ScrollSmoother, esqueça Locomotive
+- Projeto legado? Mantenha v4, mas planeje migrar para v5 ou ScrollSmoother
+
+================================================================================
+4. MIGRAÇÃO v4 -> v5
+================================================================================
+
+Antes v4:
+<div data-scroll-container>
+  <div data-scroll-section>
+    <div data-scroll data-scroll-speed="2">Oi</div>
+  </div>
+</div>
+const scroll = new LocomotiveScroll({ el: document.querySelector('[data-scroll-container]'), smooth: true })
+
+Depois v5:
+<div data-scroll data-scroll-speed="2">Oi</div>
+const scroll = new LocomotiveScroll()
+
+Removido em v5:
+- data-scroll-container (não precisa)
+- data-scroll-section (não precisa)
+- data-scroll-sticky (fixed funciona nativo)
+- data-scroll-call (use IntersectionObserver ou ScrollTrigger)
+- data-scroll-repeat (use callback)
+- data-scroll-class (use CSS + JS)
+
+Novo em v5:
+- lenisOptions
+- scrollTo com objeto
+- Evento 'scroll' com {scroll, progress}
+
+================================================================================
+5. PADRÕES DE CÓDIGO - COPIA E COLA
+================================================================================
+
+Padrão 1 - Smooth + Parallax v5:
+import LocomotiveScroll from 'locomotive-scroll'
+const scroll = new LocomotiveScroll({ lenisOptions: { duration: 1.2 } })
+// HTML: <div data-scroll data-scroll-speed="0.5">Parallax lento</div>
+
+Padrão 2 - Progress bar com Locomotive v5:
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress').style.transform = `scaleX(${progress})`
+})
+
+Padrão 3 - Reveal com IntersectionObserver + Locomotive v5:
+const observer = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('is-inview') })
+})
+document.querySelectorAll('[data-scroll]').forEach(el=>observer.observe(el))
+
+Padrão 4 - Locomotive v4 + GSAP:
+const locoScroll = new LocomotiveScroll({ el: document.querySelector('[data-scroll-container]'), smooth: true })
+locoScroll.on('scroll', ScrollTrigger.update)
+ScrollTrigger.scrollerProxy('[data-scroll-container]', {
+  scrollTop(value){ return arguments.length ? locoScroll.scrollTo(value,0,0) : locoScroll.scroll.instance.scroll.y },
+  getBoundingClientRect(){ return {top:0, left:0, width: window.innerWidth, height: window.innerHeight} }
+})
+
+Padrão 5 - Horizontal scroll v4:
+<div data-scroll-container>
+  <div data-scroll-section data-scroll-direction="horizontal">
+    <div class="horizontal-content" data-scroll data-scroll-speed="1">Item 1</div>
+  </div>
+</div>
+
+Padrão 6 - Sticky v4:
+<div data-scroll data-scroll-sticky data-scroll-target="#pin">Sticky</div>
+
+Padrão 7 - Lenis puro (substituto moderno leve):
+import Lenis from 'lenis'
+const lenis = new Lenis({ duration: 1.2, smoothWheel: true })
+function raf(time){ lenis.raf(time); requestAnimationFrame(raf) }
+requestAnimationFrame(raf)
+
+FIM LOCOMOTIVE SCROLL
+
+
+================================================================================
+EXTRA 150 PADRÕES LOCOMOTIVE SCROLL v4 + v5 + LENIS + GSAP
+================================================================================
+
+--- PADRÃO 1 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.1" data-scroll-class="is-inview-1">
+  Elemento 1 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-1').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-1', { y: progress * 10, ease: "none" })
+})
+
+JS v4:
+const scroll1 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.1
+})
+scroll1.on('call', (func, way, obj)=>{
+  if(func === 'func1' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-1",
+  scroller: "[data-scroll-container]",
+  start: "top 79%",
+  onEnter: ()=> gsap.to('.box-1', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-1 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 2 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.2" data-scroll-class="is-inview-2">
+  Elemento 2 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-2').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-2', { y: progress * 20, ease: "none" })
+})
+
+JS v4:
+const scroll2 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.2
+})
+scroll2.on('call', (func, way, obj)=>{
+  if(func === 'func2' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-2",
+  scroller: "[data-scroll-container]",
+  start: "top 78%",
+  onEnter: ()=> gsap.to('.box-2', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-2 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 3 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="horizontal" data-scroll-delay="0.3" data-scroll-class="is-inview-3">
+  Elemento 3 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-3').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-3', { y: progress * 30, ease: "none" })
+})
+
+JS v4:
+const scroll3 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.0
+})
+scroll3.on('call', (func, way, obj)=>{
+  if(func === 'func3' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-3",
+  scroller: "[data-scroll-container]",
+  start: "top 77%",
+  onEnter: ()=> gsap.to('.box-3', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-3 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 4 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.4" data-scroll-class="is-inview-4">
+  Elemento 4 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-4').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-4', { y: progress * 40, ease: "none" })
+})
+
+JS v4:
+const scroll4 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.1
+})
+scroll4.on('call', (func, way, obj)=>{
+  if(func === 'func4' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-4",
+  scroller: "[data-scroll-container]",
+  start: "top 76%",
+  onEnter: ()=> gsap.to('.box-4', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-4 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 5 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.5" data-scroll-class="is-inview-5">
+  Elemento 5 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-5').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-5', { y: progress * 50, ease: "none" })
+})
+
+JS v4:
+const scroll5 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.2
+})
+scroll5.on('call', (func, way, obj)=>{
+  if(func === 'func5' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-5",
+  scroller: "[data-scroll-container]",
+  start: "top 75%",
+  onEnter: ()=> gsap.to('.box-5', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-5 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 6 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="horizontal" data-scroll-delay="0.6" data-scroll-class="is-inview-6">
+  Elemento 6 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-6').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-6', { y: progress * 60, ease: "none" })
+})
+
+JS v4:
+const scroll6 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.0
+})
+scroll6.on('call', (func, way, obj)=>{
+  if(func === 'func6' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-6",
+  scroller: "[data-scroll-container]",
+  start: "top 74%",
+  onEnter: ()=> gsap.to('.box-6', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-6 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 7 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.7" data-scroll-class="is-inview-7">
+  Elemento 7 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-7').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-7', { y: progress * 70, ease: "none" })
+})
+
+JS v4:
+const scroll7 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.1
+})
+scroll7.on('call', (func, way, obj)=>{
+  if(func === 'func7' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-7",
+  scroller: "[data-scroll-container]",
+  start: "top 73%",
+  onEnter: ()=> gsap.to('.box-7', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-7 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 8 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.8" data-scroll-class="is-inview-8">
+  Elemento 8 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-8').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-8', { y: progress * 80, ease: "none" })
+})
+
+JS v4:
+const scroll8 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.2
+})
+scroll8.on('call', (func, way, obj)=>{
+  if(func === 'func8' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-8",
+  scroller: "[data-scroll-container]",
+  start: "top 72%",
+  onEnter: ()=> gsap.to('.box-8', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-8 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 9 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="horizontal" data-scroll-delay="0.9" data-scroll-class="is-inview-9">
+  Elemento 9 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-9').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-9', { y: progress * 90, ease: "none" })
+})
+
+JS v4:
+const scroll9 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.0
+})
+scroll9.on('call', (func, way, obj)=>{
+  if(func === 'func9' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-9",
+  scroller: "[data-scroll-container]",
+  start: "top 71%",
+  onEnter: ()=> gsap.to('.box-9', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-9 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 10 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.0" data-scroll-class="is-inview-10">
+  Elemento 10 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-10').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-10', { y: progress * 100, ease: "none" })
+})
+
+JS v4:
+const scroll10 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.1
+})
+scroll10.on('call', (func, way, obj)=>{
+  if(func === 'func10' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-10",
+  scroller: "[data-scroll-container]",
+  start: "top 70%",
+  onEnter: ()=> gsap.to('.box-10', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-10 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 11 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.1" data-scroll-class="is-inview-11">
+  Elemento 11 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-11').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-11', { y: progress * 110, ease: "none" })
+})
+
+JS v4:
+const scroll11 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.2
+})
+scroll11.on('call', (func, way, obj)=>{
+  if(func === 'func11' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-11",
+  scroller: "[data-scroll-container]",
+  start: "top 69%",
+  onEnter: ()=> gsap.to('.box-11', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-11 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 12 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="horizontal" data-scroll-delay="0.2" data-scroll-class="is-inview-12">
+  Elemento 12 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-12').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-12', { y: progress * 120, ease: "none" })
+})
+
+JS v4:
+const scroll12 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.0
+})
+scroll12.on('call', (func, way, obj)=>{
+  if(func === 'func12' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-12",
+  scroller: "[data-scroll-container]",
+  start: "top 68%",
+  onEnter: ()=> gsap.to('.box-12', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-12 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 13 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.3" data-scroll-class="is-inview-13">
+  Elemento 13 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-13').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-13', { y: progress * 130, ease: "none" })
+})
+
+JS v4:
+const scroll13 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.1
+})
+scroll13.on('call', (func, way, obj)=>{
+  if(func === 'func13' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-13",
+  scroller: "[data-scroll-container]",
+  start: "top 67%",
+  onEnter: ()=> gsap.to('.box-13', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-13 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 14 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.4" data-scroll-class="is-inview-14">
+  Elemento 14 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-14').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-14', { y: progress * 140, ease: "none" })
+})
+
+JS v4:
+const scroll14 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.2
+})
+scroll14.on('call', (func, way, obj)=>{
+  if(func === 'func14' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-14",
+  scroller: "[data-scroll-container]",
+  start: "top 66%",
+  onEnter: ()=> gsap.to('.box-14', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-14 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 15 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="horizontal" data-scroll-delay="0.5" data-scroll-class="is-inview-15">
+  Elemento 15 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-15').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-15', { y: progress * 150, ease: "none" })
+})
+
+JS v4:
+const scroll15 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.0
+})
+scroll15.on('call', (func, way, obj)=>{
+  if(func === 'func15' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-15",
+  scroller: "[data-scroll-container]",
+  start: "top 65%",
+  onEnter: ()=> gsap.to('.box-15', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-15 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 16 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.6" data-scroll-class="is-inview-16">
+  Elemento 16 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-16').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-16', { y: progress * 160, ease: "none" })
+})
+
+JS v4:
+const scroll16 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.1
+})
+scroll16.on('call', (func, way, obj)=>{
+  if(func === 'func16' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-16",
+  scroller: "[data-scroll-container]",
+  start: "top 64%",
+  onEnter: ()=> gsap.to('.box-16', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-16 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 17 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.7" data-scroll-class="is-inview-17">
+  Elemento 17 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-17').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-17', { y: progress * 170, ease: "none" })
+})
+
+JS v4:
+const scroll17 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.2
+})
+scroll17.on('call', (func, way, obj)=>{
+  if(func === 'func17' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-17",
+  scroller: "[data-scroll-container]",
+  start: "top 63%",
+  onEnter: ()=> gsap.to('.box-17', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-17 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 18 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="horizontal" data-scroll-delay="0.8" data-scroll-class="is-inview-18">
+  Elemento 18 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-18').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-18', { y: progress * 180, ease: "none" })
+})
+
+JS v4:
+const scroll18 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.0
+})
+scroll18.on('call', (func, way, obj)=>{
+  if(func === 'func18' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-18",
+  scroller: "[data-scroll-container]",
+  start: "top 62%",
+  onEnter: ()=> gsap.to('.box-18', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-18 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 19 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.9" data-scroll-class="is-inview-19">
+  Elemento 19 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-19').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-19', { y: progress * 190, ease: "none" })
+})
+
+JS v4:
+const scroll19 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.1
+})
+scroll19.on('call', (func, way, obj)=>{
+  if(func === 'func19' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-19",
+  scroller: "[data-scroll-container]",
+  start: "top 61%",
+  onEnter: ()=> gsap.to('.box-19', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-19 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 20 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.0" data-scroll-class="is-inview-20">
+  Elemento 20 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-20').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-20', { y: progress * 200, ease: "none" })
+})
+
+JS v4:
+const scroll20 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.2
+})
+scroll20.on('call', (func, way, obj)=>{
+  if(func === 'func20' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-20",
+  scroller: "[data-scroll-container]",
+  start: "top 80%",
+  onEnter: ()=> gsap.to('.box-20', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-20 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 21 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="horizontal" data-scroll-delay="0.1" data-scroll-class="is-inview-21">
+  Elemento 21 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-21').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-21', { y: progress * 210, ease: "none" })
+})
+
+JS v4:
+const scroll21 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.0
+})
+scroll21.on('call', (func, way, obj)=>{
+  if(func === 'func21' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-21",
+  scroller: "[data-scroll-container]",
+  start: "top 79%",
+  onEnter: ()=> gsap.to('.box-21', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-21 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 22 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.2" data-scroll-class="is-inview-22">
+  Elemento 22 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-22').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-22', { y: progress * 220, ease: "none" })
+})
+
+JS v4:
+const scroll22 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.1
+})
+scroll22.on('call', (func, way, obj)=>{
+  if(func === 'func22' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-22",
+  scroller: "[data-scroll-container]",
+  start: "top 78%",
+  onEnter: ()=> gsap.to('.box-22', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-22 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 23 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.3" data-scroll-class="is-inview-23">
+  Elemento 23 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-23').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-23', { y: progress * 230, ease: "none" })
+})
+
+JS v4:
+const scroll23 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.2
+})
+scroll23.on('call', (func, way, obj)=>{
+  if(func === 'func23' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-23",
+  scroller: "[data-scroll-container]",
+  start: "top 77%",
+  onEnter: ()=> gsap.to('.box-23', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-23 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 24 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="horizontal" data-scroll-delay="0.4" data-scroll-class="is-inview-24">
+  Elemento 24 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-24').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-24', { y: progress * 240, ease: "none" })
+})
+
+JS v4:
+const scroll24 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.0
+})
+scroll24.on('call', (func, way, obj)=>{
+  if(func === 'func24' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-24",
+  scroller: "[data-scroll-container]",
+  start: "top 76%",
+  onEnter: ()=> gsap.to('.box-24', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-24 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 25 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.5" data-scroll-class="is-inview-25">
+  Elemento 25 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-25').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-25', { y: progress * 250, ease: "none" })
+})
+
+JS v4:
+const scroll25 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.1
+})
+scroll25.on('call', (func, way, obj)=>{
+  if(func === 'func25' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-25",
+  scroller: "[data-scroll-container]",
+  start: "top 75%",
+  onEnter: ()=> gsap.to('.box-25', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-25 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 26 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.6" data-scroll-class="is-inview-26">
+  Elemento 26 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-26').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-26', { y: progress * 260, ease: "none" })
+})
+
+JS v4:
+const scroll26 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.2
+})
+scroll26.on('call', (func, way, obj)=>{
+  if(func === 'func26' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-26",
+  scroller: "[data-scroll-container]",
+  start: "top 74%",
+  onEnter: ()=> gsap.to('.box-26', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-26 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 27 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="horizontal" data-scroll-delay="0.7" data-scroll-class="is-inview-27">
+  Elemento 27 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-27').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-27', { y: progress * 270, ease: "none" })
+})
+
+JS v4:
+const scroll27 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.0
+})
+scroll27.on('call', (func, way, obj)=>{
+  if(func === 'func27' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-27",
+  scroller: "[data-scroll-container]",
+  start: "top 73%",
+  onEnter: ()=> gsap.to('.box-27', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-27 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 28 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.8" data-scroll-class="is-inview-28">
+  Elemento 28 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-28').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-28', { y: progress * 280, ease: "none" })
+})
+
+JS v4:
+const scroll28 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.1
+})
+scroll28.on('call', (func, way, obj)=>{
+  if(func === 'func28' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-28",
+  scroller: "[data-scroll-container]",
+  start: "top 72%",
+  onEnter: ()=> gsap.to('.box-28', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-28 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 29 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.9" data-scroll-class="is-inview-29">
+  Elemento 29 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-29').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-29', { y: progress * 290, ease: "none" })
+})
+
+JS v4:
+const scroll29 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.2
+})
+scroll29.on('call', (func, way, obj)=>{
+  if(func === 'func29' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-29",
+  scroller: "[data-scroll-container]",
+  start: "top 71%",
+  onEnter: ()=> gsap.to('.box-29', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-29 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 30 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="horizontal" data-scroll-delay="0.0" data-scroll-class="is-inview-30">
+  Elemento 30 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-30').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-30', { y: progress * 300, ease: "none" })
+})
+
+JS v4:
+const scroll30 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.0
+})
+scroll30.on('call', (func, way, obj)=>{
+  if(func === 'func30' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-30",
+  scroller: "[data-scroll-container]",
+  start: "top 70%",
+  onEnter: ()=> gsap.to('.box-30', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-30 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 31 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.1" data-scroll-class="is-inview-31">
+  Elemento 31 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-31').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-31', { y: progress * 310, ease: "none" })
+})
+
+JS v4:
+const scroll31 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.1
+})
+scroll31.on('call', (func, way, obj)=>{
+  if(func === 'func31' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-31",
+  scroller: "[data-scroll-container]",
+  start: "top 69%",
+  onEnter: ()=> gsap.to('.box-31', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-31 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 32 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.2" data-scroll-class="is-inview-32">
+  Elemento 32 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-32').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-32', { y: progress * 320, ease: "none" })
+})
+
+JS v4:
+const scroll32 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.2
+})
+scroll32.on('call', (func, way, obj)=>{
+  if(func === 'func32' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-32",
+  scroller: "[data-scroll-container]",
+  start: "top 68%",
+  onEnter: ()=> gsap.to('.box-32', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-32 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 33 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="horizontal" data-scroll-delay="0.3" data-scroll-class="is-inview-33">
+  Elemento 33 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-33').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-33', { y: progress * 330, ease: "none" })
+})
+
+JS v4:
+const scroll33 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.0
+})
+scroll33.on('call', (func, way, obj)=>{
+  if(func === 'func33' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-33",
+  scroller: "[data-scroll-container]",
+  start: "top 67%",
+  onEnter: ()=> gsap.to('.box-33', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-33 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 34 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.4" data-scroll-class="is-inview-34">
+  Elemento 34 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-34').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-34', { y: progress * 340, ease: "none" })
+})
+
+JS v4:
+const scroll34 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.1
+})
+scroll34.on('call', (func, way, obj)=>{
+  if(func === 'func34' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-34",
+  scroller: "[data-scroll-container]",
+  start: "top 66%",
+  onEnter: ()=> gsap.to('.box-34', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-34 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 35 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.5" data-scroll-class="is-inview-35">
+  Elemento 35 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-35').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-35', { y: progress * 350, ease: "none" })
+})
+
+JS v4:
+const scroll35 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.2
+})
+scroll35.on('call', (func, way, obj)=>{
+  if(func === 'func35' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-35",
+  scroller: "[data-scroll-container]",
+  start: "top 65%",
+  onEnter: ()=> gsap.to('.box-35', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-35 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 36 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="horizontal" data-scroll-delay="0.6" data-scroll-class="is-inview-36">
+  Elemento 36 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-36').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-36', { y: progress * 360, ease: "none" })
+})
+
+JS v4:
+const scroll36 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.0
+})
+scroll36.on('call', (func, way, obj)=>{
+  if(func === 'func36' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-36",
+  scroller: "[data-scroll-container]",
+  start: "top 64%",
+  onEnter: ()=> gsap.to('.box-36', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-36 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 37 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.7" data-scroll-class="is-inview-37">
+  Elemento 37 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-37').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-37', { y: progress * 370, ease: "none" })
+})
+
+JS v4:
+const scroll37 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.1
+})
+scroll37.on('call', (func, way, obj)=>{
+  if(func === 'func37' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-37",
+  scroller: "[data-scroll-container]",
+  start: "top 63%",
+  onEnter: ()=> gsap.to('.box-37', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-37 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 38 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.8" data-scroll-class="is-inview-38">
+  Elemento 38 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-38').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-38', { y: progress * 380, ease: "none" })
+})
+
+JS v4:
+const scroll38 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.2
+})
+scroll38.on('call', (func, way, obj)=>{
+  if(func === 'func38' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-38",
+  scroller: "[data-scroll-container]",
+  start: "top 62%",
+  onEnter: ()=> gsap.to('.box-38', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-38 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 39 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="horizontal" data-scroll-delay="0.9" data-scroll-class="is-inview-39">
+  Elemento 39 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-39').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-39', { y: progress * 390, ease: "none" })
+})
+
+JS v4:
+const scroll39 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.0
+})
+scroll39.on('call', (func, way, obj)=>{
+  if(func === 'func39' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-39",
+  scroller: "[data-scroll-container]",
+  start: "top 61%",
+  onEnter: ()=> gsap.to('.box-39', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-39 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 40 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.0" data-scroll-class="is-inview-40">
+  Elemento 40 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-40').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-40', { y: progress * 400, ease: "none" })
+})
+
+JS v4:
+const scroll40 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.1
+})
+scroll40.on('call', (func, way, obj)=>{
+  if(func === 'func40' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-40",
+  scroller: "[data-scroll-container]",
+  start: "top 80%",
+  onEnter: ()=> gsap.to('.box-40', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-40 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 41 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.1" data-scroll-class="is-inview-41">
+  Elemento 41 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-41').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-41', { y: progress * 410, ease: "none" })
+})
+
+JS v4:
+const scroll41 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.2
+})
+scroll41.on('call', (func, way, obj)=>{
+  if(func === 'func41' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-41",
+  scroller: "[data-scroll-container]",
+  start: "top 79%",
+  onEnter: ()=> gsap.to('.box-41', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-41 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 42 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="horizontal" data-scroll-delay="0.2" data-scroll-class="is-inview-42">
+  Elemento 42 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-42').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-42', { y: progress * 420, ease: "none" })
+})
+
+JS v4:
+const scroll42 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.0
+})
+scroll42.on('call', (func, way, obj)=>{
+  if(func === 'func42' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-42",
+  scroller: "[data-scroll-container]",
+  start: "top 78%",
+  onEnter: ()=> gsap.to('.box-42', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-42 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 43 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.3" data-scroll-class="is-inview-43">
+  Elemento 43 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-43').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-43', { y: progress * 430, ease: "none" })
+})
+
+JS v4:
+const scroll43 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.1
+})
+scroll43.on('call', (func, way, obj)=>{
+  if(func === 'func43' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-43",
+  scroller: "[data-scroll-container]",
+  start: "top 77%",
+  onEnter: ()=> gsap.to('.box-43', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-43 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 44 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.4" data-scroll-class="is-inview-44">
+  Elemento 44 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-44').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-44', { y: progress * 440, ease: "none" })
+})
+
+JS v4:
+const scroll44 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.2
+})
+scroll44.on('call', (func, way, obj)=>{
+  if(func === 'func44' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-44",
+  scroller: "[data-scroll-container]",
+  start: "top 76%",
+  onEnter: ()=> gsap.to('.box-44', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-44 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 45 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="horizontal" data-scroll-delay="0.5" data-scroll-class="is-inview-45">
+  Elemento 45 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-45').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-45', { y: progress * 450, ease: "none" })
+})
+
+JS v4:
+const scroll45 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.0
+})
+scroll45.on('call', (func, way, obj)=>{
+  if(func === 'func45' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-45",
+  scroller: "[data-scroll-container]",
+  start: "top 75%",
+  onEnter: ()=> gsap.to('.box-45', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-45 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 46 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.6" data-scroll-class="is-inview-46">
+  Elemento 46 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-46').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-46', { y: progress * 460, ease: "none" })
+})
+
+JS v4:
+const scroll46 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.1
+})
+scroll46.on('call', (func, way, obj)=>{
+  if(func === 'func46' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-46",
+  scroller: "[data-scroll-container]",
+  start: "top 74%",
+  onEnter: ()=> gsap.to('.box-46', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-46 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 47 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.7" data-scroll-class="is-inview-47">
+  Elemento 47 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-47').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-47', { y: progress * 470, ease: "none" })
+})
+
+JS v4:
+const scroll47 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.2
+})
+scroll47.on('call', (func, way, obj)=>{
+  if(func === 'func47' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-47",
+  scroller: "[data-scroll-container]",
+  start: "top 73%",
+  onEnter: ()=> gsap.to('.box-47', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-47 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 48 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="horizontal" data-scroll-delay="0.8" data-scroll-class="is-inview-48">
+  Elemento 48 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-48').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-48', { y: progress * 480, ease: "none" })
+})
+
+JS v4:
+const scroll48 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.0
+})
+scroll48.on('call', (func, way, obj)=>{
+  if(func === 'func48' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-48",
+  scroller: "[data-scroll-container]",
+  start: "top 72%",
+  onEnter: ()=> gsap.to('.box-48', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-48 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 49 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.9" data-scroll-class="is-inview-49">
+  Elemento 49 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-49').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-49', { y: progress * 490, ease: "none" })
+})
+
+JS v4:
+const scroll49 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.1
+})
+scroll49.on('call', (func, way, obj)=>{
+  if(func === 'func49' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-49",
+  scroller: "[data-scroll-container]",
+  start: "top 71%",
+  onEnter: ()=> gsap.to('.box-49', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-49 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 50 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.0" data-scroll-class="is-inview-50">
+  Elemento 50 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-50').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-50', { y: progress * 500, ease: "none" })
+})
+
+JS v4:
+const scroll50 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.2
+})
+scroll50.on('call', (func, way, obj)=>{
+  if(func === 'func50' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-50",
+  scroller: "[data-scroll-container]",
+  start: "top 70%",
+  onEnter: ()=> gsap.to('.box-50', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-50 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 51 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="horizontal" data-scroll-delay="0.1" data-scroll-class="is-inview-51">
+  Elemento 51 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-51').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-51', { y: progress * 510, ease: "none" })
+})
+
+JS v4:
+const scroll51 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.0
+})
+scroll51.on('call', (func, way, obj)=>{
+  if(func === 'func51' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-51",
+  scroller: "[data-scroll-container]",
+  start: "top 69%",
+  onEnter: ()=> gsap.to('.box-51', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-51 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 52 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.2" data-scroll-class="is-inview-52">
+  Elemento 52 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-52').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-52', { y: progress * 520, ease: "none" })
+})
+
+JS v4:
+const scroll52 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.1
+})
+scroll52.on('call', (func, way, obj)=>{
+  if(func === 'func52' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-52",
+  scroller: "[data-scroll-container]",
+  start: "top 68%",
+  onEnter: ()=> gsap.to('.box-52', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-52 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 53 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.3" data-scroll-class="is-inview-53">
+  Elemento 53 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-53').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-53', { y: progress * 530, ease: "none" })
+})
+
+JS v4:
+const scroll53 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.2
+})
+scroll53.on('call', (func, way, obj)=>{
+  if(func === 'func53' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-53",
+  scroller: "[data-scroll-container]",
+  start: "top 67%",
+  onEnter: ()=> gsap.to('.box-53', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-53 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 54 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="horizontal" data-scroll-delay="0.4" data-scroll-class="is-inview-54">
+  Elemento 54 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-54').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-54', { y: progress * 540, ease: "none" })
+})
+
+JS v4:
+const scroll54 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.0
+})
+scroll54.on('call', (func, way, obj)=>{
+  if(func === 'func54' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-54",
+  scroller: "[data-scroll-container]",
+  start: "top 66%",
+  onEnter: ()=> gsap.to('.box-54', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-54 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 55 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.5" data-scroll-class="is-inview-55">
+  Elemento 55 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-55').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-55', { y: progress * 550, ease: "none" })
+})
+
+JS v4:
+const scroll55 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.1
+})
+scroll55.on('call', (func, way, obj)=>{
+  if(func === 'func55' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-55",
+  scroller: "[data-scroll-container]",
+  start: "top 65%",
+  onEnter: ()=> gsap.to('.box-55', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-55 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 56 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.6" data-scroll-class="is-inview-56">
+  Elemento 56 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-56').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-56', { y: progress * 560, ease: "none" })
+})
+
+JS v4:
+const scroll56 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.2
+})
+scroll56.on('call', (func, way, obj)=>{
+  if(func === 'func56' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-56",
+  scroller: "[data-scroll-container]",
+  start: "top 64%",
+  onEnter: ()=> gsap.to('.box-56', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-56 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 57 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="horizontal" data-scroll-delay="0.7" data-scroll-class="is-inview-57">
+  Elemento 57 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-57').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-57', { y: progress * 570, ease: "none" })
+})
+
+JS v4:
+const scroll57 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.0
+})
+scroll57.on('call', (func, way, obj)=>{
+  if(func === 'func57' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-57",
+  scroller: "[data-scroll-container]",
+  start: "top 63%",
+  onEnter: ()=> gsap.to('.box-57', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-57 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 58 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.8" data-scroll-class="is-inview-58">
+  Elemento 58 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-58').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-58', { y: progress * 580, ease: "none" })
+})
+
+JS v4:
+const scroll58 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.1
+})
+scroll58.on('call', (func, way, obj)=>{
+  if(func === 'func58' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-58",
+  scroller: "[data-scroll-container]",
+  start: "top 62%",
+  onEnter: ()=> gsap.to('.box-58', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-58 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 59 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.9" data-scroll-class="is-inview-59">
+  Elemento 59 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-59').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-59', { y: progress * 590, ease: "none" })
+})
+
+JS v4:
+const scroll59 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.2
+})
+scroll59.on('call', (func, way, obj)=>{
+  if(func === 'func59' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-59",
+  scroller: "[data-scroll-container]",
+  start: "top 61%",
+  onEnter: ()=> gsap.to('.box-59', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-59 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 60 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="horizontal" data-scroll-delay="0.0" data-scroll-class="is-inview-60">
+  Elemento 60 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-60').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-60', { y: progress * 600, ease: "none" })
+})
+
+JS v4:
+const scroll60 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.0
+})
+scroll60.on('call', (func, way, obj)=>{
+  if(func === 'func60' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-60",
+  scroller: "[data-scroll-container]",
+  start: "top 80%",
+  onEnter: ()=> gsap.to('.box-60', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-60 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 61 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.1" data-scroll-class="is-inview-61">
+  Elemento 61 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-61').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-61', { y: progress * 610, ease: "none" })
+})
+
+JS v4:
+const scroll61 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.1
+})
+scroll61.on('call', (func, way, obj)=>{
+  if(func === 'func61' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-61",
+  scroller: "[data-scroll-container]",
+  start: "top 79%",
+  onEnter: ()=> gsap.to('.box-61', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-61 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 62 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.2" data-scroll-class="is-inview-62">
+  Elemento 62 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-62').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-62', { y: progress * 620, ease: "none" })
+})
+
+JS v4:
+const scroll62 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.2
+})
+scroll62.on('call', (func, way, obj)=>{
+  if(func === 'func62' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-62",
+  scroller: "[data-scroll-container]",
+  start: "top 78%",
+  onEnter: ()=> gsap.to('.box-62', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-62 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 63 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="horizontal" data-scroll-delay="0.3" data-scroll-class="is-inview-63">
+  Elemento 63 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-63').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-63', { y: progress * 630, ease: "none" })
+})
+
+JS v4:
+const scroll63 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.0
+})
+scroll63.on('call', (func, way, obj)=>{
+  if(func === 'func63' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-63",
+  scroller: "[data-scroll-container]",
+  start: "top 77%",
+  onEnter: ()=> gsap.to('.box-63', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-63 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 64 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.4" data-scroll-class="is-inview-64">
+  Elemento 64 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-64').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-64', { y: progress * 640, ease: "none" })
+})
+
+JS v4:
+const scroll64 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.1
+})
+scroll64.on('call', (func, way, obj)=>{
+  if(func === 'func64' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-64",
+  scroller: "[data-scroll-container]",
+  start: "top 76%",
+  onEnter: ()=> gsap.to('.box-64', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-64 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 65 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.5" data-scroll-class="is-inview-65">
+  Elemento 65 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-65').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-65', { y: progress * 650, ease: "none" })
+})
+
+JS v4:
+const scroll65 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.2
+})
+scroll65.on('call', (func, way, obj)=>{
+  if(func === 'func65' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-65",
+  scroller: "[data-scroll-container]",
+  start: "top 75%",
+  onEnter: ()=> gsap.to('.box-65', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-65 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 66 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="horizontal" data-scroll-delay="0.6" data-scroll-class="is-inview-66">
+  Elemento 66 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-66').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-66', { y: progress * 660, ease: "none" })
+})
+
+JS v4:
+const scroll66 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.0
+})
+scroll66.on('call', (func, way, obj)=>{
+  if(func === 'func66' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-66",
+  scroller: "[data-scroll-container]",
+  start: "top 74%",
+  onEnter: ()=> gsap.to('.box-66', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-66 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 67 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.7" data-scroll-class="is-inview-67">
+  Elemento 67 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-67').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-67', { y: progress * 670, ease: "none" })
+})
+
+JS v4:
+const scroll67 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.1
+})
+scroll67.on('call', (func, way, obj)=>{
+  if(func === 'func67' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-67",
+  scroller: "[data-scroll-container]",
+  start: "top 73%",
+  onEnter: ()=> gsap.to('.box-67', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-67 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 68 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.8" data-scroll-class="is-inview-68">
+  Elemento 68 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-68').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-68', { y: progress * 680, ease: "none" })
+})
+
+JS v4:
+const scroll68 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.2
+})
+scroll68.on('call', (func, way, obj)=>{
+  if(func === 'func68' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-68",
+  scroller: "[data-scroll-container]",
+  start: "top 72%",
+  onEnter: ()=> gsap.to('.box-68', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-68 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 69 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="horizontal" data-scroll-delay="0.9" data-scroll-class="is-inview-69">
+  Elemento 69 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-69').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-69', { y: progress * 690, ease: "none" })
+})
+
+JS v4:
+const scroll69 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.0
+})
+scroll69.on('call', (func, way, obj)=>{
+  if(func === 'func69' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-69",
+  scroller: "[data-scroll-container]",
+  start: "top 71%",
+  onEnter: ()=> gsap.to('.box-69', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-69 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 70 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.0" data-scroll-class="is-inview-70">
+  Elemento 70 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-70').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-70', { y: progress * 700, ease: "none" })
+})
+
+JS v4:
+const scroll70 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.1
+})
+scroll70.on('call', (func, way, obj)=>{
+  if(func === 'func70' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-70",
+  scroller: "[data-scroll-container]",
+  start: "top 70%",
+  onEnter: ()=> gsap.to('.box-70', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-70 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 71 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.1" data-scroll-class="is-inview-71">
+  Elemento 71 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-71').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-71', { y: progress * 710, ease: "none" })
+})
+
+JS v4:
+const scroll71 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.2
+})
+scroll71.on('call', (func, way, obj)=>{
+  if(func === 'func71' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-71",
+  scroller: "[data-scroll-container]",
+  start: "top 69%",
+  onEnter: ()=> gsap.to('.box-71', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-71 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 72 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="horizontal" data-scroll-delay="0.2" data-scroll-class="is-inview-72">
+  Elemento 72 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-72').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-72', { y: progress * 720, ease: "none" })
+})
+
+JS v4:
+const scroll72 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.0
+})
+scroll72.on('call', (func, way, obj)=>{
+  if(func === 'func72' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-72",
+  scroller: "[data-scroll-container]",
+  start: "top 68%",
+  onEnter: ()=> gsap.to('.box-72', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-72 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 73 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.3" data-scroll-class="is-inview-73">
+  Elemento 73 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-73').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-73', { y: progress * 730, ease: "none" })
+})
+
+JS v4:
+const scroll73 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.1
+})
+scroll73.on('call', (func, way, obj)=>{
+  if(func === 'func73' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-73",
+  scroller: "[data-scroll-container]",
+  start: "top 67%",
+  onEnter: ()=> gsap.to('.box-73', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-73 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 74 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.4" data-scroll-class="is-inview-74">
+  Elemento 74 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-74').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-74', { y: progress * 740, ease: "none" })
+})
+
+JS v4:
+const scroll74 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.2
+})
+scroll74.on('call', (func, way, obj)=>{
+  if(func === 'func74' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-74",
+  scroller: "[data-scroll-container]",
+  start: "top 66%",
+  onEnter: ()=> gsap.to('.box-74', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-74 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 75 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="horizontal" data-scroll-delay="0.5" data-scroll-class="is-inview-75">
+  Elemento 75 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-75').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-75', { y: progress * 750, ease: "none" })
+})
+
+JS v4:
+const scroll75 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.0
+})
+scroll75.on('call', (func, way, obj)=>{
+  if(func === 'func75' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-75",
+  scroller: "[data-scroll-container]",
+  start: "top 65%",
+  onEnter: ()=> gsap.to('.box-75', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-75 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 76 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.6" data-scroll-class="is-inview-76">
+  Elemento 76 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-76').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-76', { y: progress * 760, ease: "none" })
+})
+
+JS v4:
+const scroll76 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.1
+})
+scroll76.on('call', (func, way, obj)=>{
+  if(func === 'func76' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-76",
+  scroller: "[data-scroll-container]",
+  start: "top 64%",
+  onEnter: ()=> gsap.to('.box-76', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-76 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 77 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.7" data-scroll-class="is-inview-77">
+  Elemento 77 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-77').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-77', { y: progress * 770, ease: "none" })
+})
+
+JS v4:
+const scroll77 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.2
+})
+scroll77.on('call', (func, way, obj)=>{
+  if(func === 'func77' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-77",
+  scroller: "[data-scroll-container]",
+  start: "top 63%",
+  onEnter: ()=> gsap.to('.box-77', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-77 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 78 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="horizontal" data-scroll-delay="0.8" data-scroll-class="is-inview-78">
+  Elemento 78 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-78').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-78', { y: progress * 780, ease: "none" })
+})
+
+JS v4:
+const scroll78 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.0
+})
+scroll78.on('call', (func, way, obj)=>{
+  if(func === 'func78' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-78",
+  scroller: "[data-scroll-container]",
+  start: "top 62%",
+  onEnter: ()=> gsap.to('.box-78', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-78 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 79 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.9" data-scroll-class="is-inview-79">
+  Elemento 79 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-79').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-79', { y: progress * 790, ease: "none" })
+})
+
+JS v4:
+const scroll79 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.1
+})
+scroll79.on('call', (func, way, obj)=>{
+  if(func === 'func79' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-79",
+  scroller: "[data-scroll-container]",
+  start: "top 61%",
+  onEnter: ()=> gsap.to('.box-79', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-79 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 80 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.0" data-scroll-class="is-inview-80">
+  Elemento 80 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-80').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-80', { y: progress * 800, ease: "none" })
+})
+
+JS v4:
+const scroll80 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.2
+})
+scroll80.on('call', (func, way, obj)=>{
+  if(func === 'func80' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-80",
+  scroller: "[data-scroll-container]",
+  start: "top 80%",
+  onEnter: ()=> gsap.to('.box-80', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-80 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 81 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="horizontal" data-scroll-delay="0.1" data-scroll-class="is-inview-81">
+  Elemento 81 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-81').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-81', { y: progress * 810, ease: "none" })
+})
+
+JS v4:
+const scroll81 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.0
+})
+scroll81.on('call', (func, way, obj)=>{
+  if(func === 'func81' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-81",
+  scroller: "[data-scroll-container]",
+  start: "top 79%",
+  onEnter: ()=> gsap.to('.box-81', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-81 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 82 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.2" data-scroll-class="is-inview-82">
+  Elemento 82 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-82').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-82', { y: progress * 820, ease: "none" })
+})
+
+JS v4:
+const scroll82 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.1
+})
+scroll82.on('call', (func, way, obj)=>{
+  if(func === 'func82' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-82",
+  scroller: "[data-scroll-container]",
+  start: "top 78%",
+  onEnter: ()=> gsap.to('.box-82', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-82 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 83 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.3" data-scroll-class="is-inview-83">
+  Elemento 83 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-83').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-83', { y: progress * 830, ease: "none" })
+})
+
+JS v4:
+const scroll83 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.2
+})
+scroll83.on('call', (func, way, obj)=>{
+  if(func === 'func83' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-83",
+  scroller: "[data-scroll-container]",
+  start: "top 77%",
+  onEnter: ()=> gsap.to('.box-83', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-83 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 84 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="horizontal" data-scroll-delay="0.4" data-scroll-class="is-inview-84">
+  Elemento 84 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-84').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-84', { y: progress * 840, ease: "none" })
+})
+
+JS v4:
+const scroll84 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.0
+})
+scroll84.on('call', (func, way, obj)=>{
+  if(func === 'func84' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-84",
+  scroller: "[data-scroll-container]",
+  start: "top 76%",
+  onEnter: ()=> gsap.to('.box-84', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-84 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 85 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.5" data-scroll-class="is-inview-85">
+  Elemento 85 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-85').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-85', { y: progress * 850, ease: "none" })
+})
+
+JS v4:
+const scroll85 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.1
+})
+scroll85.on('call', (func, way, obj)=>{
+  if(func === 'func85' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-85",
+  scroller: "[data-scroll-container]",
+  start: "top 75%",
+  onEnter: ()=> gsap.to('.box-85', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-85 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 86 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.6" data-scroll-class="is-inview-86">
+  Elemento 86 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-86').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-86', { y: progress * 860, ease: "none" })
+})
+
+JS v4:
+const scroll86 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.2
+})
+scroll86.on('call', (func, way, obj)=>{
+  if(func === 'func86' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-86",
+  scroller: "[data-scroll-container]",
+  start: "top 74%",
+  onEnter: ()=> gsap.to('.box-86', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-86 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 87 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="horizontal" data-scroll-delay="0.7" data-scroll-class="is-inview-87">
+  Elemento 87 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-87').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-87', { y: progress * 870, ease: "none" })
+})
+
+JS v4:
+const scroll87 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.0
+})
+scroll87.on('call', (func, way, obj)=>{
+  if(func === 'func87' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-87",
+  scroller: "[data-scroll-container]",
+  start: "top 73%",
+  onEnter: ()=> gsap.to('.box-87', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-87 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 88 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.8" data-scroll-class="is-inview-88">
+  Elemento 88 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-88').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-88', { y: progress * 880, ease: "none" })
+})
+
+JS v4:
+const scroll88 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.1
+})
+scroll88.on('call', (func, way, obj)=>{
+  if(func === 'func88' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-88",
+  scroller: "[data-scroll-container]",
+  start: "top 72%",
+  onEnter: ()=> gsap.to('.box-88', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-88 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 89 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.9" data-scroll-class="is-inview-89">
+  Elemento 89 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-89').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-89', { y: progress * 890, ease: "none" })
+})
+
+JS v4:
+const scroll89 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.2
+})
+scroll89.on('call', (func, way, obj)=>{
+  if(func === 'func89' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-89",
+  scroller: "[data-scroll-container]",
+  start: "top 71%",
+  onEnter: ()=> gsap.to('.box-89', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-89 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 90 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="horizontal" data-scroll-delay="0.0" data-scroll-class="is-inview-90">
+  Elemento 90 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-90').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-90', { y: progress * 900, ease: "none" })
+})
+
+JS v4:
+const scroll90 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.0
+})
+scroll90.on('call', (func, way, obj)=>{
+  if(func === 'func90' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-90",
+  scroller: "[data-scroll-container]",
+  start: "top 70%",
+  onEnter: ()=> gsap.to('.box-90', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-90 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 91 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.1" data-scroll-class="is-inview-91">
+  Elemento 91 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-91').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-91', { y: progress * 910, ease: "none" })
+})
+
+JS v4:
+const scroll91 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.1
+})
+scroll91.on('call', (func, way, obj)=>{
+  if(func === 'func91' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-91",
+  scroller: "[data-scroll-container]",
+  start: "top 69%",
+  onEnter: ()=> gsap.to('.box-91', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-91 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 92 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.2" data-scroll-class="is-inview-92">
+  Elemento 92 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-92').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-92', { y: progress * 920, ease: "none" })
+})
+
+JS v4:
+const scroll92 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.2
+})
+scroll92.on('call', (func, way, obj)=>{
+  if(func === 'func92' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-92",
+  scroller: "[data-scroll-container]",
+  start: "top 68%",
+  onEnter: ()=> gsap.to('.box-92', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-92 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 93 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="horizontal" data-scroll-delay="0.3" data-scroll-class="is-inview-93">
+  Elemento 93 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-93').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-93', { y: progress * 930, ease: "none" })
+})
+
+JS v4:
+const scroll93 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.0
+})
+scroll93.on('call', (func, way, obj)=>{
+  if(func === 'func93' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-93",
+  scroller: "[data-scroll-container]",
+  start: "top 67%",
+  onEnter: ()=> gsap.to('.box-93', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-93 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 94 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.4" data-scroll-class="is-inview-94">
+  Elemento 94 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-94').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-94', { y: progress * 940, ease: "none" })
+})
+
+JS v4:
+const scroll94 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.1
+})
+scroll94.on('call', (func, way, obj)=>{
+  if(func === 'func94' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-94",
+  scroller: "[data-scroll-container]",
+  start: "top 66%",
+  onEnter: ()=> gsap.to('.box-94', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-94 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 95 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.5" data-scroll-class="is-inview-95">
+  Elemento 95 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-95').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-95', { y: progress * 950, ease: "none" })
+})
+
+JS v4:
+const scroll95 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.2
+})
+scroll95.on('call', (func, way, obj)=>{
+  if(func === 'func95' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-95",
+  scroller: "[data-scroll-container]",
+  start: "top 65%",
+  onEnter: ()=> gsap.to('.box-95', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-95 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 96 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="horizontal" data-scroll-delay="0.6" data-scroll-class="is-inview-96">
+  Elemento 96 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-96').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-96', { y: progress * 960, ease: "none" })
+})
+
+JS v4:
+const scroll96 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.0
+})
+scroll96.on('call', (func, way, obj)=>{
+  if(func === 'func96' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-96",
+  scroller: "[data-scroll-container]",
+  start: "top 64%",
+  onEnter: ()=> gsap.to('.box-96', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-96 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 97 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.7" data-scroll-class="is-inview-97">
+  Elemento 97 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-97').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-97', { y: progress * 970, ease: "none" })
+})
+
+JS v4:
+const scroll97 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.1
+})
+scroll97.on('call', (func, way, obj)=>{
+  if(func === 'func97' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-97",
+  scroller: "[data-scroll-container]",
+  start: "top 63%",
+  onEnter: ()=> gsap.to('.box-97', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-97 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 98 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.8" data-scroll-class="is-inview-98">
+  Elemento 98 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-98').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-98', { y: progress * 980, ease: "none" })
+})
+
+JS v4:
+const scroll98 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.2
+})
+scroll98.on('call', (func, way, obj)=>{
+  if(func === 'func98' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-98",
+  scroller: "[data-scroll-container]",
+  start: "top 62%",
+  onEnter: ()=> gsap.to('.box-98', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-98 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 99 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="horizontal" data-scroll-delay="0.9" data-scroll-class="is-inview-99">
+  Elemento 99 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-99').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-99', { y: progress * 990, ease: "none" })
+})
+
+JS v4:
+const scroll99 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.0
+})
+scroll99.on('call', (func, way, obj)=>{
+  if(func === 'func99' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-99",
+  scroller: "[data-scroll-container]",
+  start: "top 61%",
+  onEnter: ()=> gsap.to('.box-99', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-99 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 100 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.0" data-scroll-class="is-inview-100">
+  Elemento 100 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-100').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-100', { y: progress * 1000, ease: "none" })
+})
+
+JS v4:
+const scroll100 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.1
+})
+scroll100.on('call', (func, way, obj)=>{
+  if(func === 'func100' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-100",
+  scroller: "[data-scroll-container]",
+  start: "top 80%",
+  onEnter: ()=> gsap.to('.box-100', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-100 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 101 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.1" data-scroll-class="is-inview-101">
+  Elemento 101 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-101').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-101', { y: progress * 1010, ease: "none" })
+})
+
+JS v4:
+const scroll101 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.2
+})
+scroll101.on('call', (func, way, obj)=>{
+  if(func === 'func101' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-101",
+  scroller: "[data-scroll-container]",
+  start: "top 79%",
+  onEnter: ()=> gsap.to('.box-101', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-101 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 102 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="horizontal" data-scroll-delay="0.2" data-scroll-class="is-inview-102">
+  Elemento 102 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-102').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-102', { y: progress * 1020, ease: "none" })
+})
+
+JS v4:
+const scroll102 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.0
+})
+scroll102.on('call', (func, way, obj)=>{
+  if(func === 'func102' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-102",
+  scroller: "[data-scroll-container]",
+  start: "top 78%",
+  onEnter: ()=> gsap.to('.box-102', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-102 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 103 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.3" data-scroll-class="is-inview-103">
+  Elemento 103 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-103').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-103', { y: progress * 1030, ease: "none" })
+})
+
+JS v4:
+const scroll103 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.1
+})
+scroll103.on('call', (func, way, obj)=>{
+  if(func === 'func103' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-103",
+  scroller: "[data-scroll-container]",
+  start: "top 77%",
+  onEnter: ()=> gsap.to('.box-103', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-103 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 104 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.4" data-scroll-class="is-inview-104">
+  Elemento 104 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-104').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-104', { y: progress * 1040, ease: "none" })
+})
+
+JS v4:
+const scroll104 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.2
+})
+scroll104.on('call', (func, way, obj)=>{
+  if(func === 'func104' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-104",
+  scroller: "[data-scroll-container]",
+  start: "top 76%",
+  onEnter: ()=> gsap.to('.box-104', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-104 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 105 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="horizontal" data-scroll-delay="0.5" data-scroll-class="is-inview-105">
+  Elemento 105 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-105').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-105', { y: progress * 1050, ease: "none" })
+})
+
+JS v4:
+const scroll105 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.0
+})
+scroll105.on('call', (func, way, obj)=>{
+  if(func === 'func105' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-105",
+  scroller: "[data-scroll-container]",
+  start: "top 75%",
+  onEnter: ()=> gsap.to('.box-105', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-105 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 106 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.6" data-scroll-class="is-inview-106">
+  Elemento 106 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-106').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-106', { y: progress * 1060, ease: "none" })
+})
+
+JS v4:
+const scroll106 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.1
+})
+scroll106.on('call', (func, way, obj)=>{
+  if(func === 'func106' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-106",
+  scroller: "[data-scroll-container]",
+  start: "top 74%",
+  onEnter: ()=> gsap.to('.box-106', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-106 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 107 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.7" data-scroll-class="is-inview-107">
+  Elemento 107 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-107').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-107', { y: progress * 1070, ease: "none" })
+})
+
+JS v4:
+const scroll107 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.2
+})
+scroll107.on('call', (func, way, obj)=>{
+  if(func === 'func107' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-107",
+  scroller: "[data-scroll-container]",
+  start: "top 73%",
+  onEnter: ()=> gsap.to('.box-107', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-107 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 108 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="horizontal" data-scroll-delay="0.8" data-scroll-class="is-inview-108">
+  Elemento 108 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-108').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-108', { y: progress * 1080, ease: "none" })
+})
+
+JS v4:
+const scroll108 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.0
+})
+scroll108.on('call', (func, way, obj)=>{
+  if(func === 'func108' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-108",
+  scroller: "[data-scroll-container]",
+  start: "top 72%",
+  onEnter: ()=> gsap.to('.box-108', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-108 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 109 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.9" data-scroll-class="is-inview-109">
+  Elemento 109 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-109').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-109', { y: progress * 1090, ease: "none" })
+})
+
+JS v4:
+const scroll109 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.1
+})
+scroll109.on('call', (func, way, obj)=>{
+  if(func === 'func109' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-109",
+  scroller: "[data-scroll-container]",
+  start: "top 71%",
+  onEnter: ()=> gsap.to('.box-109', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-109 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 110 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.0" data-scroll-class="is-inview-110">
+  Elemento 110 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-110').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-110', { y: progress * 1100, ease: "none" })
+})
+
+JS v4:
+const scroll110 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.2
+})
+scroll110.on('call', (func, way, obj)=>{
+  if(func === 'func110' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-110",
+  scroller: "[data-scroll-container]",
+  start: "top 70%",
+  onEnter: ()=> gsap.to('.box-110', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-110 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 111 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="horizontal" data-scroll-delay="0.1" data-scroll-class="is-inview-111">
+  Elemento 111 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-111').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-111', { y: progress * 1110, ease: "none" })
+})
+
+JS v4:
+const scroll111 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.0
+})
+scroll111.on('call', (func, way, obj)=>{
+  if(func === 'func111' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-111",
+  scroller: "[data-scroll-container]",
+  start: "top 69%",
+  onEnter: ()=> gsap.to('.box-111', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-111 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 112 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.2" data-scroll-class="is-inview-112">
+  Elemento 112 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-112').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-112', { y: progress * 1120, ease: "none" })
+})
+
+JS v4:
+const scroll112 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.1
+})
+scroll112.on('call', (func, way, obj)=>{
+  if(func === 'func112' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-112",
+  scroller: "[data-scroll-container]",
+  start: "top 68%",
+  onEnter: ()=> gsap.to('.box-112', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-112 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 113 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.3" data-scroll-class="is-inview-113">
+  Elemento 113 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-113').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-113', { y: progress * 1130, ease: "none" })
+})
+
+JS v4:
+const scroll113 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.2
+})
+scroll113.on('call', (func, way, obj)=>{
+  if(func === 'func113' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-113",
+  scroller: "[data-scroll-container]",
+  start: "top 67%",
+  onEnter: ()=> gsap.to('.box-113', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-113 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 114 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="horizontal" data-scroll-delay="0.4" data-scroll-class="is-inview-114">
+  Elemento 114 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-114').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-114', { y: progress * 1140, ease: "none" })
+})
+
+JS v4:
+const scroll114 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.0
+})
+scroll114.on('call', (func, way, obj)=>{
+  if(func === 'func114' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-114",
+  scroller: "[data-scroll-container]",
+  start: "top 66%",
+  onEnter: ()=> gsap.to('.box-114', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-114 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 115 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.5" data-scroll-class="is-inview-115">
+  Elemento 115 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-115').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-115', { y: progress * 1150, ease: "none" })
+})
+
+JS v4:
+const scroll115 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.1
+})
+scroll115.on('call', (func, way, obj)=>{
+  if(func === 'func115' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-115",
+  scroller: "[data-scroll-container]",
+  start: "top 65%",
+  onEnter: ()=> gsap.to('.box-115', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-115 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 116 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.6" data-scroll-class="is-inview-116">
+  Elemento 116 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-116').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-116', { y: progress * 1160, ease: "none" })
+})
+
+JS v4:
+const scroll116 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.2
+})
+scroll116.on('call', (func, way, obj)=>{
+  if(func === 'func116' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-116",
+  scroller: "[data-scroll-container]",
+  start: "top 64%",
+  onEnter: ()=> gsap.to('.box-116', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-116 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 117 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="horizontal" data-scroll-delay="0.7" data-scroll-class="is-inview-117">
+  Elemento 117 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-117').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-117', { y: progress * 1170, ease: "none" })
+})
+
+JS v4:
+const scroll117 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.0
+})
+scroll117.on('call', (func, way, obj)=>{
+  if(func === 'func117' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-117",
+  scroller: "[data-scroll-container]",
+  start: "top 63%",
+  onEnter: ()=> gsap.to('.box-117', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-117 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 118 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.8" data-scroll-class="is-inview-118">
+  Elemento 118 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-118').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-118', { y: progress * 1180, ease: "none" })
+})
+
+JS v4:
+const scroll118 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.1
+})
+scroll118.on('call', (func, way, obj)=>{
+  if(func === 'func118' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-118",
+  scroller: "[data-scroll-container]",
+  start: "top 62%",
+  onEnter: ()=> gsap.to('.box-118', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-118 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 119 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.9" data-scroll-class="is-inview-119">
+  Elemento 119 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-119').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-119', { y: progress * 1190, ease: "none" })
+})
+
+JS v4:
+const scroll119 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.2
+})
+scroll119.on('call', (func, way, obj)=>{
+  if(func === 'func119' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-119",
+  scroller: "[data-scroll-container]",
+  start: "top 61%",
+  onEnter: ()=> gsap.to('.box-119', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-119 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 120 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="horizontal" data-scroll-delay="0.0" data-scroll-class="is-inview-120">
+  Elemento 120 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-120').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-120', { y: progress * 1200, ease: "none" })
+})
+
+JS v4:
+const scroll120 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.0
+})
+scroll120.on('call', (func, way, obj)=>{
+  if(func === 'func120' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-120",
+  scroller: "[data-scroll-container]",
+  start: "top 80%",
+  onEnter: ()=> gsap.to('.box-120', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-120 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 121 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.1" data-scroll-class="is-inview-121">
+  Elemento 121 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-121').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-121', { y: progress * 1210, ease: "none" })
+})
+
+JS v4:
+const scroll121 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.1
+})
+scroll121.on('call', (func, way, obj)=>{
+  if(func === 'func121' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-121",
+  scroller: "[data-scroll-container]",
+  start: "top 79%",
+  onEnter: ()=> gsap.to('.box-121', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-121 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 122 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.2" data-scroll-class="is-inview-122">
+  Elemento 122 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-122').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-122', { y: progress * 1220, ease: "none" })
+})
+
+JS v4:
+const scroll122 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.2
+})
+scroll122.on('call', (func, way, obj)=>{
+  if(func === 'func122' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-122",
+  scroller: "[data-scroll-container]",
+  start: "top 78%",
+  onEnter: ()=> gsap.to('.box-122', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-122 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 123 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="horizontal" data-scroll-delay="0.3" data-scroll-class="is-inview-123">
+  Elemento 123 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-123').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-123', { y: progress * 1230, ease: "none" })
+})
+
+JS v4:
+const scroll123 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.0
+})
+scroll123.on('call', (func, way, obj)=>{
+  if(func === 'func123' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-123",
+  scroller: "[data-scroll-container]",
+  start: "top 77%",
+  onEnter: ()=> gsap.to('.box-123', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-123 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 124 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.4" data-scroll-class="is-inview-124">
+  Elemento 124 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-124').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-124', { y: progress * 1240, ease: "none" })
+})
+
+JS v4:
+const scroll124 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.1
+})
+scroll124.on('call', (func, way, obj)=>{
+  if(func === 'func124' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-124",
+  scroller: "[data-scroll-container]",
+  start: "top 76%",
+  onEnter: ()=> gsap.to('.box-124', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-124 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 125 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.5" data-scroll-class="is-inview-125">
+  Elemento 125 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-125').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-125', { y: progress * 1250, ease: "none" })
+})
+
+JS v4:
+const scroll125 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.2
+})
+scroll125.on('call', (func, way, obj)=>{
+  if(func === 'func125' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-125",
+  scroller: "[data-scroll-container]",
+  start: "top 75%",
+  onEnter: ()=> gsap.to('.box-125', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-125 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 126 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="horizontal" data-scroll-delay="0.6" data-scroll-class="is-inview-126">
+  Elemento 126 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-126').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-126', { y: progress * 1260, ease: "none" })
+})
+
+JS v4:
+const scroll126 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.0
+})
+scroll126.on('call', (func, way, obj)=>{
+  if(func === 'func126' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-126",
+  scroller: "[data-scroll-container]",
+  start: "top 74%",
+  onEnter: ()=> gsap.to('.box-126', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-126 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 127 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.7" data-scroll-class="is-inview-127">
+  Elemento 127 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-127').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-127', { y: progress * 1270, ease: "none" })
+})
+
+JS v4:
+const scroll127 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.1
+})
+scroll127.on('call', (func, way, obj)=>{
+  if(func === 'func127' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-127",
+  scroller: "[data-scroll-container]",
+  start: "top 73%",
+  onEnter: ()=> gsap.to('.box-127', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-127 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 128 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.8" data-scroll-class="is-inview-128">
+  Elemento 128 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-128').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-128', { y: progress * 1280, ease: "none" })
+})
+
+JS v4:
+const scroll128 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.2
+})
+scroll128.on('call', (func, way, obj)=>{
+  if(func === 'func128' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-128",
+  scroller: "[data-scroll-container]",
+  start: "top 72%",
+  onEnter: ()=> gsap.to('.box-128', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-128 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 129 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="horizontal" data-scroll-delay="0.9" data-scroll-class="is-inview-129">
+  Elemento 129 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-129').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-129', { y: progress * 1290, ease: "none" })
+})
+
+JS v4:
+const scroll129 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.0
+})
+scroll129.on('call', (func, way, obj)=>{
+  if(func === 'func129' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-129",
+  scroller: "[data-scroll-container]",
+  start: "top 71%",
+  onEnter: ()=> gsap.to('.box-129', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-129 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 130 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.0" data-scroll-class="is-inview-130">
+  Elemento 130 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-130').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-130', { y: progress * 1300, ease: "none" })
+})
+
+JS v4:
+const scroll130 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.1
+})
+scroll130.on('call', (func, way, obj)=>{
+  if(func === 'func130' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-130",
+  scroller: "[data-scroll-container]",
+  start: "top 70%",
+  onEnter: ()=> gsap.to('.box-130', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-130 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 131 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.1" data-scroll-class="is-inview-131">
+  Elemento 131 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-131').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-131', { y: progress * 1310, ease: "none" })
+})
+
+JS v4:
+const scroll131 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.2
+})
+scroll131.on('call', (func, way, obj)=>{
+  if(func === 'func131' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-131",
+  scroller: "[data-scroll-container]",
+  start: "top 69%",
+  onEnter: ()=> gsap.to('.box-131', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-131 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 132 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="horizontal" data-scroll-delay="0.2" data-scroll-class="is-inview-132">
+  Elemento 132 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-132').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-132', { y: progress * 1320, ease: "none" })
+})
+
+JS v4:
+const scroll132 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.0
+})
+scroll132.on('call', (func, way, obj)=>{
+  if(func === 'func132' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-132",
+  scroller: "[data-scroll-container]",
+  start: "top 68%",
+  onEnter: ()=> gsap.to('.box-132', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-132 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 133 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.3" data-scroll-class="is-inview-133">
+  Elemento 133 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-133').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-133', { y: progress * 1330, ease: "none" })
+})
+
+JS v4:
+const scroll133 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.1
+})
+scroll133.on('call', (func, way, obj)=>{
+  if(func === 'func133' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-133",
+  scroller: "[data-scroll-container]",
+  start: "top 67%",
+  onEnter: ()=> gsap.to('.box-133', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-133 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 134 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.4" data-scroll-class="is-inview-134">
+  Elemento 134 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-134').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-134', { y: progress * 1340, ease: "none" })
+})
+
+JS v4:
+const scroll134 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.2
+})
+scroll134.on('call', (func, way, obj)=>{
+  if(func === 'func134' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-134",
+  scroller: "[data-scroll-container]",
+  start: "top 66%",
+  onEnter: ()=> gsap.to('.box-134', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-134 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 135 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="horizontal" data-scroll-delay="0.5" data-scroll-class="is-inview-135">
+  Elemento 135 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-135').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-135', { y: progress * 1350, ease: "none" })
+})
+
+JS v4:
+const scroll135 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.0
+})
+scroll135.on('call', (func, way, obj)=>{
+  if(func === 'func135' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-135",
+  scroller: "[data-scroll-container]",
+  start: "top 65%",
+  onEnter: ()=> gsap.to('.box-135', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-135 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 136 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.6" data-scroll-class="is-inview-136">
+  Elemento 136 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-136').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-136', { y: progress * 1360, ease: "none" })
+})
+
+JS v4:
+const scroll136 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.1
+})
+scroll136.on('call', (func, way, obj)=>{
+  if(func === 'func136' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-136",
+  scroller: "[data-scroll-container]",
+  start: "top 64%",
+  onEnter: ()=> gsap.to('.box-136', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-136 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 137 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.7" data-scroll-class="is-inview-137">
+  Elemento 137 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-137').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-137', { y: progress * 1370, ease: "none" })
+})
+
+JS v4:
+const scroll137 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.2
+})
+scroll137.on('call', (func, way, obj)=>{
+  if(func === 'func137' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-137",
+  scroller: "[data-scroll-container]",
+  start: "top 63%",
+  onEnter: ()=> gsap.to('.box-137', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-137 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 138 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="horizontal" data-scroll-delay="0.8" data-scroll-class="is-inview-138">
+  Elemento 138 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-138').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-138', { y: progress * 1380, ease: "none" })
+})
+
+JS v4:
+const scroll138 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.0
+})
+scroll138.on('call', (func, way, obj)=>{
+  if(func === 'func138' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-138",
+  scroller: "[data-scroll-container]",
+  start: "top 62%",
+  onEnter: ()=> gsap.to('.box-138', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-138 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 139 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.9" data-scroll-class="is-inview-139">
+  Elemento 139 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-139').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-139', { y: progress * 1390, ease: "none" })
+})
+
+JS v4:
+const scroll139 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.1
+})
+scroll139.on('call', (func, way, obj)=>{
+  if(func === 'func139' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-139",
+  scroller: "[data-scroll-container]",
+  start: "top 61%",
+  onEnter: ()=> gsap.to('.box-139', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-139 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 140 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.0" data-scroll-class="is-inview-140">
+  Elemento 140 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-140').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-140', { y: progress * 1400, ease: "none" })
+})
+
+JS v4:
+const scroll140 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.2
+})
+scroll140.on('call', (func, way, obj)=>{
+  if(func === 'func140' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-140",
+  scroller: "[data-scroll-container]",
+  start: "top 80%",
+  onEnter: ()=> gsap.to('.box-140', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-140 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 141 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="horizontal" data-scroll-delay="0.1" data-scroll-class="is-inview-141">
+  Elemento 141 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-141').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-141', { y: progress * 1410, ease: "none" })
+})
+
+JS v4:
+const scroll141 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.060000000000000005,
+  multiplier: 1.0
+})
+scroll141.on('call', (func, way, obj)=>{
+  if(func === 'func141' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-141",
+  scroller: "[data-scroll-container]",
+  start: "top 79%",
+  onEnter: ()=> gsap.to('.box-141', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-141 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 142 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="vertical" data-scroll-delay="0.2" data-scroll-class="is-inview-142">
+  Elemento 142 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-142').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-142', { y: progress * 1420, ease: "none" })
+})
+
+JS v4:
+const scroll142 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.07,
+  multiplier: 1.1
+})
+scroll142.on('call', (func, way, obj)=>{
+  if(func === 'func142' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-142",
+  scroller: "[data-scroll-container]",
+  start: "top 78%",
+  onEnter: ()=> gsap.to('.box-142', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-142 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 143 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.3" data-scroll-class="is-inview-143">
+  Elemento 143 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-143').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-143', { y: progress * 1430, ease: "none" })
+})
+
+JS v4:
+const scroll143 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.08,
+  multiplier: 1.2
+})
+scroll143.on('call', (func, way, obj)=>{
+  if(func === 'func143' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-143",
+  scroller: "[data-scroll-container]",
+  start: "top 77%",
+  onEnter: ()=> gsap.to('.box-143', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-143 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 144 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="horizontal" data-scroll-delay="0.4" data-scroll-class="is-inview-144">
+  Elemento 144 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-144').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-144', { y: progress * 1440, ease: "none" })
+})
+
+JS v4:
+const scroll144 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.09,
+  multiplier: 1.0
+})
+scroll144.on('call', (func, way, obj)=>{
+  if(func === 'func144' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-144",
+  scroller: "[data-scroll-container]",
+  start: "top 76%",
+  onEnter: ()=> gsap.to('.box-144', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-144 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 145 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="vertical" data-scroll-delay="0.5" data-scroll-class="is-inview-145">
+  Elemento 145 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-145').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-145', { y: progress * 1450, ease: "none" })
+})
+
+JS v4:
+const scroll145 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.1,
+  multiplier: 1.1
+})
+scroll145.on('call', (func, way, obj)=>{
+  if(func === 'func145' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-145",
+  scroller: "[data-scroll-container]",
+  start: "top 75%",
+  onEnter: ()=> gsap.to('.box-145', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-145 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }
+
+--- PADRÃO 146 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-1" data-scroll-direction="vertical" data-scroll-delay="0.6" data-scroll-class="is-inview-146">
+  Elemento 146 com parallax speed -1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.1, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-146').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-146', { y: progress * 1460, ease: "none" })
+})
+
+JS v4:
+const scroll146 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.11,
+  multiplier: 1.2
+})
+scroll146.on('call', (func, way, obj)=>{
+  if(func === 'func146' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-146",
+  scroller: "[data-scroll-container]",
+  start: "top 74%",
+  onEnter: ()=> gsap.to('.box-146', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-146 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.1s; }
+
+--- PADRÃO 147 ---
+
+HTML:
+<div data-scroll data-scroll-speed="0" data-scroll-direction="horizontal" data-scroll-delay="0.7" data-scroll-class="is-inview-147">
+  Elemento 147 com parallax speed 0
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.2, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-147').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-147', { y: progress * 1470, ease: "none" })
+})
+
+JS v4:
+const scroll147 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.12000000000000001,
+  multiplier: 1.0
+})
+scroll147.on('call', (func, way, obj)=>{
+  if(func === 'func147' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-147",
+  scroller: "[data-scroll-container]",
+  start: "top 73%",
+  onEnter: ()=> gsap.to('.box-147', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-147 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.2s; }
+
+--- PADRÃO 148 ---
+
+HTML:
+<div data-scroll data-scroll-speed="1" data-scroll-direction="vertical" data-scroll-delay="0.8" data-scroll-class="is-inview-148">
+  Elemento 148 com parallax speed 1
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.3, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-148').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-148', { y: progress * 1480, ease: "none" })
+})
+
+JS v4:
+const scroll148 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.13,
+  multiplier: 1.1
+})
+scroll148.on('call', (func, way, obj)=>{
+  if(func === 'func148' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-148",
+  scroller: "[data-scroll-container]",
+  start: "top 72%",
+  onEnter: ()=> gsap.to('.box-148', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-148 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.30000000000000004s; }
+
+--- PADRÃO 149 ---
+
+HTML:
+<div data-scroll data-scroll-speed="2" data-scroll-direction="vertical" data-scroll-delay="0.9" data-scroll-class="is-inview-149">
+  Elemento 149 com parallax speed 2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.4, smoothWheel: true, gestureOrientation: "horizontal" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-149').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-149', { y: progress * 1490, ease: "none" })
+})
+
+JS v4:
+const scroll149 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.14,
+  multiplier: 1.2
+})
+scroll149.on('call', (func, way, obj)=>{
+  if(func === 'func149' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-149",
+  scroller: "[data-scroll-container]",
+  start: "top 71%",
+  onEnter: ()=> gsap.to('.box-149', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-149 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.4s; }
+
+--- PADRÃO 150 ---
+
+HTML:
+<div data-scroll data-scroll-speed="-2" data-scroll-direction="horizontal" data-scroll-delay="0.0" data-scroll-class="is-inview-150">
+  Elemento 150 com parallax speed -2
+</div>
+
+JS v5:
+const scroll = new LocomotiveScroll({
+  lenisOptions: { duration: 1.0, smoothWheel: true, gestureOrientation: "vertical" }
+})
+scroll.on('scroll', ({progress})=>{
+  document.querySelector('.progress-150').style.transform = `scaleX(${progress})`
+  gsap.to('.parallax-150', { y: progress * 1500, ease: "none" })
+})
+
+JS v4:
+const scroll150 = new LocomotiveScroll({
+  el: document.querySelector('[data-scroll-container]'),
+  smooth: true,
+  lerp: 0.05,
+  multiplier: 1.0
+})
+scroll150.on('call', (func, way, obj)=>{
+  if(func === 'func150' && way === 'enter') gsap.from(obj.el, { y: 50, opacity: 0, duration: 0.8 })
+})
+
+GSAP + Locomotive:
+ScrollTrigger.create({
+  trigger: ".trigger-150",
+  scroller: "[data-scroll-container]",
+  start: "top 70%",
+  onEnter: ()=> gsap.to('.box-150', { x: 100, duration: 0.8, ease: "power2.out" })
+})
+
+CSS:
+.is-inview-150 { opacity: 1; transform: translateY(0); transition: all 0.8s ease 0.0s; }

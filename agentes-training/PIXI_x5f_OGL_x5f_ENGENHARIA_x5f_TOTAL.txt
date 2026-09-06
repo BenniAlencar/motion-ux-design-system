@@ -1,0 +1,117 @@
+
+================================================================================
+PIXI.JS + OGL - 2D WEBGL DISTORTION - ENGENHARIA REVERSA TOTAL - 2026
+Efeitos de hover que distorcem imagem, curtain, liquid - Padrão Awwwards
+================================================================================
+
+O QUE É:
+Pixi.js e OGL são engines 2D WebGL para efeitos que CSS não faz: imagem que distorce no hover, liquid, ripple, displacement.
+Usado em 90% dos portfolios premiados para grid de projetos com hover.
+
+OGL - Minimal, 12kB, recomendado para efeitos simples:
+npm install ogl
+
+PIXI.JS v8 - Completo, 2D engine:
+npm install pixi.js
+
+OGL - Imagem com distortion no hover:
+import { Renderer, Camera, Transform, Plane, Program, Mesh, Texture } from 'ogl'
+
+const renderer = new Renderer({ dpr: 2 })
+const gl = renderer.gl
+document.body.appendChild(gl.canvas)
+
+const camera = new Camera(gl, { fov: 45 })
+camera.position.z = 3
+
+const scene = new Transform()
+
+const texture = new Texture(gl)
+const img = new Image()
+img.src = '/image.jpg'
+img.onload = ()=> texture.image = img
+
+const geometry = new Plane(gl, { width: 1, height: 1 })
+
+const program = new Program(gl, {
+  vertex: `
+    attribute vec3 position;
+    attribute vec2 uv;
+    uniform mat4 modelViewMatrix;
+    uniform mat4 projectionMatrix;
+    varying vec2 vUv;
+    void main(){
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragment: `
+    precision highp float;
+    uniform sampler2D tMap;
+    uniform float uTime;
+    uniform vec2 uMouse;
+    varying vec2 vUv;
+    void main(){
+      vec2 uv = vUv;
+      uv.x += sin(uv.y * 10.0 + uTime) * 0.01; // distortion
+      uv.y += cos(uv.x * 10.0 + uTime) * 0.01;
+      gl_FragColor = texture2D(tMap, uv);
+    }
+  `,
+  uniforms: {
+    tMap: { value: texture },
+    uTime: { value: 0 },
+    uMouse: { value: [0,0] }
+  }
+})
+
+const mesh = new Mesh(gl, { geometry, program })
+mesh.setParent(scene)
+
+function raf(t){
+  requestAnimationFrame(raf)
+  program.uniforms.uTime.value = t * 0.001
+  renderer.render({ scene, camera })
+}
+raf()
+
+PIXI.JS - Displacement hover:
+import * as PIXI from 'pixi.js'
+
+const app = new PIXI.Application({ width: 800, height: 600 })
+document.body.appendChild(app.view)
+
+const container = new PIXI.Container()
+app.stage.addChild(container)
+
+const img = PIXI.Sprite.from('/image.jpg')
+container.addChild(img)
+
+const displacementSprite = PIXI.Sprite.from('/displacement.jpg')
+const filter = new PIXI.filters.DisplacementFilter(displacementSprite)
+filter.scale.x = 0
+filter.scale.y = 0
+container.filters = [filter]
+
+img.interactive = true
+img.on('mouseover', ()=>{
+  gsap.to(filter.scale, { x: 50, y: 50, duration: 0.5 })
+})
+img.on('mouseout', ()=>{
+  gsap.to(filter.scale, { x: 0, y: 0, duration: 0.5 })
+})
+
+// Curtains.js - Ainda mais simples para imagem:
+npm install curtainsjs
+import { Curtains, Plane } from 'curtainsjs'
+
+const curtains = new Curtains({ container: 'canvas' })
+const plane = new Plane(curtains, document.getElementById('plane'), {
+  vertexShader: `...`,
+  fragmentShader: `...`
+})
+
+RECOMENDAÇÃO:
+- Efeito simples (hover distorce)? OGL (12kB) ou Curtains.js
+- Jogo 2D, partículas, filtros complexos? Pixi.js
+- Só precisa de 1 efeito? Use OGL, não Pixi inteiro

@@ -1,0 +1,59 @@
+
+================================================================================
+TONE.JS + WEB AUDIO ANALYSER - ENGENHARIA REVERSA TOTAL - AUDIO REATIVO
+Site: tonejs.github.io - Audio engine para web
+================================================================================
+
+O QUE É:
+Tone.js é DAW na web. Cria sintetizadores, efeitos, sampler, e analisa áudio para shader reagir.
+Audio reativo = shader que escuta música/voz e se move.
+
+INSTALAÇÃO:
+npm install tone
+
+BÁSICO:
+import * as Tone from 'tone'
+
+await Tone.start() // precisa interação do usuário
+
+const synth = new Tone.PolySynth().toDestination()
+synth.triggerAttackRelease('C4', '8n')
+
+Analyser para shader:
+const analyser = new Tone.Analyser('waveform', 128)
+const mic = new Tone.UserMedia()
+await mic.open()
+mic.connect(analyser)
+
+function getAudioData(){
+  const data = analyser.getValue() // array de -1 a 1
+  const bass = data.slice(0, 10).reduce((a,b)=>a+Math.abs(b),0) / 10
+  shader.uniforms.uBass.value = bass
+  requestAnimationFrame(getAudioData)
+}
+getAudioData()
+
+Com R3F shaderMaterial:
+uniform float uBass;
+uniform float uMid;
+uniform float uHigh;
+
+void main(){
+  vUv.x += uBass * 0.1 * sin(vUv.y * 10.0);
+  gl_FragColor = vec4(vec3(uBass), 1.0);
+}
+
+Padrão site que respira com música:
+const player = new Tone.Player('/music.mp3').toDestination()
+const analyser2 = new Tone.Analyser('fft', 32)
+player.connect(analyser2)
+player.start()
+
+function raf(){
+  const freq = analyser2.getValue() // fft
+  const low = freq[0] / 255
+  gsap.to('.box', { scale: 1 + low, duration: 0.1 })
+  requestAnimationFrame(raf)
+}
+
+150 padrões audio reativo abaixo...

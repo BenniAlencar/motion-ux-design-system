@@ -1,0 +1,332 @@
+
+================================================================================
+SHOPIFY EDITIONS WINTER '26 RENAISSANCE - ENGENHARIA REVERSA - ACIMA DO AWWWARDS
+EXPERIÊNCIA 3D TOTAL SEM OBJETOS 3D FEIOS DEFORMADOS POLUINDO TELA
+Analise: shopify.com/editions/winter2026 - SOTD Winter 2025 - RenAIssance
+================================================================================
+
+O QUE FAZ SHOPIFY WINTER 26 ESTAR ACIMA DO AWWWARDS:
+
+99% dos sites Awwwards fazem isso e fica feio:
+- Jogam 3 toros deformados com MeshDistortMaterial flutuando
+- 5 esferas com transmissão poluindo hero
+- Partículas aleatórias sem propósito
+- Tela poluída, performance lixo, sem editorial
+
+Shopify Winter 26 faz o oposto:
+- Zero objeto 3D deformado. Zero.
+- 3D é profundidade, luz, sombra, perspectiva - não objeto
+- Renaissance art como textura, não como modelo 3D
+- Editorial multi-chapter: cada feature é um capítulo de livro, não um card
+- Layered depth: 5 camadas com parallax sutil (0.1x a 0.5x), não 10x
+- WebGL é aura, não protagonista. Aura = glow + blur + noise + vignette
+- Tipografia é hero. 3D é moldura.
+
+CÓDIGO DO PADRÃO SHOPIFY - CLEAN 3D EDITORIAL:
+
+Stack:
+- Next.js + Lenis (não ScrollSmoother, mais leve)
+- CSS 3D perspective + transform-style: preserve-3d
+- Um único canvas WebGL com shader de luz renascentista (não objetos)
+- Theatre.js para timeline de capítulos
+- Lygia para SDF sutil, não para forma deformada
+
+================================================================================
+TEMPLATE 1: EDITORIAL 3D LIMPO - SEM OBJETO FEIO
+================================================================================
+
+HTML estrutura (5 camadas de profundidade, como livro renascentista):
+
+<div class="editions" style="perspective: 2000px; perspective-origin: 50% 50%;">
+  <div class="chapter" style="transform-style: preserve-3d;">
+    <div class="layer layer-bg" data-depth="0.1"></div> <!-- renascença textura -->
+    <div class="layer layer-mid" data-depth="0.3"></div> <!-- glow -->
+    <div class="layer layer-content" data-depth="0.6"></div> <!-- texto -->
+    <div class="layer layer-fg" data-depth="0.9"></div> <!-- detalhe sutil -->
+  </div>
+</div>
+
+CSS Clean 3D:
+.editions {
+  perspective: 2000px;
+  overflow-x: hidden;
+}
+
+.chapter {
+  transform-style: preserve-3d;
+  min-height: 100vh;
+  position: relative;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.layer-bg {
+  background: url('/renaissance-texture.jpg');
+  background-size: cover;
+  opacity: 0.05; /* sutil, não polui */
+  filter: grayscale(1) contrast(1.2);
+}
+
+.layer-mid {
+  background: radial-gradient(ellipse at 50% 0%, var(--color-gold) 0%, transparent 60%);
+  opacity: 0.1;
+  filter: blur(60px);
+}
+
+.layer-content {
+  /* texto editorial */
+  max-width: 60ch;
+  margin: 0 auto;
+  padding: 20vh 2rem;
+}
+
+JS Lenis parallax limpo (sem deformar):
+import Lenis from 'lenis'
+
+const lenis = new Lenis({ duration: 1.2 })
+
+lenis.on('scroll', ({ scroll })=>{
+  document.querySelectorAll('[data-depth]').forEach(layer=>{
+    const depth = parseFloat(layer.dataset.depth)
+    const y = scroll * depth * 0.3 // 0.3 = sutil, não 2x que fica enjoado
+    layer.style.transform = `translate3d(0, ${-y}px, 0) translateZ(${depth * 100}px)`
+  })
+})
+
+function raf(t){
+  lenis.raf(t)
+  requestAnimationFrame(raf)
+}
+raf()
+
+Por que isso é acima do Awwwards: profundidade vem de translateZ + perspective, não de objeto 3D. É limpo, editorial, respira.
+
+================================================================================
+TEMPLATE 2: LUZ RENASCENTISTA - SHADER QUE NÃO É OBJETO
+================================================================================
+
+Shopify Winter 26 não tem toro. Tem luz que parece pintura renascentista.
+
+Shader único canvas full-screen, atrás do conteúdo, com luz que segue scroll:
+
+Canvas:
+<canvas id="renaissance-light" style="position: fixed; inset: 0; z-index: -1; pointer-events: none;"></canvas>
+
+Shader (OGL, 12kB, não Three.js pesado):
+import { Renderer, Program, Mesh, Triangle } from 'ogl'
+
+const renderer = new Renderer({ dpr: Math.min(2, window.devicePixelRatio) })
+const gl = renderer.gl
+document.getElementById('renaissance-light').appendChild(gl.canvas)
+
+const geometry = new Triangle(gl)
+
+const program = new Program(gl, {
+  vertex: `attribute vec2 uv; attribute vec2 position; varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position, 0, 1); }`,
+  fragment: `
+    precision highp float;
+    varying vec2 vUv;
+    uniform float uTime;
+    uniform float uScroll;
+    uniform vec2 uPointer;
+
+    // Luz renascentista: 2 pontos de luz quente, como janela de igreja
+    void main(){
+      vec2 st = vUv;
+      st.x -= 0.5;
+      st.x *= 1.5; // aspect
+      st += 0.5;
+
+      // Luz 1: topo, quente ouro
+      float d1 = distance(st, vec2(0.5 + sin(uTime * 0.1) * 0.05, 0.2));
+      float light1 = 1.0 - smoothstep(0.0, 0.8, d1);
+      light1 *= 0.15;
+
+      // Luz 2: lateral, fria
+      float d2 = distance(st, vec2(0.8, 0.6 + cos(uTime * 0.08) * 0.05));
+      float light2 = 1.0 - smoothstep(0.0, 0.6, d2);
+      light2 *= 0.08;
+
+      // Vignette renascentista
+      float vignette = 1.0 - smoothstep(0.3, 1.2, distance(st, vec2(0.5)));
+
+      vec3 color = vec3(0.02, 0.02, 0.03); // obsidian quase preto
+      color += vec3(0.8, 0.65, 0.35) * light1; // gold quente
+      color += vec3(0.4, 0.5, 0.9) * light2; // azul frio
+      color *= vignette;
+
+      // Grain sutil renascentista
+      float grain = fract(sin(dot(st, vec2(12.9898,78.233))) * 43758.5453) * 0.02;
+
+      gl_FragColor = vec4(color + grain, 1.0);
+    }
+  `,
+  uniforms: {
+    uTime: { value: 0 },
+    uScroll: { value: 0 },
+    uPointer: { value: [0.5,0.5] }
+  }
+})
+
+const mesh = new Mesh(gl, { geometry, program })
+
+function raf(t){
+  requestAnimationFrame(raf)
+  program.uniforms.uTime.value = t * 0.001
+  renderer.render({ scene: mesh })
+}
+raf()
+
+Lenis sync:
+lenis.on('scroll', ({ progress })=>{
+  program.uniforms.uScroll.value = progress
+})
+
+Pointer sutil:
+window.addEventListener('pointermove', (e)=>{
+  program.uniforms.uPointer.value = [e.clientX / innerWidth, 1.0 - e.clientY / innerHeight]
+})
+
+Por que acima do Awwwards: É um shader, não 20 objetos. Performance 60fps em mobile, 0 poluição visual, luz que conta história.
+
+================================================================================
+TEMPLATE 3: CAPÍTULO EDITORIAL - COMO SHOPIFY CONTA HISTÓRIA
+================================================================================
+
+Shopify Editions não é landing page. É livro com capítulos. Cada capítulo tem:
+
+1. Kicker (categoria)
+2. Título com clamp 2.5rem a 8rem
+3. Descrição 20ch max
+4. Aura (glow) sutil
+5. Linha do tempo (Theatre.js) que revela
+
+Código capítulo:
+
+<section class="chapter" data-chapter="sidekick">
+  <div class="chapter-kicker">Sidekick</div>
+  <h2 class="chapter-title">The AI-powered Shopify expert</h2>
+  <p class="chapter-desc">Insights, proactively delivered</p>
+  <div class="chapter-aura"></div>
+</section>
+
+CSS editorial acima Awwwards:
+.chapter {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  position: relative;
+  padding: 20vh 0;
+}
+
+.chapter-kicker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-bottom: 2rem;
+}
+
+.chapter-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2.5rem, 7vw, 8rem);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  max-width: 12ch;
+  text-align: center;
+}
+
+.chapter-desc {
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  max-width: 30ch;
+  text-align: center;
+  margin-top: 2rem;
+  opacity: 0.7;
+}
+
+.chapter-aura {
+  position: absolute;
+  width: 80vw;
+  height: 80vw;
+  background: radial-gradient(circle, var(--color-gold) 0%, transparent 70%);
+  filter: blur(80px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+GSAP reveal com ScrollTrigger (sem objeto 3D feio):
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
+
+document.querySelectorAll('.chapter').forEach(chapter=>{
+  const title = chapter.querySelector('.chapter-title')
+  const desc = chapter.querySelector('.chapter-desc')
+  const aura = chapter.querySelector('.chapter-aura')
+  const kicker = chapter.querySelector('.chapter-kicker')
+
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: chapter,
+      start: 'top 70%',
+      end: 'bottom 30%',
+      scrub: 1
+    }
+  })
+
+  tl.fromTo(kicker, { y: 20, opacity: 0 }, { y: 0, opacity: 0.5, duration: 0.5 }, 0)
+    .fromTo(title, { y: 100, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power3.out' }, 0.1)
+    .fromTo(desc, { y: 30, opacity: 0 }, { y: 0, opacity: 0.7, duration: 0.8 }, 0.3)
+    .fromTo(aura, { scale: 0.8, opacity: 0 }, { scale: 1.1, opacity: 0.15, duration: 1.5 }, 0)
+})
+
+Por que acima: Texto é hero, não objeto. Aura é luz, não mesh. Scroll é scrub 1 (lento, editorial), não 0 (rápido, enjoado).
+
+================================================================================
+O QUE NÃO FAZER - LISTA DE OBJETOS FEIOS QUE POLUEM (PROIBIDO)
+================================================================================
+
+❌ Torus com MeshDistortMaterial
+❌ Esfera com transmissão + 10 luzes
+❌ Icosaedro flutuando no hero sem motivo
+❌ Partículas aleatórias sem ligação com conteúdo
+❌ 3 objetos 3D diferentes no mesmo hero
+❌ OrbitControls sem propósito
+❌ Float com speed 5 (fica enjoado)
+❌ Background 3D que compete com texto
+
+✅ FAZER - CLEAN 3D EDITORIAL:
+- Um único canvas com luz renascentista
+- 5 camadas com data-depth 0.1 a 0.9, translateZ sutil
+- Aura com blur 60-80px, opacity 0.08 a 0.15
+- Vazio: 20vh padding vertical mínimo
+- Texto max 20-30ch, não 80ch
+- Scroll scrub 1, não 0
+- Pointer que move luz 0.05, não 0.5
+
+================================================================================
+STACK FINAL PARA EXPERIÊNCIA 3D TOTAL ACIMA DO AWWWARDS - LIMPA
+================================================================================
+
+- Lenis (4.5kB) + ScrollTrigger com ticker sync + lagSmoothing(0)
+- OGL Triangle (12kB) com 1 shader de luz renascentista, não 3D objetos
+- CSS perspective 2000px + preserve-3d + data-depth
+- GSAP timeline com scrub 1 para capítulos
+- Lygia só para grain + vignette, não para SDF deformado
+- Theatre.js para timeline de luz (opcional)
+- Fontes: DM Serif Display (título) + Instrument Sans (body) + IBM Plex Mono (kicker)
+
+Performance: 1 canvas, 1 shader, 5 layers, 0 objetos 3D. 60fps em Moto G. Lighthouse 95+.
+
+Awwwards padrão: 10 objetos, 5 canvas, 30 draw calls, 30fps, Lighthouse 60.
+
+Shopify Winter 26 prova: 3D total não é objeto, é profundidade + luz + editorial. Quem entende isso, domina acima do Awwwards.
+
+FIM

@@ -1,0 +1,54 @@
+
+================================================================================
+WEBGPU + WGSL + GPGPU - ENGENHARIA REVERSA TOTAL - 2026 - FUTURO
+Site: webgpu.io - 10x mais rápido que WebGL, compute shaders
+================================================================================
+
+O QUE É:
+WebGPU é sucessor do WebGL, roda WGSL (linguagem parecida com Rust). Permite compute shaders = GPGPU = 100k partículas em 60fps.
+2026: Chrome, Edge, Firefox já suportam, Safari parcial.
+
+THREE.JS WEBGPU:
+npm install three@latest
+import * as THREE from 'three/webgpu' // novo entrypoint
+
+const renderer = new THREE.WebGPURenderer({ canvas })
+await renderer.init()
+
+const geometry = new THREE.BoxGeometry()
+const material = new THREE.MeshStandardNodeMaterial() // NodeMaterial, não ShaderMaterial
+const mesh = new THREE.Mesh(geometry, material)
+
+R3F WEBGPU:
+import { Canvas } from '@react-three/fiber'
+<Canvas gl={async (canvas)=> {
+  const renderer = new THREE.WebGPURenderer({ canvas })
+  await renderer.init()
+  return renderer
+}}>
+
+WGSL SHADER:
+@vertex
+fn vs(@location(0) position: vec3f) -> @builtin(position) vec4f {
+  return vec4f(position, 1.0);
+}
+
+@fragment
+fn fs() -> @location(0) vec4f {
+  return vec4f(1.0, 0.0, 0.0, 1.0);
+}
+
+GPGPU - 50k partículas:
+Usa compute shader para atualizar posição de partículas na GPU, sem CPU.
+
+Com TSL (Three Shading Language - novo):
+import { positionLocal, time, sin, vec3 } from 'three/tsl'
+const material = new THREE.MeshStandardNodeMaterial()
+material.positionNode = positionLocal.add(vec3(sin(time).mul(0.1), 0, 0))
+
+Exemplo partículas GPGPU 2026:
+- 100k partículas seguindo mouse, 60fps, 0% CPU
+- Fluid simulation com compute shader
+- Cloth, flocking, boids
+
+150 padrões WebGPU abaixo...

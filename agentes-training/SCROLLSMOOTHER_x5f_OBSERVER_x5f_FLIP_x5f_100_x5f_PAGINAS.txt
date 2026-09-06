@@ -1,0 +1,5957 @@
+
+================================================================================
+GSAP SCROLLSMOOTHER + OBSERVER + FLIP - ENGENHARIA REVERSA TOTAL - 2026
+O trio que matou Locomotive em projetos GSAP - Padrão Awwwards 2024+
+================================================================================
+
+SCROLLSMOOTHER - Smooth scroll oficial do GSAP, integrado com ScrollTrigger
+
+INSTALAÇÃO:
+npm install gsap
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother)
+
+HTML OBRIGATÓRIO:
+<div id="smooth-wrapper">
+  <div id="smooth-content">
+    <!-- todo conteúdo aqui -->
+  </div>
+</div>
+
+BÁSICO:
+const smoother = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper',
+  content: '#smooth-content',
+  smooth: 1.2, // duração do smooth 0-3
+  effects: true, // ativa data-speed e data-lag para parallax
+  smoothTouch: 0.1, // 0 = desativa em touch, 0.1 = leve
+  normalizeScroll: true, // normaliza scroll entre browsers
+  ignoreMobileResize: true
+})
+
+// Parallax via atributos (sem JS):
+<div data-speed="0.5">Move 0.5x (lento)</div>
+<div data-speed="1.5">Move 1.5x (rápido)</div>
+<div data-lag="0.5">Lag de 0.5 (atraso)</div>
+<div data-speed="clamp(0.5)">Clamp para não sair da tela</div>
+
+// Métodos:
+smoother.scrollTo(target, smooth, position) // scrollTo igual ScrollTrigger
+smoother.paused(true) // pausa
+smoother.scrollTop() // pega scroll
+smoother.getVelocity() // velocidade
+
+// OBSERVER - Detecta wheel, touch, pointer, sem bugar scroll
+import Observer from 'gsap/Observer'
+gsap.registerPlugin(Observer)
+
+Observer.create({
+  target: window,
+  type: 'wheel,touch,pointer',
+  wheelSpeed: -1,
+  onDown: () => console.log('scroll down'),
+  onUp: () => console.log('scroll up'),
+  onChange: (self) => console.log(self.deltaY, self.velocity),
+  tolerance: 10,
+  preventDefault: true
+})
+
+// Use case: troca de slide com wheel
+let current = 0
+Observer.create({
+  type: 'wheel,touch',
+  onDown: () => { current++; gsap.to(window, { scrollTo: current * innerHeight }) },
+  onUp: () => { current--; }
+})
+
+// FLIP - First Last Invert Play - Anima layout automaticamente
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(Flip)
+
+const state = Flip.getState('.box') // captura estado atual
+// muda layout (ex: move box para outro container)
+document.querySelector('.new-container').appendChild(document.querySelector('.box'))
+Flip.from(state, {
+  duration: 0.8,
+  ease: 'power2.inOut',
+  absolute: true, // usa position absolute durante animação
+  scale: true,
+  simple: true
+})
+
+// Card expandindo para modal (padrão Awwwards):
+function expandCard(card){
+  const state = Flip.getState(card)
+  card.classList.add('expanded') // muda para fullscreen via CSS
+  Flip.from(state, { duration: 0.6, ease: 'power2.inOut', absolute: true })
+}
+
+// Shared layout com Flip (igual Motion layoutId):
+function onClick(e){
+  const state = Flip.getState('.active')
+  document.querySelector('.active').classList.remove('active')
+  e.target.classList.add('active')
+  Flip.from(state, { duration: 0.5, ease: 'power2.out' })
+}
+
+COMBO COMPLETO - ScrollSmoother + ScrollTrigger + Lenis? Escolha 1:
+- Projeto 100% GSAP? Use ScrollSmoother (integração perfeita)
+- Projeto sem GSAP ou quer mais leve? Use Lenis + ScrollTrigger
+Nunca use os dois juntos.
+
+
+================================================================================
+SCROLLSMOOTHER + OBSERVER + FLIP - 150 PADRÕES
+================================================================================
+
+--- SMOOTHER PADRÃO 1 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother1 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-1',
+  content: '#smooth-content-1',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 1
+gsap.to('.box-1', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-1',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother1.effects('.box-1', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-1',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-1', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-1', { y: 100, duration: 0.5 })
+})
+
+const state1 = Flip.getState('.card-1')
+document.querySelector('.card-1').classList.add('expanded-1')
+Flip.from(state1, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 2 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother2 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-2',
+  content: '#smooth-content-2',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 2
+gsap.to('.box-2', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-2',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother2.effects('.box-2', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-2',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-2', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-2', { y: 100, duration: 0.5 })
+})
+
+const state2 = Flip.getState('.card-2')
+document.querySelector('.card-2').classList.add('expanded-2')
+Flip.from(state2, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 3 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother3 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-3',
+  content: '#smooth-content-3',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 3
+gsap.to('.box-3', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-3',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother3.effects('.box-3', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-3',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-3', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-3', { y: 100, duration: 0.5 })
+})
+
+const state3 = Flip.getState('.card-3')
+document.querySelector('.card-3').classList.add('expanded-3')
+Flip.from(state3, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 4 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother4 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-4',
+  content: '#smooth-content-4',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 4
+gsap.to('.box-4', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-4',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother4.effects('.box-4', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-4',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-4', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-4', { y: 100, duration: 0.5 })
+})
+
+const state4 = Flip.getState('.card-4')
+document.querySelector('.card-4').classList.add('expanded-4')
+Flip.from(state4, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 5 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother5 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-5',
+  content: '#smooth-content-5',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 5
+gsap.to('.box-5', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-5',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother5.effects('.box-5', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-5',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-5', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-5', { y: 100, duration: 0.5 })
+})
+
+const state5 = Flip.getState('.card-5')
+document.querySelector('.card-5').classList.add('expanded-5')
+Flip.from(state5, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 6 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother6 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-6',
+  content: '#smooth-content-6',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 6
+gsap.to('.box-6', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-6',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother6.effects('.box-6', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-6',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-6', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-6', { y: 100, duration: 0.5 })
+})
+
+const state6 = Flip.getState('.card-6')
+document.querySelector('.card-6').classList.add('expanded-6')
+Flip.from(state6, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 7 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother7 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-7',
+  content: '#smooth-content-7',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 7
+gsap.to('.box-7', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-7',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother7.effects('.box-7', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-7',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-7', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-7', { y: 100, duration: 0.5 })
+})
+
+const state7 = Flip.getState('.card-7')
+document.querySelector('.card-7').classList.add('expanded-7')
+Flip.from(state7, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 8 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother8 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-8',
+  content: '#smooth-content-8',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 8
+gsap.to('.box-8', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-8',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother8.effects('.box-8', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-8',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-8', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-8', { y: 100, duration: 0.5 })
+})
+
+const state8 = Flip.getState('.card-8')
+document.querySelector('.card-8').classList.add('expanded-8')
+Flip.from(state8, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 9 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother9 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-9',
+  content: '#smooth-content-9',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 9
+gsap.to('.box-9', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-9',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother9.effects('.box-9', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-9',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-9', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-9', { y: 100, duration: 0.5 })
+})
+
+const state9 = Flip.getState('.card-9')
+document.querySelector('.card-9').classList.add('expanded-9')
+Flip.from(state9, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 10 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother10 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-10',
+  content: '#smooth-content-10',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 10
+gsap.to('.box-10', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-10',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother10.effects('.box-10', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-10',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-10', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-10', { y: 100, duration: 0.5 })
+})
+
+const state10 = Flip.getState('.card-10')
+document.querySelector('.card-10').classList.add('expanded-10')
+Flip.from(state10, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 11 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother11 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-11',
+  content: '#smooth-content-11',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 11
+gsap.to('.box-11', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-11',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother11.effects('.box-11', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-11',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-11', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-11', { y: 100, duration: 0.5 })
+})
+
+const state11 = Flip.getState('.card-11')
+document.querySelector('.card-11').classList.add('expanded-11')
+Flip.from(state11, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 12 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother12 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-12',
+  content: '#smooth-content-12',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 12
+gsap.to('.box-12', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-12',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother12.effects('.box-12', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-12',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-12', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-12', { y: 100, duration: 0.5 })
+})
+
+const state12 = Flip.getState('.card-12')
+document.querySelector('.card-12').classList.add('expanded-12')
+Flip.from(state12, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 13 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother13 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-13',
+  content: '#smooth-content-13',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 13
+gsap.to('.box-13', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-13',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother13.effects('.box-13', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-13',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-13', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-13', { y: 100, duration: 0.5 })
+})
+
+const state13 = Flip.getState('.card-13')
+document.querySelector('.card-13').classList.add('expanded-13')
+Flip.from(state13, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 14 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother14 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-14',
+  content: '#smooth-content-14',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 14
+gsap.to('.box-14', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-14',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother14.effects('.box-14', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-14',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-14', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-14', { y: 100, duration: 0.5 })
+})
+
+const state14 = Flip.getState('.card-14')
+document.querySelector('.card-14').classList.add('expanded-14')
+Flip.from(state14, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 15 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother15 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-15',
+  content: '#smooth-content-15',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 15
+gsap.to('.box-15', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-15',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother15.effects('.box-15', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-15',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-15', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-15', { y: 100, duration: 0.5 })
+})
+
+const state15 = Flip.getState('.card-15')
+document.querySelector('.card-15').classList.add('expanded-15')
+Flip.from(state15, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 16 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother16 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-16',
+  content: '#smooth-content-16',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 16
+gsap.to('.box-16', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-16',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother16.effects('.box-16', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-16',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-16', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-16', { y: 100, duration: 0.5 })
+})
+
+const state16 = Flip.getState('.card-16')
+document.querySelector('.card-16').classList.add('expanded-16')
+Flip.from(state16, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 17 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother17 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-17',
+  content: '#smooth-content-17',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 17
+gsap.to('.box-17', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-17',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother17.effects('.box-17', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-17',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-17', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-17', { y: 100, duration: 0.5 })
+})
+
+const state17 = Flip.getState('.card-17')
+document.querySelector('.card-17').classList.add('expanded-17')
+Flip.from(state17, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 18 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother18 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-18',
+  content: '#smooth-content-18',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 18
+gsap.to('.box-18', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-18',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother18.effects('.box-18', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-18',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-18', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-18', { y: 100, duration: 0.5 })
+})
+
+const state18 = Flip.getState('.card-18')
+document.querySelector('.card-18').classList.add('expanded-18')
+Flip.from(state18, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 19 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother19 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-19',
+  content: '#smooth-content-19',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 19
+gsap.to('.box-19', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-19',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother19.effects('.box-19', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-19',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-19', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-19', { y: 100, duration: 0.5 })
+})
+
+const state19 = Flip.getState('.card-19')
+document.querySelector('.card-19').classList.add('expanded-19')
+Flip.from(state19, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 20 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother20 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-20',
+  content: '#smooth-content-20',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 20
+gsap.to('.box-20', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-20',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother20.effects('.box-20', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-20',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-20', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-20', { y: 100, duration: 0.5 })
+})
+
+const state20 = Flip.getState('.card-20')
+document.querySelector('.card-20').classList.add('expanded-20')
+Flip.from(state20, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 21 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother21 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-21',
+  content: '#smooth-content-21',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 21
+gsap.to('.box-21', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-21',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother21.effects('.box-21', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-21',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-21', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-21', { y: 100, duration: 0.5 })
+})
+
+const state21 = Flip.getState('.card-21')
+document.querySelector('.card-21').classList.add('expanded-21')
+Flip.from(state21, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 22 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother22 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-22',
+  content: '#smooth-content-22',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 22
+gsap.to('.box-22', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-22',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother22.effects('.box-22', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-22',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-22', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-22', { y: 100, duration: 0.5 })
+})
+
+const state22 = Flip.getState('.card-22')
+document.querySelector('.card-22').classList.add('expanded-22')
+Flip.from(state22, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 23 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother23 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-23',
+  content: '#smooth-content-23',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 23
+gsap.to('.box-23', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-23',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother23.effects('.box-23', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-23',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-23', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-23', { y: 100, duration: 0.5 })
+})
+
+const state23 = Flip.getState('.card-23')
+document.querySelector('.card-23').classList.add('expanded-23')
+Flip.from(state23, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 24 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother24 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-24',
+  content: '#smooth-content-24',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 24
+gsap.to('.box-24', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-24',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother24.effects('.box-24', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-24',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-24', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-24', { y: 100, duration: 0.5 })
+})
+
+const state24 = Flip.getState('.card-24')
+document.querySelector('.card-24').classList.add('expanded-24')
+Flip.from(state24, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 25 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother25 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-25',
+  content: '#smooth-content-25',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 25
+gsap.to('.box-25', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-25',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother25.effects('.box-25', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-25',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-25', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-25', { y: 100, duration: 0.5 })
+})
+
+const state25 = Flip.getState('.card-25')
+document.querySelector('.card-25').classList.add('expanded-25')
+Flip.from(state25, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 26 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother26 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-26',
+  content: '#smooth-content-26',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 26
+gsap.to('.box-26', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-26',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother26.effects('.box-26', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-26',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-26', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-26', { y: 100, duration: 0.5 })
+})
+
+const state26 = Flip.getState('.card-26')
+document.querySelector('.card-26').classList.add('expanded-26')
+Flip.from(state26, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 27 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother27 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-27',
+  content: '#smooth-content-27',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 27
+gsap.to('.box-27', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-27',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother27.effects('.box-27', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-27',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-27', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-27', { y: 100, duration: 0.5 })
+})
+
+const state27 = Flip.getState('.card-27')
+document.querySelector('.card-27').classList.add('expanded-27')
+Flip.from(state27, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 28 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother28 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-28',
+  content: '#smooth-content-28',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 28
+gsap.to('.box-28', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-28',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother28.effects('.box-28', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-28',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-28', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-28', { y: 100, duration: 0.5 })
+})
+
+const state28 = Flip.getState('.card-28')
+document.querySelector('.card-28').classList.add('expanded-28')
+Flip.from(state28, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 29 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother29 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-29',
+  content: '#smooth-content-29',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 29
+gsap.to('.box-29', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-29',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother29.effects('.box-29', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-29',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-29', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-29', { y: 100, duration: 0.5 })
+})
+
+const state29 = Flip.getState('.card-29')
+document.querySelector('.card-29').classList.add('expanded-29')
+Flip.from(state29, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 30 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother30 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-30',
+  content: '#smooth-content-30',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 30
+gsap.to('.box-30', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-30',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother30.effects('.box-30', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-30',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-30', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-30', { y: 100, duration: 0.5 })
+})
+
+const state30 = Flip.getState('.card-30')
+document.querySelector('.card-30').classList.add('expanded-30')
+Flip.from(state30, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 31 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother31 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-31',
+  content: '#smooth-content-31',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 31
+gsap.to('.box-31', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-31',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother31.effects('.box-31', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-31',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-31', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-31', { y: 100, duration: 0.5 })
+})
+
+const state31 = Flip.getState('.card-31')
+document.querySelector('.card-31').classList.add('expanded-31')
+Flip.from(state31, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 32 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother32 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-32',
+  content: '#smooth-content-32',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 32
+gsap.to('.box-32', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-32',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother32.effects('.box-32', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-32',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-32', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-32', { y: 100, duration: 0.5 })
+})
+
+const state32 = Flip.getState('.card-32')
+document.querySelector('.card-32').classList.add('expanded-32')
+Flip.from(state32, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 33 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother33 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-33',
+  content: '#smooth-content-33',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 33
+gsap.to('.box-33', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-33',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother33.effects('.box-33', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-33',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-33', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-33', { y: 100, duration: 0.5 })
+})
+
+const state33 = Flip.getState('.card-33')
+document.querySelector('.card-33').classList.add('expanded-33')
+Flip.from(state33, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 34 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother34 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-34',
+  content: '#smooth-content-34',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 34
+gsap.to('.box-34', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-34',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother34.effects('.box-34', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-34',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-34', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-34', { y: 100, duration: 0.5 })
+})
+
+const state34 = Flip.getState('.card-34')
+document.querySelector('.card-34').classList.add('expanded-34')
+Flip.from(state34, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 35 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother35 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-35',
+  content: '#smooth-content-35',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 35
+gsap.to('.box-35', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-35',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother35.effects('.box-35', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-35',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-35', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-35', { y: 100, duration: 0.5 })
+})
+
+const state35 = Flip.getState('.card-35')
+document.querySelector('.card-35').classList.add('expanded-35')
+Flip.from(state35, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 36 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother36 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-36',
+  content: '#smooth-content-36',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 36
+gsap.to('.box-36', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-36',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother36.effects('.box-36', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-36',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-36', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-36', { y: 100, duration: 0.5 })
+})
+
+const state36 = Flip.getState('.card-36')
+document.querySelector('.card-36').classList.add('expanded-36')
+Flip.from(state36, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 37 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother37 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-37',
+  content: '#smooth-content-37',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 37
+gsap.to('.box-37', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-37',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother37.effects('.box-37', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-37',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-37', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-37', { y: 100, duration: 0.5 })
+})
+
+const state37 = Flip.getState('.card-37')
+document.querySelector('.card-37').classList.add('expanded-37')
+Flip.from(state37, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 38 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother38 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-38',
+  content: '#smooth-content-38',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 38
+gsap.to('.box-38', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-38',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother38.effects('.box-38', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-38',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-38', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-38', { y: 100, duration: 0.5 })
+})
+
+const state38 = Flip.getState('.card-38')
+document.querySelector('.card-38').classList.add('expanded-38')
+Flip.from(state38, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 39 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother39 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-39',
+  content: '#smooth-content-39',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 39
+gsap.to('.box-39', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-39',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother39.effects('.box-39', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-39',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-39', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-39', { y: 100, duration: 0.5 })
+})
+
+const state39 = Flip.getState('.card-39')
+document.querySelector('.card-39').classList.add('expanded-39')
+Flip.from(state39, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 40 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother40 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-40',
+  content: '#smooth-content-40',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 40
+gsap.to('.box-40', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-40',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother40.effects('.box-40', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-40',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-40', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-40', { y: 100, duration: 0.5 })
+})
+
+const state40 = Flip.getState('.card-40')
+document.querySelector('.card-40').classList.add('expanded-40')
+Flip.from(state40, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 41 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother41 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-41',
+  content: '#smooth-content-41',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 41
+gsap.to('.box-41', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-41',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother41.effects('.box-41', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-41',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-41', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-41', { y: 100, duration: 0.5 })
+})
+
+const state41 = Flip.getState('.card-41')
+document.querySelector('.card-41').classList.add('expanded-41')
+Flip.from(state41, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 42 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother42 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-42',
+  content: '#smooth-content-42',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 42
+gsap.to('.box-42', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-42',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother42.effects('.box-42', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-42',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-42', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-42', { y: 100, duration: 0.5 })
+})
+
+const state42 = Flip.getState('.card-42')
+document.querySelector('.card-42').classList.add('expanded-42')
+Flip.from(state42, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 43 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother43 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-43',
+  content: '#smooth-content-43',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 43
+gsap.to('.box-43', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-43',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother43.effects('.box-43', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-43',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-43', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-43', { y: 100, duration: 0.5 })
+})
+
+const state43 = Flip.getState('.card-43')
+document.querySelector('.card-43').classList.add('expanded-43')
+Flip.from(state43, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 44 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother44 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-44',
+  content: '#smooth-content-44',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 44
+gsap.to('.box-44', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-44',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother44.effects('.box-44', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-44',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-44', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-44', { y: 100, duration: 0.5 })
+})
+
+const state44 = Flip.getState('.card-44')
+document.querySelector('.card-44').classList.add('expanded-44')
+Flip.from(state44, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 45 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother45 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-45',
+  content: '#smooth-content-45',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 45
+gsap.to('.box-45', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-45',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother45.effects('.box-45', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-45',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-45', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-45', { y: 100, duration: 0.5 })
+})
+
+const state45 = Flip.getState('.card-45')
+document.querySelector('.card-45').classList.add('expanded-45')
+Flip.from(state45, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 46 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother46 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-46',
+  content: '#smooth-content-46',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 46
+gsap.to('.box-46', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-46',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother46.effects('.box-46', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-46',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-46', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-46', { y: 100, duration: 0.5 })
+})
+
+const state46 = Flip.getState('.card-46')
+document.querySelector('.card-46').classList.add('expanded-46')
+Flip.from(state46, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 47 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother47 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-47',
+  content: '#smooth-content-47',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 47
+gsap.to('.box-47', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-47',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother47.effects('.box-47', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-47',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-47', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-47', { y: 100, duration: 0.5 })
+})
+
+const state47 = Flip.getState('.card-47')
+document.querySelector('.card-47').classList.add('expanded-47')
+Flip.from(state47, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 48 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother48 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-48',
+  content: '#smooth-content-48',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 48
+gsap.to('.box-48', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-48',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother48.effects('.box-48', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-48',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-48', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-48', { y: 100, duration: 0.5 })
+})
+
+const state48 = Flip.getState('.card-48')
+document.querySelector('.card-48').classList.add('expanded-48')
+Flip.from(state48, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 49 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother49 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-49',
+  content: '#smooth-content-49',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 49
+gsap.to('.box-49', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-49',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother49.effects('.box-49', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-49',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-49', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-49', { y: 100, duration: 0.5 })
+})
+
+const state49 = Flip.getState('.card-49')
+document.querySelector('.card-49').classList.add('expanded-49')
+Flip.from(state49, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 50 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother50 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-50',
+  content: '#smooth-content-50',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 50
+gsap.to('.box-50', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-50',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother50.effects('.box-50', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-50',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-50', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-50', { y: 100, duration: 0.5 })
+})
+
+const state50 = Flip.getState('.card-50')
+document.querySelector('.card-50').classList.add('expanded-50')
+Flip.from(state50, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 51 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother51 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-51',
+  content: '#smooth-content-51',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 51
+gsap.to('.box-51', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-51',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother51.effects('.box-51', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-51',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-51', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-51', { y: 100, duration: 0.5 })
+})
+
+const state51 = Flip.getState('.card-51')
+document.querySelector('.card-51').classList.add('expanded-51')
+Flip.from(state51, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 52 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother52 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-52',
+  content: '#smooth-content-52',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 52
+gsap.to('.box-52', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-52',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother52.effects('.box-52', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-52',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-52', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-52', { y: 100, duration: 0.5 })
+})
+
+const state52 = Flip.getState('.card-52')
+document.querySelector('.card-52').classList.add('expanded-52')
+Flip.from(state52, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 53 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother53 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-53',
+  content: '#smooth-content-53',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 53
+gsap.to('.box-53', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-53',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother53.effects('.box-53', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-53',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-53', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-53', { y: 100, duration: 0.5 })
+})
+
+const state53 = Flip.getState('.card-53')
+document.querySelector('.card-53').classList.add('expanded-53')
+Flip.from(state53, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 54 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother54 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-54',
+  content: '#smooth-content-54',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 54
+gsap.to('.box-54', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-54',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother54.effects('.box-54', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-54',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-54', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-54', { y: 100, duration: 0.5 })
+})
+
+const state54 = Flip.getState('.card-54')
+document.querySelector('.card-54').classList.add('expanded-54')
+Flip.from(state54, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 55 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother55 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-55',
+  content: '#smooth-content-55',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 55
+gsap.to('.box-55', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-55',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother55.effects('.box-55', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-55',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-55', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-55', { y: 100, duration: 0.5 })
+})
+
+const state55 = Flip.getState('.card-55')
+document.querySelector('.card-55').classList.add('expanded-55')
+Flip.from(state55, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 56 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother56 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-56',
+  content: '#smooth-content-56',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 56
+gsap.to('.box-56', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-56',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother56.effects('.box-56', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-56',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-56', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-56', { y: 100, duration: 0.5 })
+})
+
+const state56 = Flip.getState('.card-56')
+document.querySelector('.card-56').classList.add('expanded-56')
+Flip.from(state56, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 57 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother57 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-57',
+  content: '#smooth-content-57',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 57
+gsap.to('.box-57', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-57',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother57.effects('.box-57', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-57',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-57', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-57', { y: 100, duration: 0.5 })
+})
+
+const state57 = Flip.getState('.card-57')
+document.querySelector('.card-57').classList.add('expanded-57')
+Flip.from(state57, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 58 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother58 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-58',
+  content: '#smooth-content-58',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 58
+gsap.to('.box-58', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-58',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother58.effects('.box-58', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-58',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-58', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-58', { y: 100, duration: 0.5 })
+})
+
+const state58 = Flip.getState('.card-58')
+document.querySelector('.card-58').classList.add('expanded-58')
+Flip.from(state58, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 59 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother59 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-59',
+  content: '#smooth-content-59',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 59
+gsap.to('.box-59', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-59',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother59.effects('.box-59', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-59',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-59', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-59', { y: 100, duration: 0.5 })
+})
+
+const state59 = Flip.getState('.card-59')
+document.querySelector('.card-59').classList.add('expanded-59')
+Flip.from(state59, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 60 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother60 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-60',
+  content: '#smooth-content-60',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 60
+gsap.to('.box-60', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-60',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother60.effects('.box-60', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-60',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-60', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-60', { y: 100, duration: 0.5 })
+})
+
+const state60 = Flip.getState('.card-60')
+document.querySelector('.card-60').classList.add('expanded-60')
+Flip.from(state60, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 61 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother61 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-61',
+  content: '#smooth-content-61',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 61
+gsap.to('.box-61', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-61',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother61.effects('.box-61', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-61',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-61', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-61', { y: 100, duration: 0.5 })
+})
+
+const state61 = Flip.getState('.card-61')
+document.querySelector('.card-61').classList.add('expanded-61')
+Flip.from(state61, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 62 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother62 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-62',
+  content: '#smooth-content-62',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 62
+gsap.to('.box-62', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-62',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother62.effects('.box-62', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-62',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-62', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-62', { y: 100, duration: 0.5 })
+})
+
+const state62 = Flip.getState('.card-62')
+document.querySelector('.card-62').classList.add('expanded-62')
+Flip.from(state62, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 63 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother63 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-63',
+  content: '#smooth-content-63',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 63
+gsap.to('.box-63', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-63',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother63.effects('.box-63', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-63',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-63', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-63', { y: 100, duration: 0.5 })
+})
+
+const state63 = Flip.getState('.card-63')
+document.querySelector('.card-63').classList.add('expanded-63')
+Flip.from(state63, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 64 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother64 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-64',
+  content: '#smooth-content-64',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 64
+gsap.to('.box-64', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-64',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother64.effects('.box-64', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-64',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-64', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-64', { y: 100, duration: 0.5 })
+})
+
+const state64 = Flip.getState('.card-64')
+document.querySelector('.card-64').classList.add('expanded-64')
+Flip.from(state64, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 65 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother65 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-65',
+  content: '#smooth-content-65',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 65
+gsap.to('.box-65', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-65',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother65.effects('.box-65', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-65',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-65', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-65', { y: 100, duration: 0.5 })
+})
+
+const state65 = Flip.getState('.card-65')
+document.querySelector('.card-65').classList.add('expanded-65')
+Flip.from(state65, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 66 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother66 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-66',
+  content: '#smooth-content-66',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 66
+gsap.to('.box-66', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-66',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother66.effects('.box-66', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-66',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-66', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-66', { y: 100, duration: 0.5 })
+})
+
+const state66 = Flip.getState('.card-66')
+document.querySelector('.card-66').classList.add('expanded-66')
+Flip.from(state66, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 67 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother67 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-67',
+  content: '#smooth-content-67',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 67
+gsap.to('.box-67', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-67',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother67.effects('.box-67', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-67',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-67', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-67', { y: 100, duration: 0.5 })
+})
+
+const state67 = Flip.getState('.card-67')
+document.querySelector('.card-67').classList.add('expanded-67')
+Flip.from(state67, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 68 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother68 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-68',
+  content: '#smooth-content-68',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 68
+gsap.to('.box-68', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-68',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother68.effects('.box-68', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-68',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-68', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-68', { y: 100, duration: 0.5 })
+})
+
+const state68 = Flip.getState('.card-68')
+document.querySelector('.card-68').classList.add('expanded-68')
+Flip.from(state68, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 69 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother69 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-69',
+  content: '#smooth-content-69',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 69
+gsap.to('.box-69', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-69',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother69.effects('.box-69', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-69',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-69', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-69', { y: 100, duration: 0.5 })
+})
+
+const state69 = Flip.getState('.card-69')
+document.querySelector('.card-69').classList.add('expanded-69')
+Flip.from(state69, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 70 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother70 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-70',
+  content: '#smooth-content-70',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 70
+gsap.to('.box-70', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-70',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother70.effects('.box-70', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-70',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-70', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-70', { y: 100, duration: 0.5 })
+})
+
+const state70 = Flip.getState('.card-70')
+document.querySelector('.card-70').classList.add('expanded-70')
+Flip.from(state70, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 71 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother71 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-71',
+  content: '#smooth-content-71',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 71
+gsap.to('.box-71', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-71',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother71.effects('.box-71', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-71',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-71', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-71', { y: 100, duration: 0.5 })
+})
+
+const state71 = Flip.getState('.card-71')
+document.querySelector('.card-71').classList.add('expanded-71')
+Flip.from(state71, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 72 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother72 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-72',
+  content: '#smooth-content-72',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 72
+gsap.to('.box-72', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-72',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother72.effects('.box-72', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-72',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-72', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-72', { y: 100, duration: 0.5 })
+})
+
+const state72 = Flip.getState('.card-72')
+document.querySelector('.card-72').classList.add('expanded-72')
+Flip.from(state72, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 73 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother73 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-73',
+  content: '#smooth-content-73',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 73
+gsap.to('.box-73', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-73',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother73.effects('.box-73', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-73',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-73', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-73', { y: 100, duration: 0.5 })
+})
+
+const state73 = Flip.getState('.card-73')
+document.querySelector('.card-73').classList.add('expanded-73')
+Flip.from(state73, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 74 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother74 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-74',
+  content: '#smooth-content-74',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 74
+gsap.to('.box-74', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-74',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother74.effects('.box-74', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-74',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-74', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-74', { y: 100, duration: 0.5 })
+})
+
+const state74 = Flip.getState('.card-74')
+document.querySelector('.card-74').classList.add('expanded-74')
+Flip.from(state74, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 75 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother75 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-75',
+  content: '#smooth-content-75',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 75
+gsap.to('.box-75', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-75',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother75.effects('.box-75', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-75',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-75', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-75', { y: 100, duration: 0.5 })
+})
+
+const state75 = Flip.getState('.card-75')
+document.querySelector('.card-75').classList.add('expanded-75')
+Flip.from(state75, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 76 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother76 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-76',
+  content: '#smooth-content-76',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 76
+gsap.to('.box-76', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-76',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother76.effects('.box-76', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-76',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-76', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-76', { y: 100, duration: 0.5 })
+})
+
+const state76 = Flip.getState('.card-76')
+document.querySelector('.card-76').classList.add('expanded-76')
+Flip.from(state76, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 77 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother77 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-77',
+  content: '#smooth-content-77',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 77
+gsap.to('.box-77', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-77',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother77.effects('.box-77', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-77',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-77', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-77', { y: 100, duration: 0.5 })
+})
+
+const state77 = Flip.getState('.card-77')
+document.querySelector('.card-77').classList.add('expanded-77')
+Flip.from(state77, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 78 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother78 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-78',
+  content: '#smooth-content-78',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 78
+gsap.to('.box-78', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-78',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother78.effects('.box-78', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-78',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-78', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-78', { y: 100, duration: 0.5 })
+})
+
+const state78 = Flip.getState('.card-78')
+document.querySelector('.card-78').classList.add('expanded-78')
+Flip.from(state78, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 79 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother79 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-79',
+  content: '#smooth-content-79',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 79
+gsap.to('.box-79', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-79',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother79.effects('.box-79', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-79',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-79', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-79', { y: 100, duration: 0.5 })
+})
+
+const state79 = Flip.getState('.card-79')
+document.querySelector('.card-79').classList.add('expanded-79')
+Flip.from(state79, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 80 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother80 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-80',
+  content: '#smooth-content-80',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 80
+gsap.to('.box-80', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-80',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother80.effects('.box-80', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-80',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-80', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-80', { y: 100, duration: 0.5 })
+})
+
+const state80 = Flip.getState('.card-80')
+document.querySelector('.card-80').classList.add('expanded-80')
+Flip.from(state80, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 81 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother81 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-81',
+  content: '#smooth-content-81',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 81
+gsap.to('.box-81', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-81',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother81.effects('.box-81', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-81',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-81', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-81', { y: 100, duration: 0.5 })
+})
+
+const state81 = Flip.getState('.card-81')
+document.querySelector('.card-81').classList.add('expanded-81')
+Flip.from(state81, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 82 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother82 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-82',
+  content: '#smooth-content-82',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 82
+gsap.to('.box-82', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-82',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother82.effects('.box-82', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-82',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-82', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-82', { y: 100, duration: 0.5 })
+})
+
+const state82 = Flip.getState('.card-82')
+document.querySelector('.card-82').classList.add('expanded-82')
+Flip.from(state82, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 83 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother83 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-83',
+  content: '#smooth-content-83',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 83
+gsap.to('.box-83', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-83',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother83.effects('.box-83', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-83',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-83', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-83', { y: 100, duration: 0.5 })
+})
+
+const state83 = Flip.getState('.card-83')
+document.querySelector('.card-83').classList.add('expanded-83')
+Flip.from(state83, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 84 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother84 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-84',
+  content: '#smooth-content-84',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 84
+gsap.to('.box-84', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-84',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother84.effects('.box-84', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-84',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-84', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-84', { y: 100, duration: 0.5 })
+})
+
+const state84 = Flip.getState('.card-84')
+document.querySelector('.card-84').classList.add('expanded-84')
+Flip.from(state84, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 85 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother85 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-85',
+  content: '#smooth-content-85',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 85
+gsap.to('.box-85', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-85',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother85.effects('.box-85', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-85',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-85', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-85', { y: 100, duration: 0.5 })
+})
+
+const state85 = Flip.getState('.card-85')
+document.querySelector('.card-85').classList.add('expanded-85')
+Flip.from(state85, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 86 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother86 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-86',
+  content: '#smooth-content-86',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 86
+gsap.to('.box-86', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-86',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother86.effects('.box-86', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-86',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-86', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-86', { y: 100, duration: 0.5 })
+})
+
+const state86 = Flip.getState('.card-86')
+document.querySelector('.card-86').classList.add('expanded-86')
+Flip.from(state86, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 87 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother87 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-87',
+  content: '#smooth-content-87',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 87
+gsap.to('.box-87', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-87',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother87.effects('.box-87', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-87',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-87', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-87', { y: 100, duration: 0.5 })
+})
+
+const state87 = Flip.getState('.card-87')
+document.querySelector('.card-87').classList.add('expanded-87')
+Flip.from(state87, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 88 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother88 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-88',
+  content: '#smooth-content-88',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 88
+gsap.to('.box-88', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-88',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother88.effects('.box-88', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-88',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-88', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-88', { y: 100, duration: 0.5 })
+})
+
+const state88 = Flip.getState('.card-88')
+document.querySelector('.card-88').classList.add('expanded-88')
+Flip.from(state88, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 89 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother89 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-89',
+  content: '#smooth-content-89',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 89
+gsap.to('.box-89', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-89',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother89.effects('.box-89', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-89',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-89', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-89', { y: 100, duration: 0.5 })
+})
+
+const state89 = Flip.getState('.card-89')
+document.querySelector('.card-89').classList.add('expanded-89')
+Flip.from(state89, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 90 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother90 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-90',
+  content: '#smooth-content-90',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 90
+gsap.to('.box-90', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-90',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother90.effects('.box-90', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-90',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-90', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-90', { y: 100, duration: 0.5 })
+})
+
+const state90 = Flip.getState('.card-90')
+document.querySelector('.card-90').classList.add('expanded-90')
+Flip.from(state90, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 91 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother91 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-91',
+  content: '#smooth-content-91',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 91
+gsap.to('.box-91', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-91',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother91.effects('.box-91', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-91',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-91', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-91', { y: 100, duration: 0.5 })
+})
+
+const state91 = Flip.getState('.card-91')
+document.querySelector('.card-91').classList.add('expanded-91')
+Flip.from(state91, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 92 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother92 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-92',
+  content: '#smooth-content-92',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 92
+gsap.to('.box-92', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-92',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother92.effects('.box-92', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-92',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-92', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-92', { y: 100, duration: 0.5 })
+})
+
+const state92 = Flip.getState('.card-92')
+document.querySelector('.card-92').classList.add('expanded-92')
+Flip.from(state92, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 93 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother93 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-93',
+  content: '#smooth-content-93',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 93
+gsap.to('.box-93', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-93',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother93.effects('.box-93', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-93',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-93', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-93', { y: 100, duration: 0.5 })
+})
+
+const state93 = Flip.getState('.card-93')
+document.querySelector('.card-93').classList.add('expanded-93')
+Flip.from(state93, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 94 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother94 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-94',
+  content: '#smooth-content-94',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 94
+gsap.to('.box-94', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-94',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother94.effects('.box-94', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-94',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-94', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-94', { y: 100, duration: 0.5 })
+})
+
+const state94 = Flip.getState('.card-94')
+document.querySelector('.card-94').classList.add('expanded-94')
+Flip.from(state94, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 95 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother95 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-95',
+  content: '#smooth-content-95',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 95
+gsap.to('.box-95', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-95',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother95.effects('.box-95', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-95',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-95', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-95', { y: 100, duration: 0.5 })
+})
+
+const state95 = Flip.getState('.card-95')
+document.querySelector('.card-95').classList.add('expanded-95')
+Flip.from(state95, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 96 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother96 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-96',
+  content: '#smooth-content-96',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 96
+gsap.to('.box-96', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-96',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother96.effects('.box-96', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-96',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-96', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-96', { y: 100, duration: 0.5 })
+})
+
+const state96 = Flip.getState('.card-96')
+document.querySelector('.card-96').classList.add('expanded-96')
+Flip.from(state96, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 97 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother97 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-97',
+  content: '#smooth-content-97',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 97
+gsap.to('.box-97', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-97',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother97.effects('.box-97', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-97',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-97', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-97', { y: 100, duration: 0.5 })
+})
+
+const state97 = Flip.getState('.card-97')
+document.querySelector('.card-97').classList.add('expanded-97')
+Flip.from(state97, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 98 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother98 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-98',
+  content: '#smooth-content-98',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 98
+gsap.to('.box-98', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-98',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother98.effects('.box-98', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-98',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-98', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-98', { y: 100, duration: 0.5 })
+})
+
+const state98 = Flip.getState('.card-98')
+document.querySelector('.card-98').classList.add('expanded-98')
+Flip.from(state98, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 99 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother99 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-99',
+  content: '#smooth-content-99',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 99
+gsap.to('.box-99', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-99',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother99.effects('.box-99', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-99',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-99', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-99', { y: 100, duration: 0.5 })
+})
+
+const state99 = Flip.getState('.card-99')
+document.querySelector('.card-99').classList.add('expanded-99')
+Flip.from(state99, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 100 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother100 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-100',
+  content: '#smooth-content-100',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 100
+gsap.to('.box-100', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-100',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother100.effects('.box-100', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-100',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-100', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-100', { y: 100, duration: 0.5 })
+})
+
+const state100 = Flip.getState('.card-100')
+document.querySelector('.card-100').classList.add('expanded-100')
+Flip.from(state100, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 101 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother101 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-101',
+  content: '#smooth-content-101',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 101
+gsap.to('.box-101', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-101',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother101.effects('.box-101', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-101',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-101', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-101', { y: 100, duration: 0.5 })
+})
+
+const state101 = Flip.getState('.card-101')
+document.querySelector('.card-101').classList.add('expanded-101')
+Flip.from(state101, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 102 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother102 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-102',
+  content: '#smooth-content-102',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 102
+gsap.to('.box-102', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-102',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother102.effects('.box-102', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-102',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-102', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-102', { y: 100, duration: 0.5 })
+})
+
+const state102 = Flip.getState('.card-102')
+document.querySelector('.card-102').classList.add('expanded-102')
+Flip.from(state102, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 103 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother103 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-103',
+  content: '#smooth-content-103',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 103
+gsap.to('.box-103', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-103',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother103.effects('.box-103', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-103',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-103', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-103', { y: 100, duration: 0.5 })
+})
+
+const state103 = Flip.getState('.card-103')
+document.querySelector('.card-103').classList.add('expanded-103')
+Flip.from(state103, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 104 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother104 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-104',
+  content: '#smooth-content-104',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 104
+gsap.to('.box-104', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-104',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother104.effects('.box-104', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-104',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-104', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-104', { y: 100, duration: 0.5 })
+})
+
+const state104 = Flip.getState('.card-104')
+document.querySelector('.card-104').classList.add('expanded-104')
+Flip.from(state104, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 105 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother105 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-105',
+  content: '#smooth-content-105',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 105
+gsap.to('.box-105', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-105',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother105.effects('.box-105', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-105',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-105', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-105', { y: 100, duration: 0.5 })
+})
+
+const state105 = Flip.getState('.card-105')
+document.querySelector('.card-105').classList.add('expanded-105')
+Flip.from(state105, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 106 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother106 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-106',
+  content: '#smooth-content-106',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 106
+gsap.to('.box-106', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-106',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother106.effects('.box-106', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-106',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-106', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-106', { y: 100, duration: 0.5 })
+})
+
+const state106 = Flip.getState('.card-106')
+document.querySelector('.card-106').classList.add('expanded-106')
+Flip.from(state106, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 107 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother107 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-107',
+  content: '#smooth-content-107',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 107
+gsap.to('.box-107', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-107',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother107.effects('.box-107', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-107',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-107', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-107', { y: 100, duration: 0.5 })
+})
+
+const state107 = Flip.getState('.card-107')
+document.querySelector('.card-107').classList.add('expanded-107')
+Flip.from(state107, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 108 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother108 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-108',
+  content: '#smooth-content-108',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 108
+gsap.to('.box-108', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-108',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother108.effects('.box-108', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-108',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-108', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-108', { y: 100, duration: 0.5 })
+})
+
+const state108 = Flip.getState('.card-108')
+document.querySelector('.card-108').classList.add('expanded-108')
+Flip.from(state108, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 109 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother109 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-109',
+  content: '#smooth-content-109',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 109
+gsap.to('.box-109', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-109',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother109.effects('.box-109', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-109',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-109', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-109', { y: 100, duration: 0.5 })
+})
+
+const state109 = Flip.getState('.card-109')
+document.querySelector('.card-109').classList.add('expanded-109')
+Flip.from(state109, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 110 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother110 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-110',
+  content: '#smooth-content-110',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 110
+gsap.to('.box-110', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-110',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother110.effects('.box-110', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-110',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-110', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-110', { y: 100, duration: 0.5 })
+})
+
+const state110 = Flip.getState('.card-110')
+document.querySelector('.card-110').classList.add('expanded-110')
+Flip.from(state110, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 111 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother111 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-111',
+  content: '#smooth-content-111',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 111
+gsap.to('.box-111', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-111',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother111.effects('.box-111', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-111',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-111', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-111', { y: 100, duration: 0.5 })
+})
+
+const state111 = Flip.getState('.card-111')
+document.querySelector('.card-111').classList.add('expanded-111')
+Flip.from(state111, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 112 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother112 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-112',
+  content: '#smooth-content-112',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 112
+gsap.to('.box-112', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-112',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother112.effects('.box-112', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-112',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-112', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-112', { y: 100, duration: 0.5 })
+})
+
+const state112 = Flip.getState('.card-112')
+document.querySelector('.card-112').classList.add('expanded-112')
+Flip.from(state112, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 113 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother113 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-113',
+  content: '#smooth-content-113',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 113
+gsap.to('.box-113', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-113',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother113.effects('.box-113', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-113',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-113', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-113', { y: 100, duration: 0.5 })
+})
+
+const state113 = Flip.getState('.card-113')
+document.querySelector('.card-113').classList.add('expanded-113')
+Flip.from(state113, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 114 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother114 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-114',
+  content: '#smooth-content-114',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 114
+gsap.to('.box-114', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-114',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother114.effects('.box-114', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-114',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-114', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-114', { y: 100, duration: 0.5 })
+})
+
+const state114 = Flip.getState('.card-114')
+document.querySelector('.card-114').classList.add('expanded-114')
+Flip.from(state114, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 115 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother115 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-115',
+  content: '#smooth-content-115',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 115
+gsap.to('.box-115', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-115',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother115.effects('.box-115', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-115',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-115', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-115', { y: 100, duration: 0.5 })
+})
+
+const state115 = Flip.getState('.card-115')
+document.querySelector('.card-115').classList.add('expanded-115')
+Flip.from(state115, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 116 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother116 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-116',
+  content: '#smooth-content-116',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 116
+gsap.to('.box-116', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-116',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother116.effects('.box-116', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-116',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-116', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-116', { y: 100, duration: 0.5 })
+})
+
+const state116 = Flip.getState('.card-116')
+document.querySelector('.card-116').classList.add('expanded-116')
+Flip.from(state116, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 117 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother117 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-117',
+  content: '#smooth-content-117',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 117
+gsap.to('.box-117', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-117',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother117.effects('.box-117', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-117',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-117', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-117', { y: 100, duration: 0.5 })
+})
+
+const state117 = Flip.getState('.card-117')
+document.querySelector('.card-117').classList.add('expanded-117')
+Flip.from(state117, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 118 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother118 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-118',
+  content: '#smooth-content-118',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 118
+gsap.to('.box-118', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-118',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother118.effects('.box-118', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-118',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-118', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-118', { y: 100, duration: 0.5 })
+})
+
+const state118 = Flip.getState('.card-118')
+document.querySelector('.card-118').classList.add('expanded-118')
+Flip.from(state118, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 119 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother119 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-119',
+  content: '#smooth-content-119',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 119
+gsap.to('.box-119', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-119',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother119.effects('.box-119', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-119',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-119', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-119', { y: 100, duration: 0.5 })
+})
+
+const state119 = Flip.getState('.card-119')
+document.querySelector('.card-119').classList.add('expanded-119')
+Flip.from(state119, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 120 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother120 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-120',
+  content: '#smooth-content-120',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 120
+gsap.to('.box-120', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-120',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother120.effects('.box-120', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-120',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-120', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-120', { y: 100, duration: 0.5 })
+})
+
+const state120 = Flip.getState('.card-120')
+document.querySelector('.card-120').classList.add('expanded-120')
+Flip.from(state120, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 121 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother121 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-121',
+  content: '#smooth-content-121',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 121
+gsap.to('.box-121', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-121',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother121.effects('.box-121', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-121',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-121', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-121', { y: 100, duration: 0.5 })
+})
+
+const state121 = Flip.getState('.card-121')
+document.querySelector('.card-121').classList.add('expanded-121')
+Flip.from(state121, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 122 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother122 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-122',
+  content: '#smooth-content-122',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 122
+gsap.to('.box-122', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-122',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother122.effects('.box-122', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-122',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-122', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-122', { y: 100, duration: 0.5 })
+})
+
+const state122 = Flip.getState('.card-122')
+document.querySelector('.card-122').classList.add('expanded-122')
+Flip.from(state122, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 123 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother123 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-123',
+  content: '#smooth-content-123',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 123
+gsap.to('.box-123', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-123',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother123.effects('.box-123', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-123',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-123', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-123', { y: 100, duration: 0.5 })
+})
+
+const state123 = Flip.getState('.card-123')
+document.querySelector('.card-123').classList.add('expanded-123')
+Flip.from(state123, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 124 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother124 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-124',
+  content: '#smooth-content-124',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 124
+gsap.to('.box-124', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-124',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother124.effects('.box-124', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-124',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-124', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-124', { y: 100, duration: 0.5 })
+})
+
+const state124 = Flip.getState('.card-124')
+document.querySelector('.card-124').classList.add('expanded-124')
+Flip.from(state124, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 125 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother125 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-125',
+  content: '#smooth-content-125',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 125
+gsap.to('.box-125', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-125',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother125.effects('.box-125', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-125',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-125', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-125', { y: 100, duration: 0.5 })
+})
+
+const state125 = Flip.getState('.card-125')
+document.querySelector('.card-125').classList.add('expanded-125')
+Flip.from(state125, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 126 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother126 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-126',
+  content: '#smooth-content-126',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 126
+gsap.to('.box-126', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-126',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother126.effects('.box-126', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-126',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-126', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-126', { y: 100, duration: 0.5 })
+})
+
+const state126 = Flip.getState('.card-126')
+document.querySelector('.card-126').classList.add('expanded-126')
+Flip.from(state126, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 127 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother127 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-127',
+  content: '#smooth-content-127',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 127
+gsap.to('.box-127', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-127',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother127.effects('.box-127', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-127',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-127', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-127', { y: 100, duration: 0.5 })
+})
+
+const state127 = Flip.getState('.card-127')
+document.querySelector('.card-127').classList.add('expanded-127')
+Flip.from(state127, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 128 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother128 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-128',
+  content: '#smooth-content-128',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 128
+gsap.to('.box-128', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-128',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother128.effects('.box-128', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-128',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-128', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-128', { y: 100, duration: 0.5 })
+})
+
+const state128 = Flip.getState('.card-128')
+document.querySelector('.card-128').classList.add('expanded-128')
+Flip.from(state128, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 129 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother129 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-129',
+  content: '#smooth-content-129',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 129
+gsap.to('.box-129', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-129',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother129.effects('.box-129', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-129',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-129', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-129', { y: 100, duration: 0.5 })
+})
+
+const state129 = Flip.getState('.card-129')
+document.querySelector('.card-129').classList.add('expanded-129')
+Flip.from(state129, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 130 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother130 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-130',
+  content: '#smooth-content-130',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 130
+gsap.to('.box-130', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-130',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother130.effects('.box-130', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-130',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-130', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-130', { y: 100, duration: 0.5 })
+})
+
+const state130 = Flip.getState('.card-130')
+document.querySelector('.card-130').classList.add('expanded-130')
+Flip.from(state130, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 131 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother131 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-131',
+  content: '#smooth-content-131',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 131
+gsap.to('.box-131', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-131',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother131.effects('.box-131', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-131',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-131', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-131', { y: 100, duration: 0.5 })
+})
+
+const state131 = Flip.getState('.card-131')
+document.querySelector('.card-131').classList.add('expanded-131')
+Flip.from(state131, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 132 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother132 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-132',
+  content: '#smooth-content-132',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 132
+gsap.to('.box-132', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-132',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother132.effects('.box-132', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-132',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-132', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-132', { y: 100, duration: 0.5 })
+})
+
+const state132 = Flip.getState('.card-132')
+document.querySelector('.card-132').classList.add('expanded-132')
+Flip.from(state132, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 133 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother133 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-133',
+  content: '#smooth-content-133',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 133
+gsap.to('.box-133', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-133',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother133.effects('.box-133', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-133',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-133', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-133', { y: 100, duration: 0.5 })
+})
+
+const state133 = Flip.getState('.card-133')
+document.querySelector('.card-133').classList.add('expanded-133')
+Flip.from(state133, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 134 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother134 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-134',
+  content: '#smooth-content-134',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 134
+gsap.to('.box-134', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-134',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother134.effects('.box-134', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-134',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-134', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-134', { y: 100, duration: 0.5 })
+})
+
+const state134 = Flip.getState('.card-134')
+document.querySelector('.card-134').classList.add('expanded-134')
+Flip.from(state134, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 135 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother135 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-135',
+  content: '#smooth-content-135',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 135
+gsap.to('.box-135', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-135',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother135.effects('.box-135', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-135',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-135', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-135', { y: 100, duration: 0.5 })
+})
+
+const state135 = Flip.getState('.card-135')
+document.querySelector('.card-135').classList.add('expanded-135')
+Flip.from(state135, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 136 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother136 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-136',
+  content: '#smooth-content-136',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 136
+gsap.to('.box-136', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-136',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother136.effects('.box-136', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-136',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-136', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-136', { y: 100, duration: 0.5 })
+})
+
+const state136 = Flip.getState('.card-136')
+document.querySelector('.card-136').classList.add('expanded-136')
+Flip.from(state136, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 137 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother137 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-137',
+  content: '#smooth-content-137',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 137
+gsap.to('.box-137', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-137',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother137.effects('.box-137', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-137',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-137', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-137', { y: 100, duration: 0.5 })
+})
+
+const state137 = Flip.getState('.card-137')
+document.querySelector('.card-137').classList.add('expanded-137')
+Flip.from(state137, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 138 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother138 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-138',
+  content: '#smooth-content-138',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 138
+gsap.to('.box-138', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-138',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother138.effects('.box-138', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-138',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-138', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-138', { y: 100, duration: 0.5 })
+})
+
+const state138 = Flip.getState('.card-138')
+document.querySelector('.card-138').classList.add('expanded-138')
+Flip.from(state138, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 139 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother139 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-139',
+  content: '#smooth-content-139',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 139
+gsap.to('.box-139', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-139',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother139.effects('.box-139', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-139',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-139', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-139', { y: 100, duration: 0.5 })
+})
+
+const state139 = Flip.getState('.card-139')
+document.querySelector('.card-139').classList.add('expanded-139')
+Flip.from(state139, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 140 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother140 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-140',
+  content: '#smooth-content-140',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 140
+gsap.to('.box-140', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-140',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother140.effects('.box-140', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-140',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-140', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-140', { y: 100, duration: 0.5 })
+})
+
+const state140 = Flip.getState('.card-140')
+document.querySelector('.card-140').classList.add('expanded-140')
+Flip.from(state140, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 141 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother141 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-141',
+  content: '#smooth-content-141',
+  smooth: 1.1,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 141
+gsap.to('.box-141', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-141',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother141.effects('.box-141', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-141',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-141', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-141', { y: 100, duration: 0.5 })
+})
+
+const state141 = Flip.getState('.card-141')
+document.querySelector('.card-141').classList.add('expanded-141')
+Flip.from(state141, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 142 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother142 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-142',
+  content: '#smooth-content-142',
+  smooth: 1.2,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 142
+gsap.to('.box-142', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-142',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother142.effects('.box-142', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-142',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-142', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-142', { y: 100, duration: 0.5 })
+})
+
+const state142 = Flip.getState('.card-142')
+document.querySelector('.card-142').classList.add('expanded-142')
+Flip.from(state142, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 143 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother143 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-143',
+  content: '#smooth-content-143',
+  smooth: 1.3,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 143
+gsap.to('.box-143', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-143',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother143.effects('.box-143', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-143',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-143', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-143', { y: 100, duration: 0.5 })
+})
+
+const state143 = Flip.getState('.card-143')
+document.querySelector('.card-143').classList.add('expanded-143')
+Flip.from(state143, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 144 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother144 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-144',
+  content: '#smooth-content-144',
+  smooth: 1.4,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 144
+gsap.to('.box-144', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-144',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother144.effects('.box-144', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-144',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-144', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-144', { y: 100, duration: 0.5 })
+})
+
+const state144 = Flip.getState('.card-144')
+document.querySelector('.card-144').classList.add('expanded-144')
+Flip.from(state144, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 145 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother145 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-145',
+  content: '#smooth-content-145',
+  smooth: 1.5,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 145
+gsap.to('.box-145', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-145',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother145.effects('.box-145', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-145',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-145', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-145', { y: 100, duration: 0.5 })
+})
+
+const state145 = Flip.getState('.card-145')
+document.querySelector('.card-145').classList.add('expanded-145')
+Flip.from(state145, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 146 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother146 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-146',
+  content: '#smooth-content-146',
+  smooth: 1.6,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 146
+gsap.to('.box-146', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-146',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother146.effects('.box-146', { speed: 0.6 })
+  }
+})
+
+Observer.create({
+  target: '.section-146',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-146', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-146', { y: 100, duration: 0.5 })
+})
+
+const state146 = Flip.getState('.card-146')
+document.querySelector('.card-146').classList.add('expanded-146')
+Flip.from(state146, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 147 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother147 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-147',
+  content: '#smooth-content-147',
+  smooth: 1.7,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 147
+gsap.to('.box-147', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-147',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother147.effects('.box-147', { speed: 0.7 })
+  }
+})
+
+Observer.create({
+  target: '.section-147',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-147', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-147', { y: 100, duration: 0.5 })
+})
+
+const state147 = Flip.getState('.card-147')
+document.querySelector('.card-147').classList.add('expanded-147')
+Flip.from(state147, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 148 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother148 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-148',
+  content: '#smooth-content-148',
+  smooth: 1.8,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 148
+gsap.to('.box-148', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-148',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother148.effects('.box-148', { speed: 0.8 })
+  }
+})
+
+Observer.create({
+  target: '.section-148',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-148', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-148', { y: 100, duration: 0.5 })
+})
+
+const state148 = Flip.getState('.card-148')
+document.querySelector('.card-148').classList.add('expanded-148')
+Flip.from(state148, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 149 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother149 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-149',
+  content: '#smooth-content-149',
+  smooth: 1.9,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 149
+gsap.to('.box-149', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-149',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother149.effects('.box-149', { speed: 0.9 })
+  }
+})
+
+Observer.create({
+  target: '.section-149',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-149', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-149', { y: 100, duration: 0.5 })
+})
+
+const state149 = Flip.getState('.card-149')
+document.querySelector('.card-149').classList.add('expanded-149')
+Flip.from(state149, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })
+
+--- SMOOTHER PADRÃO 150 ---
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+import ScrollSmoother from 'gsap/ScrollSmoother'
+import Observer from 'gsap/Observer'
+import Flip from 'gsap/Flip'
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, Observer, Flip)
+
+const smoother150 = ScrollSmoother.create({
+  wrapper: '#smooth-wrapper-150',
+  content: '#smooth-content-150',
+  smooth: 1.0,
+  effects: true,
+  normalizeScroll: true
+})
+
+// Parallax 150
+gsap.to('.box-150', {
+  y: 100,
+  scrollTrigger: {
+    trigger: '.box-150',
+    start: 'top bottom',
+    end: 'bottom top',
+    scrub: true,
+    onUpdate: self => smoother150.effects('.box-150', { speed: 0.5 })
+  }
+})
+
+Observer.create({
+  target: '.section-150',
+  type: 'wheel,touch',
+  onDown: ()=> gsap.to('.slide-150', { y: -100, duration: 0.5 }),
+  onUp: ()=> gsap.to('.slide-150', { y: 100, duration: 0.5 })
+})
+
+const state150 = Flip.getState('.card-150')
+document.querySelector('.card-150').classList.add('expanded-150')
+Flip.from(state150, { duration: 0.6, ease: 'power2.inOut', absolute: true, scale: true })

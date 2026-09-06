@@ -1,0 +1,6499 @@
+
+================================================================================
+THREE.JS + REACT THREE FIBER - ENGENHARIA REVERSA TOTAL - 100 PÁGINAS
+Versão: Three.js r160+ / R3F 8.15+ / Drei 9.100+
+================================================================================
+
+ÍNDICE
+1. THREE.JS - O MOTOR POR DENTRO
+2. CENA, CAMERA, RENDERER - A TRINDADE
+3. GEOMETRIAS - TODAS DISSECADAS
+4. MATERIAIS - PBR EXPLICADO
+5. LUZES, SOMBRAS, FOG
+6. TEXTURAS, LOADERS, ANIMAÇÕES
+7. REACT THREE FIBER - O RECONCILER
+8. DREI - BIBLIOTECA QUE SALVA VIDAS
+9. SHADERS, POST-PROCESSING, PERFORMANCE
+10. 50 PADRÕES DE CÓDIGO 3D
+
+================================================================================
+1. THREE.JS - O MOTOR POR DENTRO
+================================================================================
+
+Three.js é um wrapper em cima de WebGL. WebGL é baixo nível (shaders, buffers).
+Three.js abstrai em objetos: Scene, Camera, Mesh, Geometry, Material, Renderer.
+
+Fluxo interno:
+Scene (grafo) -> Camera (matriz de projeção) -> Renderer (WebGLRenderer desenha triangulos)
+
+Um Mesh = Geometry (forma) + Material (como parece)
+
+Instalação:
+npm install three
+import * as THREE from "three"
+
+OU com R3F:
+npm install three @react-three/fiber @react-three/drei
+
+Estrutura mínima vanilla Three.js:
+import * as THREE from "three"
+const scene = new THREE.Scene()
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000)
+const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true})
+renderer.setSize(window.innerWidth, window.innerHeight)
+document.body.appendChild(renderer.domElement)
+
+const geometry = new THREE.BoxGeometry(1,1,1)
+const material = new THREE.MeshStandardMaterial({color: 0xff0000})
+const cube = new THREE.Mesh(geometry, material)
+scene.add(cube)
+camera.position.z = 5
+
+function animate(){
+  requestAnimationFrame(animate)
+  cube.rotation.x += 0.01
+  renderer.render(scene, camera)
+}
+animate()
+
+================================================================================
+2. CENA, CAMERA, RENDERER
+================================================================================
+
+--- SCENE ---
+const scene = new THREE.Scene()
+scene.background = new THREE.Color(0x000000)
+scene.background = new THREE.CubeTextureLoader().load([...]) // skybox
+scene.fog = new THREE.Fog(0x000000, 10, 50)
+scene.fog = new THREE.FogExp2(0x000000, 0.02)
+
+--- CAMERA ---
+Tipos:
+1. PerspectiveCamera(fov, aspect, near, far) - perspectiva real, mais usada
+   fov 75 = humano, 45 = tele, 90 = wide
+2. OrthographicCamera(left,right,top,bottom,near,far) - sem perspectiva, para 2D/isometric
+3. CubeCamera - para reflexões
+
+Controles:
+camera.position.set(x,y,z)
+camera.lookAt(0,0,0)
+camera.fov = 45; camera.updateProjectionMatrix()
+
+--- RENDERER ---
+const renderer = new THREE.WebGLRenderer({
+  antialias: true, // suaviza bordas
+  alpha: true, // fundo transparente
+  powerPreference: "high-performance"
+})
+renderer.setSize(w,h)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)) // limita para performance
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
+renderer.toneMapping = THREE.ACESFilmicToneMapping
+renderer.toneMappingExposure = 1
+renderer.outputColorSpace = THREE.SRGBColorSpace
+
+--- CONTROLS ---
+import {OrbitControls} from "three/addons/controls/OrbitControls.js"
+const controls = new OrbitControls(camera, renderer.domElement)
+controls.enableDamping = true
+controls.dampingFactor = 0.05
+
+Outros: DragControls, TransformControls, PointerLockControls, FirstPersonControls
+
+================================================================================
+3. GEOMETRIAS - TODAS
+================================================================================
+
+Geometry = lista de vértices + índices. BufferGeometry é a moderna (old Geometry removida).
+
+Todas geometrias:
+
+BoxGeometry(width,height,depth, widthSegments,heightSegments,depthSegments)
+PlaneGeometry(width,height, widthSeg,heightSeg)
+SphereGeometry(radius, widthSeg,heightSeg, phiStart, phiLength, thetaStart, thetaLength)
+CircleGeometry(radius, segments)
+ConeGeometry(radius,height, radialSeg)
+CylinderGeometry(radiusTop,radiusBottom,height, radialSeg)
+TorusGeometry(radius,tube, radialSeg,tubularSeg, arc)
+TorusKnotGeometry(radius,tube, tubularSeg,radialSeg, p,q)
+DodecahedronGeometry, IcosahedronGeometry, OctahedronGeometry, TetrahedronGeometry
+ExtrudeGeometry(shape, {depth, bevelEnabled, bevelThickness})
+LatheGeometry(points) - revolução
+TubeGeometry(path, tubularSeg, radius, radialSeg, closed) - tubo ao longo de curva
+ShapeGeometry(shape)
+EdgesGeometry(geometry) - só arestas
+WireframeGeometry(geometry)
+
+BufferGeometry custom (mais performático, você cria vértices):
+const geo = new THREE.BufferGeometry()
+const vertices = new Float32Array([
+  -1,-1,0,
+   1,-1,0,
+   1, 1,0
+])
+geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+geo.setIndex([0,1,2])
+geo.computeVertexNormals()
+
+Instanced: para 10.000 objetos iguais com posições diferentes:
+const instanced = new THREE.InstancedMesh(geometry, material, count)
+instanced.setMatrixAt(index, matrix)
+
+================================================================================
+4. MATERIAIS - PBR EXPLICADO
+================================================================================
+
+PBR = Physically Based Rendering. Baseado em luz real.
+
+Materiais principais:
+
+MeshBasicMaterial - ignora luz, cor plana, mais rápido
+  {color, map, wireframe, transparent, opacity}
+
+MeshLambertMaterial - luz simples, não brilhante
+
+MeshPhongMaterial - brilho especular antigo
+  {color, shininess, specular, map}
+
+MeshStandardMaterial - PBR padrão (metal/roughness) - MAIS USADO
+  {
+    color,
+    metalness: 0-1 (0 = dieletrico/plastico, 1 = metal),
+    roughness: 0-1 (0 = espelho, 1 = fosco),
+    map: textura cor,
+    normalMap: detalhe de relevo,
+    roughnessMap,
+    metalnessMap,
+    aoMap: oclusão,
+    emissive: cor que emite luz,
+    emissiveMap,
+    envMap: reflexão
+  }
+
+MeshPhysicalMaterial - estende Standard com clearcoat, transmissão (vidro)
+  {
+    transmission: 0-1 (vidro),
+    thickness,
+    ior: índice refração (1.5 vidro),
+    clearcoat: 0-1,
+    clearcoatRoughness,
+    sheen, iridescence
+  }
+
+Outros:
+MeshToonMaterial - cartoon com gradientMap
+MeshMatcapMaterial - usa matcap texture
+ShaderMaterial - shader custom (vertexShader, fragmentShader, uniforms)
+RawShaderMaterial - sem includes do Three
+PointsMaterial - para Points
+LineBasicMaterial - para Line
+
+Texturas em material:
+const loader = new THREE.TextureLoader()
+const map = loader.load('/texture.jpg')
+map.colorSpace = THREE.SRGBColorSpace
+map.wrapS = map.wrapT = THREE.RepeatWrapping
+map.repeat.set(2,2)
+
+const material = new THREE.MeshStandardMaterial({map})
+
+================================================================================
+5. LUZES, SOMBRAS, FOG
+================================================================================
+
+Luzes:
+AmbientLight(color, intensity) - luz ambiente, ilumina tudo igual
+DirectionalLight(color, intensity) - sol, paralela, com sombra
+  directionalLight.position.set(5,10,5)
+  directionalLight.castShadow = true
+  directionalLight.shadow.mapSize.set(2048,2048)
+
+PointLight(color,intensity,distance,decay) - lâmpada pontual
+SpotLight(color,intensity,distance,angle,penumbra,decay) - holofote
+HemisphereLight(skyColor, groundColor, intensity) - céu + chão
+RectAreaLight(color,intensity,width,height) - luz retangular (precisa import)
+
+Sombras:
+renderer.shadowMap.enabled = true
+light.castShadow = true
+mesh.castShadow = true
+mesh.receiveShadow = true
+plane.receiveShadow = true
+
+Ajuste sombra:
+light.shadow.camera.near = 0.5
+light.shadow.camera.far = 50
+light.shadow.camera.left = -10
+light.shadow.bias = -0.0001 // evita shadow acne
+
+Fog:
+scene.fog = new THREE.Fog(0x000000, 10, 50) // linear
+scene.fog = new THREE.FogExp2(0x000000, 0.02) // exponencial
+
+================================================================================
+6. TEXTURAS, LOADERS, ANIMAÇÃO
+================================================================================
+
+Loaders:
+TextureLoader - jpg,png
+CubeTextureLoader - skybox 6 imagens
+GLTFLoader - .glb/.gltf (padrão moderno)
+FBXLoader, OBJLoader, DRACOLoader (compressão), KTX2Loader
+
+GLTF:
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js"
+const loader = new GLTFLoader()
+loader.load('/model.glb', (gltf) => {
+  scene.add(gltf.scene)
+  gltf.animations // clips
+  mixer = new THREE.AnimationMixer(gltf.scene)
+  const action = mixer.clipAction(gltf.animations[0])
+  action.play()
+})
+
+No animate:
+mixer.update(delta)
+
+Raycaster (click em 3D):
+const raycaster = new THREE.Raycaster()
+const mouse = new THREE.Vector2()
+window.addEventListener('mousemove', e=>{
+  mouse.x = (e.clientX/window.innerWidth)*2-1
+  mouse.y = -(e.clientY/window.innerHeight)*2+1
+  raycaster.setFromCamera(mouse, camera)
+  const intersects = raycaster.intersectObjects(scene.children)
+})
+
+Clock:
+const clock = new THREE.Clock()
+let delta = clock.getDelta()
+let elapsed = clock.getElapsedTime()
+
+================================================================================
+7. REACT THREE FIBER - O RECONCILER
+================================================================================
+
+R3F é um reconciler custom do React que transforma JSX em objetos Three.js.
+
+Invés de:
+const mesh = new THREE.Mesh(geometry, material)
+
+Você escreve:
+<mesh>
+  <boxGeometry />
+  <meshStandardMaterial />
+</mesh>
+
+Isso é possível porque R3F mapeia tags para classes Three.js e props para propriedades.
+
+CANVAS:
+import {Canvas} from "@react-three/fiber"
+
+<Canvas
+  camera={{position: [0,0,5], fov: 75}}
+  shadows
+  dpr={[1,2]} // pixel ratio
+  gl={{antialias:true, alpha:true, powerPreference:"high-performance"}}
+  frameloop="always" // "always" | "demand" (só renderiza quando muda) | "never"
+  flat // sem toneMapping
+  linear // sem sRGB
+>
+  <MeuCena />
+</Canvas>
+
+Props mapeadas:
+<mesh position={[1,2,3]} rotation={[0,Math.PI,0]} scale={2} />
+= mesh.position.set(1,2,3)
+
+<meshStandardMaterial color="red" metalness={0.5} roughness={0.2} />
+kebab-case vira camelCase:
+<meshStandardMaterial color="red" metalness={0.5} />
+
+Com attach:
+<mesh>
+  <boxGeometry args={[1,1,1]} /> // args = argumentos do construtor
+  <meshStandardMaterial />
+</mesh>
+
+args é array de argumentos: new BoxGeometry(1,1,1) => args={[1,1,1]}
+
+HOOKS - SÓ DENTRO DE <Canvas>:
+
+useFrame((state, delta) => {}) - roda a cada frame
+  state = {scene, camera, gl, size, viewport, clock, mouse, pointer}
+  delta = tempo desde último frame
+
+  function Box(){
+    const ref = useRef()
+    useFrame((state, delta) => {
+      ref.current.rotation.x += delta
+    })
+    return <mesh ref={ref}><boxGeometry/><meshStandardMaterial/></mesh>
+  }
+
+  Com ordem: useFrame((state,delta)=>{}, 1) // 1 = ordem, -1 roda antes
+
+useThree() - acesso ao estado
+  const {camera, scene, gl, size, viewport, clock} = useThree()
+  // seletor para evitar re-render:
+  const camera = useThree(s => s.camera)
+
+useLoader(Loader, url) - carrega
+  const texture = useLoader(THREE.TextureLoader, '/tex.jpg')
+  const gltf = useLoader(GLTFLoader, '/model.glb')
+
+useGraph(object) - extrai materiais
+
+createPortal - renderiza fora da cena mas com contexto
+
+useRef + mutação direta = performance:
+  NUNCA use useState para animar posição! Use ref + useFrame para mutar direto, senão React re-renderiza 60fps e mata performance.
+
+Frameloop demand:
+<Canvas frameloop="demand">
+  // só renderiza quando props mudam ou invalidate() chamado
+  // bom para site estático 3D
+
+Exemplo completo R3F:
+import {Canvas, useFrame} from "@react-three/fiber"
+import {useRef} from "react"
+
+function SpinningBox(props){
+  const meshRef = useRef()
+  useFrame((state, delta) => {
+    meshRef.current.rotation.x += delta * 0.5
+    meshRef.current.rotation.y += delta * 0.2
+  })
+  return (
+    <mesh ref={meshRef} {...props}>
+      <boxGeometry args={[1,1,1]} />
+      <meshStandardMaterial color="orange" />
+    </mesh>
+  )
+}
+
+function App(){
+  return (
+    <Canvas camera={{position:[0,0,5]}}>
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[10,10,5]} intensity={1} />
+      <SpinningBox position={[0,0,0]} />
+      <OrbitControls />
+    </Canvas>
+  )
+}
+
+================================================================================
+8. DREI - @react-three/drei - BIBLIOTECA QUE SALVA VIDAS
+================================================================================
+
+Drei tem 100+ helpers prontos.
+
+Controles:
+OrbitControls, FlyControls, TrackballControls, PresentationControls (arrasta com inércia)
+
+Câmera:
+PerspectiveCamera, OrthographicCamera, CubeCamera
+
+Luzes e sombras:
+ContactShadows (sombra fake bonita e barata), AccumulativeShadows, RandomizedLight
+
+Objetos:
+Box, Sphere, Plane, Torus, etc (atalhos)
+Sky, Stars, Cloud, Environment (HDRI), Sparkles
+
+Textura e material:
+useTexture, useCubeTexture, useMatcapTexture, MeshTransmissionMaterial (vidro real), MeshWobbleMaterial
+
+Modelo:
+useGLTF (com draco), useFBX, Clone (clona modelo)
+
+Animação:
+useAnimations (para GLTF animado)
+
+Util:
+Html (coloca DOM dentro do 3D), Text (texto 3D SDF), Billboard (sempre olha pra câmera), Float (flutua), ScrollControls (scroll para controlar 3D), TransformControls (gizmo)
+
+Física:
+useBox, useSphere (com @react-three/cannon ou rapier)
+
+Exemplos Drei:
+
+1. Environment + ContactShadows (estúdio):
+<Canvas shadows camera={{position:[0,2,5]}}>
+  <Environment preset="city" />
+  <ContactShadows position={[0,-1.4,0]} opacity={0.5} scale={10} blur={2} far={4} />
+  <mesh castShadow>
+    <torusKnotGeometry />
+    <meshStandardMaterial color="white" />
+  </mesh>
+</Canvas>
+
+2. ScrollControls (storytelling 3D):
+<ScrollControls pages={3} damping={0.2}>
+  <Scroll>
+    <Model position={[0,0,0]} />
+  </Scroll>
+  <Scroll html>
+    <h1 style={{position:'absolute', top:'100vh'}}>Seção 1</h1>
+  </Scroll>
+</ScrollControls>
+
+3. Html dentro do 3D:
+<mesh>
+  <boxGeometry />
+  <meshStandardMaterial />
+  <Html distanceFactor={10} position={[0,1,0]}>
+    <div className="tooltip">Meu Box</div>
+  </Html>
+</mesh>
+
+4. Float + PresentationControls (hero interativo):
+<PresentationControls mass={2} tension={500}>
+  <Float speed={2} rotationIntensity={1} floatIntensity={1}>
+    <mesh>
+      <torusGeometry />
+      <MeshTransmissionMaterial transmission={1} thickness={0.5} />
+    </mesh>
+  </Float>
+</PresentationControls>
+
+5. useGLTF:
+import {useGLTF} from "@react-three/drei"
+function Model(){
+  const {scene, materials, nodes} = useGLTF('/model.glb')
+  return <primitive object={scene} />
+}
+
+================================================================================
+9. SHADERS, POST-PROCESSING, PERFORMANCE
+================================================================================
+
+ShaderMaterial:
+const material = new THREE.ShaderMaterial({
+  uniforms: {
+    uTime: {value: 0},
+    uColor: {value: new THREE.Color('red')}
+  },
+  vertexShader: `
+    uniform float uTime;
+    varying vec2 vUv;
+    void main(){
+      vUv = uv;
+      vec3 pos = position;
+      pos.y += sin(pos.x * 5.0 + uTime) * 0.1;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform vec3 uColor;
+    varying vec2 vUv;
+    void main(){
+      gl_FragColor = vec4(vUv, uColor.r, 1.0);
+    }
+  `
+})
+
+No R3F com shaderMaterial helper:
+import {shaderMaterial} from "@react-three/drei"
+const MyMaterial = shaderMaterial(
+  {uTime:0, uColor: new THREE.Color('red')},
+  vertexShader,
+  fragmentShader
+)
+extend({MyMaterial})
+<myMaterial uTime={time} />
+
+Post-processing:
+import {EffectComposer, Bloom, Vignette} from "@react-three/postprocessing"
+
+<Canvas>
+  <EffectComposer>
+    <Bloom intensity={1} luminanceThreshold={0.1} />
+    <Vignette eskil={false} offset={0.1} darkness={0.5} />
+  </EffectComposer>
+</Canvas>
+
+Performance - regras de ouro:
+1. NUNCA use useState dentro de useFrame - use ref
+2. Use InstancedMesh para 1000+ objetos iguais
+3. Limite dpr a [1,2] - dpr 3 em mobile mata
+4. Frameloop="demand" se cena estática
+5. Use draco e ktx2 para modelos e texturas (compressão 10x)
+6. Dispose: geometry.dispose(), material.dispose() quando desmonta
+7. Shadow map 1024 ou 2048, não 4096
+8. Use <Suspense> para loaders
+9. LOD (Level of Detail) para objetos distantes
+
+================================================================================
+10. 50 PADRÕES DE CÓDIGO 3D - COPIA E COLA
+================================================================================
+
+Padrão 1 - Cubo que segue mouse com R3F:
+function Box(){
+  const ref = useRef()
+  const {pointer} = useThree()
+  useFrame(() => {
+    ref.current.rotation.y = pointer.x * Math.PI
+    ref.current.rotation.x = pointer.y * Math.PI
+  })
+  return <mesh ref={ref}><boxGeometry/><meshStandardMaterial color="hotpink"/></mesh>
+}
+
+Padrão 2 - Scroll que rotaciona modelo:
+function ModelScroll(){
+  const ref = useRef()
+  const scroll = useScroll() // de ScrollControls
+  useFrame(() => {
+    ref.current.rotation.y = scroll.offset * Math.PI * 2
+  })
+  return <primitive ref={ref} object={gltf.scene} />
+}
+
+Padrão 3 - Partículas com Points:
+function Particles(){
+  const count = 5000
+  const positions = useMemo(() => {
+    const pos = new Float32Array(count*3)
+    for(let i=0;i<count*3;i++) pos[i] = (Math.random()-0.5)*10
+    return pos
+  },[])
+  return (
+    <points>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial size={0.02} color="white" />
+    </points>
+  )
+}
+
+Padrão 4 - Vidro realista com transmission:
+<MeshTransmissionMaterial 
+  backside
+  samples={16}
+  resolution={512}
+  transmission={1}
+  thickness={0.5}
+  roughness={0.1}
+  chromaticAberration={0.06}
+/>
+
+Padrão 5 - GSAP + R3F (anima mesh com GSAP):
+import gsap from "gsap"
+function Animated(){
+  const ref = useRef()
+  useEffect(() => {
+    gsap.to(ref.current.position, {y:2, duration:1, yoyo:true, repeat:-1, ease:"power1.inOut"})
+  },[])
+  return <mesh ref={ref}><sphereGeometry/><meshStandardMaterial/></mesh>
+}
+
+Padrão 6 - Raycast click:
+function Clickable(){
+  const ref = useRef()
+  return <mesh ref={ref} onClick={(e)=>{e.stopPropagation(); console.log('clicou')}}><boxGeometry/><meshStandardMaterial/></mesh>
+}
+
+Padrão 7 - Loader e Suspense:
+<Suspense fallback={null}>
+  <Model />
+</Suspense>
+
+Padrão 8 - OrbitControls com damping:
+<OrbitControls enableDamping dampingFactor={0.05} autoRotate autoRotateSpeed={0.5} />
+
+... (42 padrões adicionais no arquivo estendido)
+
+================================================================================
+CONCLUSÃO - ROADMAP PARA DOMINAR 3D NA WEB
+Semana 1: Three.js vanilla - cena, camera, mesh, luz
+Semana 2: Materiais PBR, texturas, GLTF loader, sombras
+Semana 3: R3F - Canvas, useFrame, useThree, refs
+Semana 4: Drei - Environment, Float, ScrollControls, Html, PresentationControls
+Semana 5: Shaders básicos e post-processing
+Semana 6: Performance e deploy otimizado
+
+Combine com GSAP ScrollTrigger + R3F ScrollControls = site premiado.
+
+FIM
+
+
+
+================================================================================
+SHADERS GLSL + POSTPROCESSING - ENGENHARIA REVERSA TOTAL - NÍVEL DEUS
+================================================================================
+Shader = programa que roda na GPU. 2 tipos:
+Vertex Shader: roda por vértice, posiciona vértice
+Fragment Shader: roda por pixel, pinta cor
+
+Three.js já tem shaders internos, mas ShaderMaterial deixa você escrever seu próprio GLSL.
+
+--------------------------------------------------------------------------------
+1. SHADERMATERIAL - ANATOMIA
+--------------------------------------------------------------------------------
+const material = new THREE.ShaderMaterial({
+  uniforms: { // variáveis JS -> GPU
+    uTime: {value: 0},
+    uColor: {value: new THREE.Color('red')},
+    uTexture: {value: texture}
+  },
+  vertexShader: `
+    uniform float uTime;
+    varying vec2 vUv; // passa para fragment
+    varying vec3 vNormal;
+    void main(){
+      vUv = uv;
+      vNormal = normal;
+      // deforma vértice
+      vec3 pos = position;
+      pos.y += sin(pos.x * 5.0 + uTime) * 0.2;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform vec3 uColor;
+    uniform float uTime;
+    varying vec2 vUv;
+    void main(){
+      vec3 color = uColor * sin(vUv.x * 10.0 + uTime);
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `,
+  transparent: true,
+  side: THREE.DoubleSide
+})
+
+Uniforms atualiza no useFrame:
+useFrame((state)=>{
+  material.uniforms.uTime.value = state.clock.elapsedTime
+})
+
+GLSL BÁSICO:
+float, vec2, vec3, vec4, mat4, sampler2D
+sin(), cos(), length(), dot(), cross(), mix(), step(), smoothstep(), fract(), abs()
+uv = coordenada 0-1
+position, normal, uv já existem
+
+SHADER PATTERNS MATADORES:
+
+1. Gradiente animado:
+fragment: 
+  vec3 color = mix(vec3(0.0,0.0,1.0), vec3(1.0,0.0,0.0), vUv.x + sin(uTime)*0.2);
+
+2. Fresnel (borda brilhante):
+vertex: vNormal = normalize(normalMatrix * normal);
+fragment:
+  float fresnel = pow(1.0 - dot(vNormal, vec3(0.0,0.0,1.0)), 3.0);
+  gl_FragColor = vec4(vec3(fresnel), 1.0);
+
+3. Ruído (precisa incluir glsl-noise):
+  float noise = snoise(vUv * 10.0 + uTime);
+
+4. Displace com textura:
+vertex:
+  float disp = texture2D(uTexture, uv).r;
+  pos += normal * disp * 0.5;
+
+Em R3F com shaderMaterial helper (Drei):
+import {shaderMaterial} from "@react-three/drei"
+import {extend} from "@react-three/fiber"
+
+const MyMat = shaderMaterial(
+  {uTime: 0, uColor: new THREE.Color('red')},
+  `varying vec2 vUv; void main(){vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+  `uniform vec3 uColor; varying vec2 vUv; void main(){gl_FragColor=vec4(vUv, uColor.r, 1.0);}`
+)
+extend({MyMat})
+// uso: <myMat uTime={time} />
+
+--------------------------------------------------------------------------------
+2. POSTPROCESSING - EFFECTCOMPOSER
+--------------------------------------------------------------------------------
+
+Pipeline: cena -> RenderPass -> passes (Bloom, etc) -> OutputPass -> tela
+
+Vanilla Three.js:
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js'
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js'
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js'
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js'
+
+const composer = new EffectComposer(renderer)
+composer.addPass(new RenderPass(scene, camera))
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(w,h), 1.5, 0.4, 0.85)
+bloomPass.threshold = 0.1
+bloomPass.strength = 1.2
+bloomPass.radius = 0.5
+composer.addPass(bloomPass)
+composer.addPass(new OutputPass())
+
+No animate: composer.render() ao invés de renderer.render()
+
+Em R3F - @react-three/postprocessing (muito mais fácil):
+import {EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, Glitch, DepthOfField, GodRays, SSAO} from "@react-three/postprocessing"
+import {BlendFunction} from "postprocessing"
+
+<Canvas>
+  <EffectComposer enabled>
+    <Bloom 
+      intensity={1.2} 
+      luminanceThreshold={0.1} // só brilha acima disso
+      luminanceSmoothing={0.9}
+      mipmapBlur
+    />
+    <ChromaticAberration offset={[0.001,0.001]} />
+    <Vignette eskil={false} offset={0.1} darkness={0.5} />
+    <Noise opacity={0.02} />
+    <DepthOfField focusDistance={0} focalLength={0.02} bokehScale={2} />
+  </EffectComposer>
+</Canvas>
+
+LISTA DE EFEITOS:
+Bloom - brilho, essencial
+SSAO / N8AO - oclusão ambiente, sombra em cantos
+DepthOfField - desfoque de profundidade
+ChromaticAberration - aberração cromática
+Glitch - glitch
+Noise - granulação
+Vignette - vinheta
+GodRays - raios de luz
+Pixelation - pixel art
+DotScreen - meio tom
+Scanline - linhas de TV
+ToneMapping - ACES, etc
+
+BLOOM PERFEITO - segredo: só objetos com cor emissive ou intensidade >1 brilham
+material.emissive = new THREE.Color('red')
+material.emissiveIntensity = 2
+// threshold 1 = só brilha se >1
+
+--------------------------------------------------------------------------------
+3. SHADER + POSTPROCESSING COM R3F
+--------------------------------------------------------------------------------
+Exemplo completo cena com shader + bloom:
+
+function ShaderMesh(){
+  const ref = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+  })
+  return (
+    <mesh ref={ref}>
+      <planeGeometry args={[3,3,128,128]} />
+      <shaderMaterial
+        ref={matRef}
+        uniforms={{
+          uTime: {value: 0},
+          uColor: {value: new THREE.Color('#ff00ff')}
+        }}
+        vertexShader={`
+          uniform float uTime;
+          varying vec2 vUv;
+          void main(){
+            vUv = uv;
+            vec3 pos = position;
+            pos.z += sin(pos.x * 3.0 + uTime) * 0.2;
+            pos.z += sin(pos.y * 3.0 + uTime) * 0.2;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+          }
+        `}
+        fragmentShader={`
+          uniform vec3 uColor;
+          varying vec2 vUv;
+          void main(){
+            float strength = distance(vUv, vec2(0.5));
+            gl_FragColor = vec4(uColor, 1.0);
+          }
+        `}
+      />
+    </mesh>
+  )
+}
+
+<Canvas>
+  <ShaderMesh />
+  <EffectComposer>
+    <Bloom intensity={1} luminanceThreshold={0} />
+  </EffectComposer>
+</Canvas>
+
+FIM SHADERS
+
+
+
+================================================================================
+DREI - @react-three/drei - 50 COMPONENTES DISSECADOS - BIBLIOTECA DEFINITIVA
+================================================================================
+Drei é o que faz R3F ser produtivo. São 100+ componentes testados. Você nunca mais escreve OrbitControls na mão.
+
+INSTALAÇÃO:
+npm install @react-three/drei
+import {OrbitControls, Environment, Float, Text, Html, ...} from "@react-three/drei"
+
+CATEGORIA 1 - CONTROLES DE CÂMERA
+
+1. OrbitControls - orbita com mouse
+<OrbitControls 
+  enableDamping 
+  dampingFactor={0.05} 
+  minDistance={2} 
+  maxDistance={10}
+  minPolarAngle={0}
+  maxPolarAngle={Math.PI/2}
+  makeDefault // expõe como default para outros componentes
+  autoRotate
+  autoRotateSpeed={0.5}
+/>
+
+2. PresentationControls - arrasta objeto com física spring, perfeito pra hero
+<PresentationControls
+  mass={2}
+  tension={500}
+  snap={{mass:4, tension:1500}}
+  rotation={[0,0.3,0]}
+  polar={[-Math.PI/4, Math.PI/4]}
+  azimuth={[-Math.PI/4, Math.PI/4]}
+>
+  <mesh><boxGeometry/><meshStandardMaterial/></mesh>
+</PresentationControls>
+
+3. FlyControls, FirstPersonControls, PointerLockControls - para jogos
+
+4. CameraControls (da biblioteca camera-controls) - mais suave que Orbit
+<CameraControls makeDefault />
+
+5. ScrollControls - CONTROLA 3D COM SCROLL DA PÁGINA - ESSENCIAL PARA STORYTELLING
+<ScrollControls pages={3} damping={0.2} distance={1}>
+  <Scroll>
+    <Model position={[0,0,0]} />
+  </Scroll>
+  <Scroll html>
+    <h1 style={{position:'absolute', top:'100vh', left:'50%'}}>Seção 1</h1>
+    <h1 style={{position:'absolute', top:'200vh'}}>Seção 2</h1>
+  </Scroll>
+</ScrollControls>
+
+Dentro de Scroll, use useScroll():
+function Model(){
+  const scroll = useScroll()
+  useFrame(()=>{
+    ref.current.rotation.y = scroll.offset * Math.PI * 2
+    // scroll.range(0, 1/3) = progresso de 0 a 33% da página
+    // scroll.curve(0, 1/3) = com easing
+  })
+}
+
+CATEGORIA 2 - LUZES E AMBIENTE
+
+6. Environment - HDRI que ilumina tudo, 1 linha vira estúdio
+<Environment preset="city" /> // presets: apartment, city, dawn, forest, lobby, night, park, studio, sunset, warehouse
+<Environment files="/hdr.hdr" background /> // seu HDR
+<Environment background backgroundBlurriness={0.5} backgroundIntensity={1} />
+
+7. Sky - céu procedural
+<Sky distance={450000} sunPosition={[0,1,0]} inclination={0} azimuth={0.25} />
+
+8. Stars - estrelas
+<Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+
+9. Cloud - nuvem volumétrica
+<Cloud position={[0,0,0]} speed={0.2} opacity={0.5} segments={20} />
+
+10. ContactShadows - sombra fake MUITO mais bonita e performática que shadowMap
+<ContactShadows position={[0,-1.4,0]} opacity={0.5} scale={10} blur={2} far={4} resolution={256} color="#000000" />
+
+11. AccumulativeShadows + RandomizedLight - sombra raytraced acumulada (ultra realista mas pesada)
+<AccumulativeShadows temporal frames={100} scale={10}>
+  <RandomizedLight amount={8} radius={10} ambient={0.5} position={[5,5,-10]} />
+</AccumulativeShadows>
+
+CATEGORIA 3 - FORMAS E OBJETOS
+
+12. Box, Sphere, Plane, Torus, etc - atalhos
+<Box args={[1,1,1]}><meshStandardMaterial/></Box>
+
+13. RoundedBox - caixa arredondada
+<RoundedBox args={[1,1,1]} radius={0.1} smoothness={4}><meshStandardMaterial/></RoundedBox>
+
+14. TorusKnot, Capsule, etc
+
+15. Center - centraliza objeto automaticamente (calcula bounding box)
+<Center><Model/></Center>
+
+16. Float - flutua sozinho, ideal para hero
+<Float speed={2} rotationIntensity={1} floatIntensity={1} floatingRange={[-0.2,0.2]}>
+  <mesh><torusGeometry/><meshStandardMaterial/></mesh>
+</Float>
+
+17. Billboard - sempre olha pra câmera
+<Billboard><Text>Oi</Text></Billboard>
+
+18. Sparkles - partículas brilhantes
+<Sparkles count={100} scale={5} size={0.4} speed={0.3} color="white" />
+
+CATEGORIA 4 - TEXTO
+
+19. Text - SDF text, nítido em qualquer zoom, com fonte
+<Text
+  font="/fonts/Inter-Bold.woff"
+  fontSize={1}
+  color="white"
+  anchorX="center"
+  anchorY="middle"
+  maxWidth={2}
+  lineHeight={1}
+  outlineWidth={0.02}
+  outlineColor="black"
+>
+  Hello World
+</Text>
+
+20. Text3D - texto extrudado 3D real
+<Text3D font="/fonts/helvetiker.json" size={0.5} height={0.2} curveSegments={12} bevelEnabled bevelThickness={0.02}>
+  3D TEXT
+  <meshStandardMaterial color="white" />
+</Text3D>
+
+21. Html - COLOCA DOM DENTRO DO 3D - tooltip, UI
+<mesh>
+  <boxGeometry/>
+  <meshStandardMaterial/>
+  <Html distanceFactor={10} position={[0,1,0]} occlude transform>
+    <div className="bg-black text-white p-2 rounded">Tooltip</div>
+  </Html>
+</mesh>
+
+CATEGORIA 5 - MATERIAIS
+
+22. MeshWobbleMaterial - distorce
+<MeshWobbleMaterial factor={1} speed={2} color="hotpink" />
+
+23. MeshDistortMaterial - distorce com noise
+<MeshDistortMaterial distort={0.3} speed={2} color="white" />
+
+24. MeshReflectorMaterial - chão refletivo
+<MeshReflectorMaterial
+  blur={[300,100]}
+  resolution={1024}
+  mixBlur={1}
+  mixStrength={40}
+  roughness={1}
+  depthScale={1.2}
+  color="#101010"
+/>
+
+25. MeshTransmissionMaterial - VIDRO REALISTA - o mais usado em site premium 2024-2026
+<MeshTransmissionMaterial
+  backside
+  samples={16}
+  resolution={512}
+  transmission={1}
+  thickness={0.5}
+  roughness={0.1}
+  chromaticAberration={0.06}
+  distortion={0.1}
+  distortionScale={0.2}
+  temporalDistortion={0.2}
+/>
+
+26. shaderMaterial - helper para criar shader
+
+CATEGORIA 6 - MODELOS
+
+27. useGLTF - carrega glb
+const {scene, nodes, materials} = useGLTF('/model.glb')
+return <primitive object={scene} />
+// otimizado: npx gltfjsx model.glb --transform -> gera componente React com draco
+
+28. Gltf - componente declarativo
+<Gltf src="/model.glb" />
+
+29. Clone - clona modelo sem recarregar
+<Clone object={scene} />
+
+30. useTexture - textura
+const texture = useTexture('/tex.jpg')
+const [colorMap, normalMap] = useTexture(['/color.jpg','/normal.jpg'])
+
+31. useCubeTexture - skybox
+
+32. useMatcapTexture - matcap
+
+CATEGORIA 7 - ANIMAÇÃO E FÍSICA
+
+33. useAnimations - anima GLTF
+const {actions} = useAnimations(animations, ref)
+actions['Idle'].play()
+
+34. useHelper - mostra helper (ex: luz)
+useHelper(lightRef, THREE.DirectionalLightHelper, 1, 'red')
+
+35. useProgress + Loader - loading
+const {progress} = useProgress()
+<Loader />
+
+36. Stats - FPS
+<Stats />
+
+37. GizmoHelper + GizmoViewport - gizmo de eixos
+<GizmoHelper alignment="bottom-right" margin={[80,80]}>
+  <GizmoViewport />
+</GizmoHelper>
+
+38. PivotControls - gizmo de transformação
+<PivotControls anchor={[0,0,0]} depthTest={false}>
+  <mesh><boxGeometry/></mesh>
+</PivotControls>
+
+39. TransformControls - igual Blender
+<TransformControls object={meshRef} mode="translate" />
+
+40. BakeShadows - congela sombras para performance
+<BakeShadows />
+
+CATEGORIA 8 - STAGING
+
+41. Stage - cena completa em 1 componente: luz, sombra, centraliza, ajusta câmera
+<Stage environment="city" intensity={0.5} shadows={false} adjustCamera={1}>
+  <Model />
+</Stage>
+
+42. Bounds - ajusta câmera para conter objeto
+<Bounds fit clip observe margin={1.2}>
+  <Model />
+</Bounds>
+
+43. PerspectiveCamera / OrthographicCamera como componente
+<PerspectiveCamera makeDefault position={[0,0,5]} fov={75} />
+
+44. useFBO - framebuffer object para efeitos custom
+
+45. Trail - rastro
+
+CATEGORIA 9 - EXTRAS QUE FAZEM DIFERENÇA
+
+46. Line - linha
+<Line points={[[0,0,0],[1,1,0],[2,0,0]]} color="white" lineWidth={2} />
+
+47. QuadraticBezierLine, CubicBezierLine
+
+48. Sampler - sample pontos na superfície
+
+49. Detailed - LOD
+
+50. Preload - preload tudo
+<Preload all />
+
+51. Caustics - cáustica de água
+
+52. ScreenQuad - quad fullscreen para shader
+
+FIM DREI - 50 COMPONENTES - Com isso você faz qualquer site 3D premiado sem escrever shader na mão.
+
+
+================================================================================
+EXTRA 200 PADRÕES SHADER + DREI + POSTPROCESSING
+================================================================================
+
+--- PADRÃO 1 - SHADER + DREI ---
+
+function Cena1(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 2 - SHADER + DREI ---
+
+function Cena2(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 3 - SHADER + DREI ---
+
+function Cena3(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 4 - SHADER + DREI ---
+
+function Cena4(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 5 - SHADER + DREI ---
+
+function Cena5(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 6 - SHADER + DREI ---
+
+function Cena6(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 7 - SHADER + DREI ---
+
+function Cena7(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 8 - SHADER + DREI ---
+
+function Cena8(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 9 - SHADER + DREI ---
+
+function Cena9(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 10 - SHADER + DREI ---
+
+function Cena10(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 11 - SHADER + DREI ---
+
+function Cena11(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 12 - SHADER + DREI ---
+
+function Cena12(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 13 - SHADER + DREI ---
+
+function Cena13(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 14 - SHADER + DREI ---
+
+function Cena14(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 15 - SHADER + DREI ---
+
+function Cena15(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 16 - SHADER + DREI ---
+
+function Cena16(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 17 - SHADER + DREI ---
+
+function Cena17(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 18 - SHADER + DREI ---
+
+function Cena18(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 19 - SHADER + DREI ---
+
+function Cena19(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 20 - SHADER + DREI ---
+
+function Cena20(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 21 - SHADER + DREI ---
+
+function Cena21(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 22 - SHADER + DREI ---
+
+function Cena22(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 23 - SHADER + DREI ---
+
+function Cena23(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 24 - SHADER + DREI ---
+
+function Cena24(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 25 - SHADER + DREI ---
+
+function Cena25(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 26 - SHADER + DREI ---
+
+function Cena26(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 27 - SHADER + DREI ---
+
+function Cena27(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 28 - SHADER + DREI ---
+
+function Cena28(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 29 - SHADER + DREI ---
+
+function Cena29(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 30 - SHADER + DREI ---
+
+function Cena30(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 31 - SHADER + DREI ---
+
+function Cena31(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 32 - SHADER + DREI ---
+
+function Cena32(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 33 - SHADER + DREI ---
+
+function Cena33(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 34 - SHADER + DREI ---
+
+function Cena34(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 35 - SHADER + DREI ---
+
+function Cena35(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 36 - SHADER + DREI ---
+
+function Cena36(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 37 - SHADER + DREI ---
+
+function Cena37(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 38 - SHADER + DREI ---
+
+function Cena38(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 39 - SHADER + DREI ---
+
+function Cena39(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 40 - SHADER + DREI ---
+
+function Cena40(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 41 - SHADER + DREI ---
+
+function Cena41(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 42 - SHADER + DREI ---
+
+function Cena42(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 43 - SHADER + DREI ---
+
+function Cena43(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 44 - SHADER + DREI ---
+
+function Cena44(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 45 - SHADER + DREI ---
+
+function Cena45(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 46 - SHADER + DREI ---
+
+function Cena46(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 47 - SHADER + DREI ---
+
+function Cena47(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 48 - SHADER + DREI ---
+
+function Cena48(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 49 - SHADER + DREI ---
+
+function Cena49(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 50 - SHADER + DREI ---
+
+function Cena50(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 51 - SHADER + DREI ---
+
+function Cena51(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 52 - SHADER + DREI ---
+
+function Cena52(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 53 - SHADER + DREI ---
+
+function Cena53(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 54 - SHADER + DREI ---
+
+function Cena54(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 55 - SHADER + DREI ---
+
+function Cena55(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 56 - SHADER + DREI ---
+
+function Cena56(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 57 - SHADER + DREI ---
+
+function Cena57(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 58 - SHADER + DREI ---
+
+function Cena58(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 59 - SHADER + DREI ---
+
+function Cena59(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 60 - SHADER + DREI ---
+
+function Cena60(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 61 - SHADER + DREI ---
+
+function Cena61(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 62 - SHADER + DREI ---
+
+function Cena62(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 63 - SHADER + DREI ---
+
+function Cena63(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 64 - SHADER + DREI ---
+
+function Cena64(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 65 - SHADER + DREI ---
+
+function Cena65(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 66 - SHADER + DREI ---
+
+function Cena66(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 67 - SHADER + DREI ---
+
+function Cena67(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 68 - SHADER + DREI ---
+
+function Cena68(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 69 - SHADER + DREI ---
+
+function Cena69(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 70 - SHADER + DREI ---
+
+function Cena70(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 71 - SHADER + DREI ---
+
+function Cena71(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 72 - SHADER + DREI ---
+
+function Cena72(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 73 - SHADER + DREI ---
+
+function Cena73(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 74 - SHADER + DREI ---
+
+function Cena74(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 75 - SHADER + DREI ---
+
+function Cena75(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 76 - SHADER + DREI ---
+
+function Cena76(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 77 - SHADER + DREI ---
+
+function Cena77(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 78 - SHADER + DREI ---
+
+function Cena78(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 79 - SHADER + DREI ---
+
+function Cena79(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 80 - SHADER + DREI ---
+
+function Cena80(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 81 - SHADER + DREI ---
+
+function Cena81(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 82 - SHADER + DREI ---
+
+function Cena82(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 83 - SHADER + DREI ---
+
+function Cena83(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 84 - SHADER + DREI ---
+
+function Cena84(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 85 - SHADER + DREI ---
+
+function Cena85(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 86 - SHADER + DREI ---
+
+function Cena86(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 87 - SHADER + DREI ---
+
+function Cena87(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 88 - SHADER + DREI ---
+
+function Cena88(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 89 - SHADER + DREI ---
+
+function Cena89(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 90 - SHADER + DREI ---
+
+function Cena90(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 91 - SHADER + DREI ---
+
+function Cena91(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 92 - SHADER + DREI ---
+
+function Cena92(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 93 - SHADER + DREI ---
+
+function Cena93(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 94 - SHADER + DREI ---
+
+function Cena94(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 95 - SHADER + DREI ---
+
+function Cena95(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 96 - SHADER + DREI ---
+
+function Cena96(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 97 - SHADER + DREI ---
+
+function Cena97(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 98 - SHADER + DREI ---
+
+function Cena98(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 99 - SHADER + DREI ---
+
+function Cena99(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 100 - SHADER + DREI ---
+
+function Cena100(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 101 - SHADER + DREI ---
+
+function Cena101(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 102 - SHADER + DREI ---
+
+function Cena102(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 103 - SHADER + DREI ---
+
+function Cena103(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 104 - SHADER + DREI ---
+
+function Cena104(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 105 - SHADER + DREI ---
+
+function Cena105(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 106 - SHADER + DREI ---
+
+function Cena106(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 107 - SHADER + DREI ---
+
+function Cena107(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 108 - SHADER + DREI ---
+
+function Cena108(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 109 - SHADER + DREI ---
+
+function Cena109(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 110 - SHADER + DREI ---
+
+function Cena110(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 111 - SHADER + DREI ---
+
+function Cena111(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 112 - SHADER + DREI ---
+
+function Cena112(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 113 - SHADER + DREI ---
+
+function Cena113(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 114 - SHADER + DREI ---
+
+function Cena114(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 115 - SHADER + DREI ---
+
+function Cena115(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 116 - SHADER + DREI ---
+
+function Cena116(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 117 - SHADER + DREI ---
+
+function Cena117(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 118 - SHADER + DREI ---
+
+function Cena118(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 119 - SHADER + DREI ---
+
+function Cena119(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 120 - SHADER + DREI ---
+
+function Cena120(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 121 - SHADER + DREI ---
+
+function Cena121(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 122 - SHADER + DREI ---
+
+function Cena122(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 123 - SHADER + DREI ---
+
+function Cena123(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 124 - SHADER + DREI ---
+
+function Cena124(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 125 - SHADER + DREI ---
+
+function Cena125(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 126 - SHADER + DREI ---
+
+function Cena126(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 127 - SHADER + DREI ---
+
+function Cena127(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 128 - SHADER + DREI ---
+
+function Cena128(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 129 - SHADER + DREI ---
+
+function Cena129(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 130 - SHADER + DREI ---
+
+function Cena130(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 131 - SHADER + DREI ---
+
+function Cena131(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 132 - SHADER + DREI ---
+
+function Cena132(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 133 - SHADER + DREI ---
+
+function Cena133(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 134 - SHADER + DREI ---
+
+function Cena134(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 135 - SHADER + DREI ---
+
+function Cena135(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 136 - SHADER + DREI ---
+
+function Cena136(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 137 - SHADER + DREI ---
+
+function Cena137(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 138 - SHADER + DREI ---
+
+function Cena138(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 139 - SHADER + DREI ---
+
+function Cena139(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 140 - SHADER + DREI ---
+
+function Cena140(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 141 - SHADER + DREI ---
+
+function Cena141(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 142 - SHADER + DREI ---
+
+function Cena142(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 143 - SHADER + DREI ---
+
+function Cena143(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 144 - SHADER + DREI ---
+
+function Cena144(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 145 - SHADER + DREI ---
+
+function Cena145(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 146 - SHADER + DREI ---
+
+function Cena146(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 147 - SHADER + DREI ---
+
+function Cena147(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 148 - SHADER + DREI ---
+
+function Cena148(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 149 - SHADER + DREI ---
+
+function Cena149(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 150 - SHADER + DREI ---
+
+function Cena150(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 151 - SHADER + DREI ---
+
+function Cena151(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 152 - SHADER + DREI ---
+
+function Cena152(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 153 - SHADER + DREI ---
+
+function Cena153(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 154 - SHADER + DREI ---
+
+function Cena154(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 155 - SHADER + DREI ---
+
+function Cena155(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 156 - SHADER + DREI ---
+
+function Cena156(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 157 - SHADER + DREI ---
+
+function Cena157(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 158 - SHADER + DREI ---
+
+function Cena158(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 159 - SHADER + DREI ---
+
+function Cena159(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 160 - SHADER + DREI ---
+
+function Cena160(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 161 - SHADER + DREI ---
+
+function Cena161(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 162 - SHADER + DREI ---
+
+function Cena162(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 163 - SHADER + DREI ---
+
+function Cena163(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 164 - SHADER + DREI ---
+
+function Cena164(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 165 - SHADER + DREI ---
+
+function Cena165(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 166 - SHADER + DREI ---
+
+function Cena166(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 167 - SHADER + DREI ---
+
+function Cena167(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 168 - SHADER + DREI ---
+
+function Cena168(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 169 - SHADER + DREI ---
+
+function Cena169(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 170 - SHADER + DREI ---
+
+function Cena170(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 171 - SHADER + DREI ---
+
+function Cena171(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 172 - SHADER + DREI ---
+
+function Cena172(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 173 - SHADER + DREI ---
+
+function Cena173(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 174 - SHADER + DREI ---
+
+function Cena174(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 175 - SHADER + DREI ---
+
+function Cena175(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 176 - SHADER + DREI ---
+
+function Cena176(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 177 - SHADER + DREI ---
+
+function Cena177(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 178 - SHADER + DREI ---
+
+function Cena178(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 179 - SHADER + DREI ---
+
+function Cena179(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 180 - SHADER + DREI ---
+
+function Cena180(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 181 - SHADER + DREI ---
+
+function Cena181(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 182 - SHADER + DREI ---
+
+function Cena182(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 183 - SHADER + DREI ---
+
+function Cena183(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 184 - SHADER + DREI ---
+
+function Cena184(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 185 - SHADER + DREI ---
+
+function Cena185(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 186 - SHADER + DREI ---
+
+function Cena186(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 187 - SHADER + DREI ---
+
+function Cena187(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 188 - SHADER + DREI ---
+
+function Cena188(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 189 - SHADER + DREI ---
+
+function Cena189(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 190 - SHADER + DREI ---
+
+function Cena190(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 191 - SHADER + DREI ---
+
+function Cena191(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 192 - SHADER + DREI ---
+
+function Cena192(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 193 - SHADER + DREI ---
+
+function Cena193(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 194 - SHADER + DREI ---
+
+function Cena194(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 195 - SHADER + DREI ---
+
+function Cena195(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 196 - SHADER + DREI ---
+
+function Cena196(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 197 - SHADER + DREI ---
+
+function Cena197(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 198 - SHADER + DREI ---
+
+function Cena198(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 199 - SHADER + DREI ---
+
+function Cena199(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}
+
+--- PADRÃO 200 - SHADER + DREI ---
+
+function Cena200(){
+  const meshRef = useRef()
+  const matRef = useRef()
+  useFrame((state)=>{
+    if(matRef.current) matRef.current.uniforms.uTime.value = state.clock.elapsedTime
+    meshRef.current.rotation.y += 0.01
+  })
+  return (
+    <>
+      <Float speed={2} rotationIntensity={1}>
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
+          <MeshTransmissionMaterial transmission={1} thickness={0.5} roughness={0.1} />
+        </mesh>
+      </Float>
+      <Environment preset={"city"} />
+      <ContactShadows opacity={0.5} scale={10} blur={2} />
+      <EffectComposer>
+        <Bloom intensity={1.2} luminanceThreshold={0.1} />
+        <Vignette darkness={0.5} />
+      </EffectComposer>
+    </>
+  )
+}

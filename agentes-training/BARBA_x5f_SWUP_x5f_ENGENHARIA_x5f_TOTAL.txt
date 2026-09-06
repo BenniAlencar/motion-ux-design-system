@@ -1,0 +1,105 @@
+
+================================================================================
+BARBA.JS + SWUP - PAGE TRANSITIONS - ENGENHARIA REVERSA TOTAL - 2026
+Transição fluida entre páginas sem reload - Padrão Awwwards
+================================================================================
+
+O QUE É:
+Barba.js e Swup fazem SPA sem framework: interceptam clique em <a>, carregam próxima página via fetch, e animam transição (fade, slide, morph). Mantém SEO, mas com UX de app.
+
+BARBA.JS v2:
+npm install @barba/core
+import barba from '@barba/core'
+import gsap from 'gsap'
+
+barba.init({
+  transitions: [{
+    name: 'fade',
+    leave(data){
+      return gsap.to(data.current.container, { opacity: 0, duration: 0.5 })
+    },
+    enter(data){
+      return gsap.from(data.next.container, { opacity: 0, duration: 0.5 })
+    }
+  }],
+  views: [{
+    namespace: 'home',
+    beforeEnter(){ console.log('entrou home') },
+    afterEnter(){ ScrollTrigger.refresh() }
+  }]
+})
+
+HTML:
+<body data-barba="wrapper">
+  <main data-barba="container" data-barba-namespace="home">
+    Conteúdo
+  </main>
+</body>
+
+Com GSAP + ScrollTrigger:
+barba.init({
+  transitions: [{
+    leave(data){
+      return gsap.to(data.current.container, { y: -100, opacity: 0, duration: 0.6, ease: 'power2.in' })
+    },
+    enter(data){
+      window.scrollTo(0,0)
+      return gsap.from(data.next.container, { y: 100, opacity: 0, duration: 0.6, ease: 'power2.out' })
+    }
+  }]
+})
+
+SWUP v4 (mais moderno, menor):
+npm install swup
+import Swup from 'swup'
+import SwupGsapPlugin from '@swup/gsap-plugin'
+
+const swup = new Swup({
+  containers: ['#swup'],
+  plugins: [new SwupGsapPlugin()]
+})
+
+HTML:
+<main id="swup" class="transition-fade">Conteúdo</main>
+
+CSS:
+.transition-fade { transition: opacity 0.4s; }
+html.is-animating .transition-fade { opacity: 0 }
+
+Com GSAP:
+import Swup from 'swup'
+const swup = new Swup()
+
+swup.hooks.on('animation:out:start', ()=>{
+  gsap.to('#swup', { opacity: 0, duration: 0.5 })
+})
+
+swup.hooks.on('animation:in:start', ()=>{
+  gsap.from('#swup', { opacity: 0, y: 50, duration: 0.5 })
+  ScrollTrigger.refresh()
+})
+
+NEXT.JS - Page transitions nativas (sem Barba/Swup):
+// app/template.tsx
+'use client'
+import { motion, AnimatePresence } from 'motion/react'
+export default function Template({ children }){
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={pathname}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.5 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
+RECOMENDAÇÃO 2026:
+- Site estático/multi-page? Swup (mais leve, moderno)
+- Site com transições complexas? Barba.js
+- Next.js? Use template.tsx + Motion AnimatePresence (nativo, sem lib)
