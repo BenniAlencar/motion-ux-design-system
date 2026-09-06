@@ -1,0 +1,205 @@
+version: 1
+status: proposed
+repository: BenniAlencar/motion-ux-design-system
+training_root: agentes-training
+cross_cutting_sources:
+  - path: agentes-training/BENNI_x5f_MASTER_x5f_OS_x5f_V10_x5f_ARTE_x5f_SUPREMA_x5f_SEM_x5f_DEPENDENCIAS.txt
+    role: operating-principles
+  - path: agentes-training/BENNI_x5f_MASTER_x5f_OS_x5f_V10_x5f_ULTRA_x5f_200_x5f_PADROES.txt
+    role: cross-cutting-patterns
+  - path: agentes-training/CODIGOS_x5f_SECRETOS_x5f_DOMINAM_x5f_TUDO_x5f_V11.txt
+    role: cross-cutting-patterns
+  - path: agentes-training/PACOTE_x5f_DOMINA_x5f_TUDO_x5f_V11_x5f_FINAL.txt
+    role: cross-cutting-knowledge
+  - path: agentes-training/PACOTE_x5f_FINAL_x5f_DEDUPLICADO_x5f_V3.txt
+    role: deduplicated-cross-cutting-knowledge
+  - path: agentes-training/SHOPIFY_x5f_EDITIONS_x5f_WINTER26_x5f_ULTRA_x5f_200_x5f_PADROES_x5f_LIMPO.txt
+    role: product-and-ux-patterns
+  - path: agentes-training/SHOPIFY_x5f_EDITIONS_x5f_WINTER26_x5f_ACIMA_x5f_AWWWARDS_x5f_LIMPO.txt
+    role: visual-patterns
+skills:
+  accessibility-a11y:
+    status: proposed
+    sources: []
+  animejs:
+    status: proposed
+    sources:
+      - path: agentes-training/ANIMEJS_x5f_V4_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/ANIMEJS_x5f_V4_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  asset-gate:
+    status: proposed
+    sources: []
+  barba:
+    status: proposed
+    sources:
+      - path: agentes-training/BARBA_x5f_SWUP_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/BARBA_x5f_SWUP_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  curtains:
+    status: proposed
+    sources: []
+  flip:
+    status: proposed
+    sources:
+      - path: agentes-training/SCROLLSMOOTHER_x5f_OBSERVER_x5f_FLIP_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/SCROLLSMOOTHER_x5f_OBSERVER_x5f_FLIP_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  gsap-scrolltrigger:
+    status: proposed
+    sources:
+      - path: agentes-training/GSAP_x5f_ENGENHARIA_x5f_REVERSA_x5f_ULTRA_x5f_100_x5f_PAGINAS (7).txt
+        role: primary
+      - path: agentes-training/SCROLLTRIGGER_x5f_ENGENHARIA_x5f_REVERSA_x5f_TOTAL (6).txt
+        role: engineering
+  lenis:
+    status: proposed
+    sources:
+      - path: agentes-training/LENIS-COMETA-REVERSA-TOTAL-100-PAGINAS (2).txt
+        role: primary
+      - path: agentes-training/LENIS-ENGENHARIA-REVERSA-100-PAGINAS.txt
+        role: engineering
+      - path: agentes-training/LENIS_x5f_100_x5f_PAGINAS.txt
+        role: reference
+      - path: agentes-training/LENIS_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+      - path: agentes-training/lenis-engenharia-reversa-completa.txt
+        role: reference
+  locomotive-scroll:
+    status: proposed
+    sources:
+      - path: agentes-training/LOCOMOTIVE_x5f_SCROLL_x5f_100_x5f_PAGINAS (1).txt
+        role: primary
+  lottiefiles:
+    status: proposed
+    sources:
+      - path: agentes-training/LOTTIEFILES_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/LOTTIEFILES_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  lygia:
+    status: proposed
+    sources:
+      - path: agentes-training/LYGIA_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/LYGIA_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  motion-framer:
+    status: proposed
+    sources:
+      - path: agentes-training/MOTION_x5f_ENGENHARIA_x5f_REVERSA_x5f_100_x5f_PAGINAS (2).txt
+        role: primary
+  observer:
+    status: proposed
+    sources:
+      - path: agentes-training/SCROLLSMOOTHER_x5f_OBSERVER_x5f_FLIP_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/SCROLLSMOOTHER_x5f_OBSERVER_x5f_FLIP_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  ogl:
+    status: proposed
+    sources:
+      - path: agentes-training/PIXI_x5f_OGL_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/PIXI_x5f_OGL_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  p5js:
+    status: proposed
+    sources:
+      - path: agentes-training/RAPIER_x5f_P5_x5f_100_x5f_PAGINAS.txt
+        role: related
+  performance-budget:
+    status: proposed
+    sources: []
+  pixi:
+    status: proposed
+    sources:
+      - path: agentes-training/PIXI_x5f_OGL_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/PIXI_x5f_OGL_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  quality-gate:
+    status: proposed
+    sources: []
+  r3f-threejs-drei:
+    status: proposed
+    sources:
+      - path: agentes-training/THREEJS_x5f_R3F_x5f_DREI_x5f_SHADERS_x5f_ULTRA_x5f_100_x5f_PAGINAS (4).txt
+        role: primary
+      - path: agentes-training/TEMPLATE_x5f_PREMIADO_x5f_GSAP_x5f_R3F_x5f_SHADERS (3).txt
+        role: implementation-template
+  rapier:
+    status: proposed
+    sources:
+      - path: agentes-training/RAPIER_x5f_P5_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/RAPIER_x5f_P5_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  rive:
+    status: proposed
+    sources:
+      - path: agentes-training/RIVE_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/RIVE_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  scrollsmoother:
+    status: proposed
+    sources:
+      - path: agentes-training/SCROLLSMOOTHER_x5f_OBSERVER_x5f_FLIP_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/SCROLLSMOOTHER_x5f_OBSERVER_x5f_FLIP_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  spline-runtime:
+    status: proposed
+    sources:
+      - path: agentes-training/SPLINE_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/SPLINE_x5f_RUNTIME_x5f_VIEWER_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  swup:
+    status: proposed
+    sources:
+      - path: agentes-training/BARBA_x5f_SWUP_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/BARBA_x5f_SWUP_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  theatrejs:
+    status: proposed
+    sources:
+      - path: agentes-training/THEATREJS_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/THEATREJS_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  tonejs:
+    status: proposed
+    sources:
+      - path: agentes-training/TONEJS_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/TONEJS_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  webgpu-gpgpu:
+    status: proposed
+    sources:
+      - path: agentes-training/WEBGPU_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/WEBGPU_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  webgpu-wgsl-tsl:
+    status: proposed
+    sources:
+      - path: agentes-training/WEBGPU_x5f_100_x5f_PAGINAS.txt
+        role: primary
+      - path: agentes-training/WEBGPU_x5f_ENGENHARIA_x5f_TOTAL.txt
+        role: engineering
+  cerebro-orquestrador:
+    status: proposed
+    sources:
+      - path: agentes-training/BENNI_x5f_MASTER_x5f_OS_x5f_V10_x5f_ULTRA_x5f_200_x5f_PADROES.txt
+        role: operating-system-patterns
+      - path: agentes-training/CODIGOS_x5f_SECRETOS_x5f_DOMINAM_x5f_TUDO_x5f_V11.txt
+        role: operating-system-patterns
+      - path: agentes-training/README.md
+        role: training-index
