@@ -1,0 +1,259 @@
+# Cerebro - Output Contract
+
+response:
+  type: object
+  required:
+    - intent_classification
+    - selected_skills
+    - execution_plan
+    - asset_gate_report
+  properties:
+    intent_classification:
+      type: object
+      properties:
+        intent_type:
+          type: string
+          enum: [hero_scroll, landing, hero_3d, microinteraction, site_completo, page_transition, generative, audio_interactive]
+        surface:
+          type: string
+          enum: [hero, section, page, site_completo]
+        audience:
+          type: string
+        constraints:
+          type: array
+          items:
+            type: string
+        narrative:
+          type: array
+          items:
+            type: object
+            properties:
+              act:
+                type: string
+              scroll_range:
+                type: string
+              elements:
+                type: array
+                items:
+                  type: string
+    
+    selected_skills:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          type:
+            type: string
+            enum: [primary, secondary, required]
+          weight:
+            type: number
+            minimum: 0
+            maximum: 1
+    
+    execution_plan:
+      type: array
+      items:
+        type: object
+        properties:
+          step:
+            type: number
+          skill:
+            type: string
+          action:
+            type: string
+          output:
+            type: string
+          dependencies:
+            type: array
+            items:
+              type: object
+              properties:
+                step:
+                  type: number
+    
+    asset_gate_report:
+      type: object
+      properties:
+        asset_state:
+          type: string
+          enum: [provided, pending, placeholder_only]
+        delivery_state:
+          type: string
+          enum: [final, prototype, blocked]
+        blocking_assets:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              status:
+                type: string
+              required_for:
+                type: string
+              instructions:
+                type: string
+        asset_instructions:
+          type: string
+          description: "Instrucoes claras para o usuario enviar assets faltantes"
+    
+    quality_state:
+      type: object
+      properties:
+        functional:
+          type: string
+          enum: [pass, fail]
+        performance:
+          type: string
+          enum: [pass, fail]
+        accessibility:
+          type: string
+          enum: [pass, pass_with_warnings, fail]
+        motion:
+          type: string
+          enum: [pass, fail]
+        visual:
+          type: string
+          enum: [pass, fail]
+    
+    acceptance:
+      type: object
+      properties:
+        met:
+          type: boolean
+        warnings:
+          type: array
+          items:
+            type: string
+    
+    delivery_state:
+      type: string
+      enum: [final, prototype, blocked]
+    
+    next_action:
+      type: string
+      description: "Proximo passo claro para o usuario"
+    
+    run_snapshot:
+      type: object
+      properties:
+        trace_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        project:
+          type: string
+        skills_used:
+          type: array
+          items:
+            type: string
+        approved_by:
+          type: string
+        approved_at:
+          type: string
+          format: date-time
+
+# Exemplo de resposta
+example:
+  intent_classification:
+    intent_type: hero_scroll
+    surface: hero
+    audience: "pt-BR, mobile/desktop"
+    constraints:
+      - "performance_budget: 16ms p95"
+      - "a11y_target: AA"
+      - "motion_policy: full + reduced"
+    narrative:
+      - act: introducao
+        scroll_range: "0-0.3"
+        elements: [hero_title, hero_subtitle]
+      - act: revelacao
+        scroll_range: "0.3-0.7"
+        elements: [product_grid, feature_cards]
+      - act: climax
+        scroll_range: "0.7-1.0"
+        elements: [cta, social_proof]
+  
+  selected_skills:
+    - name: gsap-scrolltrigger
+      type: primary
+      weight: 1.0
+    - name: lenis
+      type: primary
+      weight: 1.0
+    - name: accessibility-a11y
+      type: secondary
+      weight: 0.8
+    - name: performance-budget
+      type: secondary
+      weight: 0.8
+    - name: asset-gate
+      type: required
+      weight: 1.0
+    - name: quality-gate
+      type: required
+      weight: 1.0
+  
+  execution_plan:
+    - step: 1
+      skill: gsap-scrolltrigger
+      action: generate_motion_plan
+      output: motion_plan.yaml
+      dependencies: []
+    - step: 2
+      skill: lenis
+      action: integrate_scroll
+      output: lenis_integration.ts
+      dependencies: [{step: 1}]
+  
+  asset_gate_report:
+    asset_state: asset_pending
+    delivery_state: prototype
+    blocking_assets:
+      - type: logo
+        status: missing
+        required_for: final_delivery
+        instructions: "Enviar logo em SVG ou PNG (min 500x500, fundo transparente)"
+      - type: images
+        status: missing
+        required_for: final_delivery
+        count: 3
+        instructions: "Enviar 3 imagens conforme especificacoes"
+    asset_instructions: |
+      "Para entrega final, enviar:
+       1. Logo em SVG ou PNG (min 500x500, fundo transparente)
+       2. 3 imagens (hero bg + 2 product shots)
+       3. Confirmar fonte: Inter (Google Fonts)"
+  
+  quality_state:
+    functional: pass
+    performance: pass
+    accessibility: pass_with_warnings
+    motion: pass
+    visual: pass
+  
+  acceptance:
+    met: true
+    warnings:
+      - "Contraste 4.2:1 em texto secundario (aceito pelo cliente)"
+  
+  delivery_state: prototype
+  next_action: "Aguardar logo e imagens para final delivery"
+  
+  run_snapshot:
+    trace_id: trace_001_cerebro
+    timestamp: "2026-09-05T23:30:00Z"
+    project: "Minha Landing"
+    skills_used:
+      - cerebro-orquestrador
+      - gsap-scrolltrigger
+      - lenis
+      - accessibility-a11y
+      - performance-budget
+      - asset-gate
+      - quality-gate
+    approved_by: "Benni Alencar"
+    approved_at: "2026-09-05T23:30:00Z"
