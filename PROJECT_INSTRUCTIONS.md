@@ -6,6 +6,62 @@ Este repositorio e um **sistema de skills dedicadas para design de sites e UI/UX
 
 **Nao e** um runtime Python/Node independente. O "runtime" e a IDE/agente que carrega e executa as instrucoes das skills.
 
+## CARREGAMENTO AUTOMATICO OBRIGATORIO
+
+**IMPORTANTE:** Em TODA solicitacao do usuario, a IDE/agente DEVE:
+
+1. **Ler automaticamente TODAS as skills** do diretorio `skills/` antes de responder
+2. **Nao esperar** que o usuario especifique qual skill usar
+3. **Nao carregar apenas o cerebro** — todo o sistema de skills deve estar disponivel
+4. **Indexar skills por keywords** listadas em cada `SKILL.md` (campo `activation.keywords`)
+5. **Selecionar skills relevantes** baseado na intencao do usuario
+
+### Exemplo de Fluxo Automatico
+
+```
+[IDE carrega automaticamente]
+├── skills/cerebro-orquestrador/SKILL.md
+├── skills/gsap-scrolltrigger/SKILL.md
+├── skills/lenis/SKILL.md
+├── skills/r3f-threejs-drei/SKILL.md
+├── skills/spline-runtime/SKILL.md
+├── skills/rive/SKILL.md
+├── skills/lottiefiles/SKILL.md
+├── skills/webgpu-gpgpu/SKILL.md
+├── skills/lygia/SKILL.md
+├── skills/accessibility-a11y/SKILL.md
+├── skills/performance-budget/SKILL.md
+├── skills/asset-gate/SKILL.md
+├── skills/quality-gate/SKILL.md
+├── skills/scrollsmoother/SKILL.md
+├── skills/observer/SKILL.md
+├── skills/flip/SKILL.md
+├── skills/motion-framer/SKILL.md
+├── skills/locomotive-scroll/SKILL.md
+├── skills/animejs/SKILL.md
+├── skills/theatrejs/SKILL.md
+├── skills/barba/SKILL.md
+├── skills/swup/SKILL.md
+├── skills/pixi/SKILL.md
+├── skills/ogl/SKILL.md
+├── skills/curtains/SKILL.md
+├── skills/tonejs/SKILL.md
+├── skills/rapier/SKILL.md
+├── skills/p5js/SKILL.md
+└── skills/webgpu-wgsl-tsl/SKILL.md
+
+[Usuario faz pedido]
+→ "Quero um hero com scroll que revela produtos"
+
+[IDE automaticamente]
+1. Cerebro classifica: intent = hero_scroll
+2. Skills selecionadas: gsap-scrolltrigger, lenis, accessibility-a11y, performance-budget
+3. Executa workflow de cada skill
+4. Asset Gate verifica assets
+5. Quality Gate valida
+6. Entrega resultado
+```
+
 ## Principios
 
 1. **Skills dedicadas** - Cada skill e independente e especializada
@@ -15,14 +71,38 @@ Este repositorio e um **sistema de skills dedicadas para design de sites e UI/UX
 5. **Fallback sempre** - Toda skill deve ter fallback para browsers/devices limitados
 6. **Asset Gate antes de entrega** - Verificar assets antes de declarar entrega final
 7. **Quality Gate antes de publicar** - QA, acceptance, evidence, rollback
+8. **CARREGAMENTO AUTOMATICO** - TODAS as skills devem ser lidas em TODA solicitacao
 
 ## Como Usar em uma IDE
 
-### Passo 1: Carregar Cerebro
+### Passo 0: Carregamento Automatico (OBRIGATORIO)
 
-Sempre carregue `skills/cerebro-orquestrador/SKILL.md` primeiro. O cerebro:
+**ANTES de processar qualquer pedido do usuario:**
+
+```pseudo
+function onRequest(userRequest):
+  // 1. Ler TODAS as skills automaticamente
+  allSkills = readDirectory("skills/")
+  
+  // 2. Para cada skill, ler SKILL.md e extrair keywords
+  for skill in allSkills:
+    skillManifest = readFile(skill + "/SKILL.md")
+    skill.keywords = parseKeywords(skillManifest)
+    skill.agents = readFile(skill + "/AGENTS.md")
+    skill.workflow = readFile(skill + "/WORKFLOW.md")
+  
+  // 3. Indexar skills por keywords
+  keywordIndex = buildKeywordIndex(allSkills)
+  
+  // 4. Agora processar o pedido do usuario
+  return processRequest(userRequest, keywordIndex)
+```
+
+### Passo 1: Cerebro Classifica
+
+O cerebro-orquestrador:
 - Classifica a intencao do usuario
-- Seleciona skills relevantes
+- Seleciona skills relevantes baseado em keywords
 - Cria plano de execucao
 - Coordena asset gate e quality gate
 
@@ -130,6 +210,8 @@ Toda entrega deve ter rollback plan:
 ## Exemplo de Uso
 
 ```
+[IDE carrega automaticamente todas as 26 skills]
+
 User: "Quero um hero com scroll que revela produtos"
 
 1. Cerebro classifica: intent = hero_scroll
@@ -159,6 +241,7 @@ Para adicionar uma nova skill:
 4. Adicionar PATTERNS.md, IMPLEMENTATION.md, QUALITY_GATE.md, EVALS.md
 5. Adicionar exemplos em `skills/<skill-slug>/examples/`
 6. Atualizar README.md com nova skill
+7. **IMPORTANTE:** Adicionar keywords em `activation.keywords` no SKILL.md para indexacao automatica
 
 ## License
 

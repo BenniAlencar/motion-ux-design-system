@@ -10,9 +10,11 @@ activation:
     - orquestrador
     - router
     - classifier
+    - orchestrator
   routes:
     - core
   priority: 1
+  auto_load: true
 outputs:
   - intent_classification
   - selected_skills
@@ -24,7 +26,17 @@ outputs:
 
 ## Funcao
 
-Primeira skill a ser carregada. Classifica a intencao do usuario e seleciona as skills especializadas para executar o trabalho.
+**PRIMEIRA skill a ser carregada automaticamente em TODA solicitacao.**
+
+O cerebro classifica a intencao do usuario e seleciona as skills especializadas para executar o trabalho.
+
+## CARREGAMENTO AUTOMATICO
+
+A IDE/agente DEVE:
+1. Carregar cerebro-orquestrador automaticamente em TODA solicitacao
+2. Ler TODAS as outras skills do diretorio `skills/` automaticamente
+3. Indexar skills por keywords (`activation.keywords`)
+4. Nao esperar instrucao explicita do usuario para carregar skills
 
 ## Enxame de Agentes
 
@@ -58,3 +70,23 @@ Primeira skill a ser carregada. Classifica a intencao do usuario e seleciona as 
 ## Contratos
 
 Ver INPUT_CONTRACT.yaml e OUTPUT_CONTRACT.yaml para schema completo.
+
+## Exemplo de Fluxo
+
+```
+[IDE carrega automaticamente]
+→ skills/cerebro-orquestrador/SKILL.md
+→ skills/gsap-scrolltrigger/SKILL.md
+→ skills/lenis/SKILL.md
+→ ... (todas as 26 skills)
+
+[Usuario]
+→ "Quero um hero com scroll que revela produtos"
+
+[Cerebro]
+→ intent_type: hero_scroll
+→ selected_skills: [gsap-scrolltrigger, lenis, accessibility-a11y, performance-budget]
+→ asset_state: asset_pending (logo, imagens)
+→ delivery_state: prototype
+→ next_action: "Aguardar logo e imagens para final delivery"
+```
