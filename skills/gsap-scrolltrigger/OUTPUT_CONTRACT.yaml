@@ -1,0 +1,133 @@
+# GSAP ScrollTrigger - Output Contract
+
+response:
+  type: object
+  required:
+    - triggers
+    - timeline
+    - implementation_code
+    - reduced_motion_css
+    - performance_report
+  properties:
+    triggers:
+      type: array
+      items:
+        type: object
+        properties:
+          element:
+            type: string
+          trigger:
+            type: string
+          start:
+            type: string
+          end:
+            type: string
+          scrub:
+            oneOf:
+              - type: boolean
+              - type: number
+          pin:
+            type: boolean
+          animation:
+            type: object
+    
+    timeline:
+      type: object
+      properties:
+        duration_total:
+          type: string
+        easing:
+          type: string
+        stagger:
+          type: object
+        reduced_motion:
+          type: object
+    
+    implementation_code:
+      type: string
+      description: "Codigo Next.js/React completo"
+    
+    reduced_motion_css:
+      type: string
+      description: "CSS para prefers-reduced-motion"
+    
+    performance_report:
+      type: object
+      properties:
+        layout_thrashing:
+          type: boolean
+        paint_heavy:
+          type: boolean
+        pin_count:
+          type: number
+        mobile_fps_estimate:
+          type: number
+        recommendations:
+          type: array
+          items:
+            type: string
+    
+    accessibility_report:
+      type: object
+      properties:
+        reduced_motion:
+          type: string
+          enum: [pass, fail]
+        keyboard_navigation:
+          type: string
+          enum: [pass, fail]
+        focus_visible:
+          type: string
+          enum: [pass, fail]
+
+# Exemplo
+example:
+  triggers:
+    - element: .hero_title
+      trigger: .hero
+      start: "top top"
+      end: "bottom top"
+      scrub: true
+      pin: false
+      animation:
+        y: [0, -100]
+        opacity: [1, 0]
+        duration: 1
+    - element: .product_grid
+      trigger: .products
+      start: "top center"
+      end: "bottom center"
+      scrub: 1
+      pin: true
+      animation:
+        scale: [0.9, 1]
+        opacity: [0, 1]
+  
+  timeline:
+    duration_total: "3s"
+    easing: "power2.inOut"
+    stagger:
+      elements: ".product_card"
+      amount: 0.1
+      from: "center"
+    reduced_motion:
+      strategy: "remove_scrub_keep_fade"
+      duration: "0.5s"
+  
+  implementation_code: "'use client'\nimport { useEffect, useRef } from 'react'\n// ... codigo completo"
+  
+  reduced_motion_css: "@media (prefers-reduced-motion: reduce) { ... }"
+  
+  performance_report:
+    layout_thrashing: false
+    paint_heavy: false
+    pin_count: 2
+    mobile_fps_estimate: 55
+    recommendations:
+      - "Usar transform em vez de top para parallax"
+      - "Limitar pin a 2 secoes"
+  
+  accessibility_report:
+    reduced_motion: pass
+    keyboard_navigation: pass
+    focus_visible: pass
